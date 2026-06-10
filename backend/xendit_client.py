@@ -20,6 +20,9 @@ def _is_mock_mode() -> bool:
 async def _post(path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     auth = httpx.BasicAuth(_key(), "")
     headers = {"api-version": XENDIT_API_VERSION}
+    cb = os.environ.get("XENDIT_CALLBACK_URL")
+    if cb:
+        headers["x-callback-url"] = cb
     async with httpx.AsyncClient(base_url=XENDIT_BASE, headers=headers, auth=auth, timeout=20) as c:
         r = await c.post(path, json=payload)
         if r.status_code >= 400:
