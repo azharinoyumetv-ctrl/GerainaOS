@@ -1,0 +1,125 @@
+{
+  "theme": "Light",
+  "archetype": "Archetype 1 (Organic & Earthy) blended with Archetype 4 (Swiss & High-Contrast)",
+  "vibe": "Indonesian Modern: Warm Utility. Grounded, tactile, reliable, premium but low cost friendly for UMKM.",
+  "colors": {
+    "light": {
+      "background": "hsl(36, 17%, 97%)",
+      "surface": "hsl(0, 0%, 100%)",
+      "primary": "hsl(151, 39%, 17%)",
+      "primary_hover": "hsl(151, 39%, 24%)",
+      "accent": "hsl(9, 65%, 55%)",
+      "accent_hover": "hsl(9, 65%, 60%)",
+      "text_primary": "hsl(0, 0%, 11%)",
+      "text_secondary": "hsl(0, 0%, 35%)",
+      "border": "hsl(36, 15%, 88%)",
+      "success": "hsl(145, 46%, 33%)",
+      "warning": "hsl(37, 90%, 55%)",
+      "danger": "hsl(353, 98%, 41%)"
+    },
+    "dark": {
+      "background": "hsl(0, 0%, 7%)",
+      "surface": "hsl(0, 0%, 12%)",
+      "primary": "hsl(151, 39%, 24%)",
+      "primary_hover": "hsl(151, 39%, 30%)",
+      "accent": "hsl(9, 68%, 62%)",
+      "accent_hover": "hsl(9, 68%, 68%)",
+      "text_primary": "hsl(0, 0%, 96%)",
+      "text_secondary": "hsl(0, 0%, 64%)",
+      "border": "hsl(0, 0%, 20%)",
+      "success": "hsl(145, 47%, 38%)",
+      "warning": "hsl(37, 90%, 62%)",
+      "danger": "hsl(353, 78%, 56%)"
+    }
+  },
+  "typography": {
+    "headings": {
+      "family": "Cabinet Grotesk",
+      "weights": ["400", "700", "800"],
+      "tracking": "tracking-tight"
+    },
+    "body": {
+      "family": "Figtree",
+      "weights": ["400", "500", "600"],
+      "tracking": "tracking-normal"
+    },
+    "rules": [
+      "No Inter or Roboto allowed.",
+      "H1 should not exceed text-5xl on desktop, tight leading.",
+      "Labels must be uppercase, text-xs, tracking-widest."
+    ]
+  },
+  "spacing_and_layout": {
+    "philosophy": "Generous Spacing (p-6 to p-12) for landing pages; Dense 'Control Room' for POS and Dashboard.",
+    "border_radius": "rounded-lg (8px) for cards, rounded-md (6px) for buttons. Avoid pill shapes unless it's a badge.",
+    "shadows": {
+      "default": "none",
+      "card": "shadow-sm",
+      "hover": "shadow-md",
+      "modal": "shadow-[0_8px_32px_rgba(26,59,43,0.12)]"
+    }
+  },
+  "component_styles": {
+    "buttons": {
+      "primary": "bg-[hsl(151,39%,17%)] text-white hover:bg-[hsl(151,39%,24%)] rounded-md px-6 py-2 transition-colors",
+      "accent": "bg-[hsl(9,65%,55%)] text-white hover:bg-[hsl(9,65%,60%)] rounded-md px-6 py-2 transition-colors",
+      "outline": "border border-[hsl(36,15%,88%)] text-[hsl(0,0%,11%)] hover:bg-[hsl(36,17%,97%)] rounded-md px-6 py-2 transition-colors"
+    },
+    "cards": {
+      "default": "bg-white border border-[hsl(36,15%,88%)] rounded-lg p-6",
+      "pos_item": "bg-white border border-[hsl(36,15%,88%)] rounded-lg p-4 hover:border-[hsl(151,39%,17%)] cursor-pointer transition-all hover:shadow-sm"
+    },
+    "inputs": {
+      "default": "border border-[hsl(36,15%,88%)] rounded-md px-4 py-2 focus:ring-2 focus:ring-[hsl(151,39%,17%)] focus:border-transparent outline-none bg-white text-[hsl(0,0%,11%)]"
+    }
+  },
+  "page_layouts": {
+    "landing": {
+      "structure": "Hero (Image swap to Indonesian cafe owner) -> Features (Tetris Grid) -> Pricing Teaser -> CTA -> Footer",
+      "hero_overlay": "bg-gradient-to-r from-white/90 via-white/70 to-transparent",
+      "spacing": "py-24"
+    },
+    "pricing": {
+      "structure": "Header -> 4 Tier Cards (Trial, Starter, Growth, Enterprise) -> FAQ",
+      "highlight_tier": "Growth tier gets hsl(9, 65%, 55%) (Terracotta) border and 'Most Popular' badge."
+    },
+    "dashboard": {
+      "structure": "Sidebar Nav -> Topbar (Trial upgrade banner) -> Grid of KPIs -> Sales Chart",
+      "grid_mode": "Control Room grid: tight gaps (gap-4), max data visibility."
+    },
+    "pos": {
+      "structure": "Left 70% (Bento Grid of Categories/Products) | Right 30% (Dense Cart/Receipt preview + Payment methods).",
+      "interaction": "Fast tap targets. Clear separation between Cash, QRIS, E-wallet."
+    },
+    "products_crud": {
+      "structure": "Header with 'Import CSV/Excel' button -> Table of products.",
+      "import_ui": "Drag & Drop zone Modal, dashed border border-[hsl(36,15%,88%)] hover:border-[hsl(151,39%,17%)] bg-[hsl(36,17%,97%)]."
+    }
+  },
+  "media": {
+    "image_urls": [
+      {
+        "category": "hero",
+        "url": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2000",
+        "description": "Young cashier/entrepreneur using a modern POS system in a minimalist cafe (Premium but realistic vibe)"
+      },
+      {
+        "category": "pos_feature",
+        "url": "https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?q=80&w=2000",
+        "description": "Asian barista or shop owner looking confident in a warm-lit store"
+      }
+    ]
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure text on Terracotta and Deep Green meets APCA standards.",
+    "testing_attributes": "All interactive elements (buttons, inputs, links, cart items) MUST include data-testid='...' (e.g., data-testid='add-to-cart-btn')."
+  },
+  "instructions_to_main_agent": [
+    "Implement Cabinet Grotesk (headings) and Figtree (body) using Google Fonts or local assets.",
+    "Do NOT use generic purple/teal gradients. Stick to the Warm Utility palette (Deep Forest Green + Terracotta).",
+    "Build the POS dashboard with a dense, control-room layout (no wasted space, high functionality).",
+    "Ensure the PDF generation (Receipt/Invoice) uses clear tabular structures. Thermal receipt should be narrow (e.g., 80mm width layout) and Invoice should be A4.",
+    "Stripe is skipped. Focus on Xendit QRIS + e-wallet flow mockups/integrations.",
+    "Ensure the Pricing page clearly shows 4 tiers with the Growth tier highlighted."
+  ]
+}
