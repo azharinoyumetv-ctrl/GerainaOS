@@ -16,7 +16,8 @@ export default function Sales() {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [filter]);
 
   const filtered = items.filter((o) =>
     !q || o.order_no.toLowerCase().includes(q.toLowerCase())

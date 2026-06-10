@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import api from "@/api/client";
 
 const AuthCtx = createContext(null);
@@ -42,16 +42,19 @@ export function AuthProvider({ children }) {
     try {
       const r = await api.get("/auth/me");
       setUser(r.data);
-    } catch (e) {
-      /* ignore */
+    } catch (err) {
+      console.warn("[Auth] refresh failed", err);
     }
   };
 
-  return (
-    <AuthCtx.Provider value={{ user, loading, login, register, logout, refresh }}>
-      {children}
-    </AuthCtx.Provider>
+  const value = useMemo(
+    () => ({ user, loading, login, register, logout, refresh }),
+    // login/register/logout/refresh are stable closures over setUser only — safe to omit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, loading]
   );
+
+  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
 export function useAuth() {

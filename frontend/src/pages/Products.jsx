@@ -206,7 +206,7 @@ function ImportDialog({ onClose, onDone }) {
                   <AlertCircle size={14} /> Error
                 </p>
                 <ul className="text-xs text-[hsl(var(--destructive))] space-y-1 max-h-40 overflow-y-auto">
-                  {result.errors.map((e, i) => <li key={i}>· {e}</li>)}
+                  {result.errors.map((errMsg, i) => <li key={`${i}-${errMsg.slice(0, 24)}`}>· {errMsg}</li>)}
                 </ul>
               </div>
             )}
@@ -237,8 +237,10 @@ export default function Products() {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
-  useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t); /* eslint-disable-next-line */ }, [q]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t); }, [q]);
 
   const remove = async (p) => {
     if (!window.confirm(`Hapus "${p.name}"?`)) return;

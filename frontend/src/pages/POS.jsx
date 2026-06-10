@@ -21,7 +21,9 @@ function ReceiptDialog({ order, onClose }) {
       try {
         const r = await api.get(`/orders/${poll.id}`);
         setPoll(r.data);
-      } catch (e) { /* ignore */ }
+      } catch (err) {
+        console.warn("[POS] poll order status failed", err);
+      }
     }, 3500);
     return () => clearInterval(t);
   }, [poll?.id, poll?.payment_status, poll?.payment_method]);
@@ -76,7 +78,7 @@ function ReceiptDialog({ order, onClose }) {
 
         <div className="divide-y divide-[hsl(var(--border))] text-sm mb-3 max-h-48 overflow-y-auto">
           {o.items.map((it, i) => (
-            <div key={i} className="py-2 flex justify-between" data-testid={`receipt-item-${i}`}>
+            <div key={`${it.product_id}-${i}`} className="py-2 flex justify-between" data-testid={`receipt-item-${i}`}>
               <div>
                 <p className="font-medium">{it.name}</p>
                 <p className="text-xs text-[hsl(var(--muted))]">{it.quantity} × {fmtIDR(it.price)}</p>
@@ -258,7 +260,7 @@ export default function POS() {
             </p>
           )}
           {cart.map((it, idx) => (
-            <div key={idx} className="card-surface p-3 mb-2" data-testid={`cart-item-${idx}`}>
+            <div key={it.product_id} className="card-surface p-3 mb-2" data-testid={`cart-item-${idx}`}>
               <div className="flex items-start justify-between gap-2 mb-2">
                 <p className="font-medium text-sm leading-tight">{it.name}</p>
                 <p className="font-display font-bold num-display text-sm">{fmtIDR(it.subtotal)}</p>
