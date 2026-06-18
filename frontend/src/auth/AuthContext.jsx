@@ -43,7 +43,10 @@ export function AuthProvider({ children }) {
       const r = await api.get("/auth/me");
       setUser(r.data);
     } catch (err) {
-      console.warn("[Auth] refresh failed", err);
+      if (process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.warn("[Auth] refresh failed", err);
+      }
     }
   };
 

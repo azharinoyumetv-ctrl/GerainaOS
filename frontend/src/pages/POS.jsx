@@ -22,7 +22,10 @@ function ReceiptDialog({ order, onClose }) {
         const r = await api.get(`/orders/${poll.id}`);
         setPoll(r.data);
       } catch (err) {
-        console.warn("[POS] poll order status failed", err);
+        if (process.env.NODE_ENV !== "production") {
+          // eslint-disable-next-line no-console
+          console.warn("[POS] poll order status failed", err);
+        }
       }
     }, 3500);
     return () => clearInterval(t);
