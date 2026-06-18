@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { fmtIDR } from "@/api/client";
 
-const HERO_IMG = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2000&auto=format&fit=crop";
+const HERO_IMG = "https://customer-assets.emergentagent.com/job_dagangos-features/artifacts/0kij0lxo_ChatGPT%20Image%20Jun%2010%2C%202026%2C%2005_42_03%20PM.png";
 
 function Nav() {
   return (
@@ -60,25 +60,12 @@ function Hero() {
         </div>
 
         <div className="lg:col-span-6 relative" data-testid="hero-image-wrap">
-          <div className="absolute -top-10 -right-10 w-72 h-72 rounded-full bg-[hsl(var(--accent))]/12 blur-3xl" />
-          <div className="relative card-surface overflow-hidden" style={{ borderRadius: 20 }}>
-            <img
-              src={HERO_IMG}
-              alt="Pemilik toko muda Indonesia menggunakan POS tablet"
-              className="w-full h-[480px] object-cover"
-              data-testid="hero-image"
-            />
-            <div className="absolute bottom-4 left-4 right-4 flex gap-3">
-              <div className="flex-1 card-surface px-4 py-3 backdrop-blur-md bg-white/85">
-                <p className="label-tiny">Penjualan hari ini</p>
-                <p className="font-display text-2xl font-bold num-display">{fmtIDR(2480000)}</p>
-              </div>
-              <div className="card-surface px-4 py-3 backdrop-blur-md bg-white/85">
-                <p className="label-tiny">Transaksi</p>
-                <p className="font-display text-2xl font-bold num-display">87</p>
-              </div>
-            </div>
-          </div>
+          <img
+            src={HERO_IMG}
+            alt="Pemilik toko Indonesia tersenyum di kasir modern dengan POS dan pembayaran QRIS"
+            className="w-full h-auto rounded-2xl"
+            data-testid="hero-image"
+          />
         </div>
       </div>
     </section>
@@ -131,25 +118,35 @@ function PricingTeaser() {
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="label-tiny">Harga</span>
           <h2 className="font-display text-4xl font-bold mt-2">Mulai gratis. Bayar saat Anda siap.</h2>
-          <p className="text-[hsl(var(--muted))] mt-3">4 paket. Mulai dari Rp 0, scale sampai Enterprise.</p>
+          <p className="text-[hsl(var(--muted))] mt-3">5 paket. Mulai dari Rp 0, scale sampai Multi-Branch.</p>
         </div>
-        <div className="grid md:grid-cols-4 gap-4">
-          {tiers.slice(0, 4).map((t) => (
-            <div key={t.id}
-                 className={`card-surface p-6 ${t.highlight ? "border-[hsl(var(--accent))] shadow-sm ring-1 ring-[hsl(var(--accent))]/30" : ""}`}
-                 data-testid={`pricing-teaser-card-${t.id}`}>
-              {t.badge && <span className="pill pill-warning mb-3">{t.badge}</span>}
-              <h3 className="font-display text-xl font-bold">{t.name}</h3>
-              <p className="num-display font-display text-3xl font-extrabold mt-2">
-                {t.price_idr === null ? "Custom" : t.price_idr === 0 ? "Rp 0" : fmtIDR(t.price_idr)}
-                <span className="text-sm font-normal text-[hsl(var(--muted))] ml-1">{t.period}</span>
-              </p>
-              <p className="text-sm text-[hsl(var(--muted))] mt-2 mb-4">{t.tagline}</p>
-              <Link to="/pricing" className={t.highlight ? "btn-accent w-full" : "btn-outline w-full"} data-testid={`pricing-teaser-cta-${t.id}`}>
-                {t.cta}
-              </Link>
-            </div>
-          ))}
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-3">
+          {tiers.map((t) => {
+            const price =
+              t.id === "trial" ? "Gratis"
+              : t.id === "multibranch" ? `${fmtIDR(t.price_idr_monthly)}+`
+              : fmtIDR(t.price_idr_monthly);
+            const period =
+              t.id === "trial" ? "14 hari"
+              : t.id === "multibranch" ? "/bulan, mulai"
+              : "/bulan";
+            return (
+              <div key={t.id}
+                   className={`card-surface p-5 ${t.highlight ? "border-[hsl(var(--accent))] shadow-sm ring-1 ring-[hsl(var(--accent))]/30 relative" : ""}`}
+                   data-testid={`pricing-teaser-card-${t.id}`}>
+                {t.badge && <span className="pill pill-warning mb-2 inline-block text-[10px]">{t.badge}</span>}
+                <h3 className="font-display text-lg font-bold">{t.name}</h3>
+                <p className="num-display font-display text-2xl font-extrabold mt-2 leading-tight">
+                  {price}
+                </p>
+                <p className="text-xs text-[hsl(var(--muted))]">{period}</p>
+                <p className="text-xs text-[hsl(var(--muted))] mt-2 mb-3 min-h-[32px]">{t.tagline}</p>
+                <Link to="/pricing" className={`${t.highlight ? "btn-accent" : "btn-outline"} w-full text-xs`} data-testid={`pricing-teaser-cta-${t.id}`}>
+                  {t.cta}
+                </Link>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
