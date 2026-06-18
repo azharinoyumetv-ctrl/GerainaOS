@@ -1,52 +1,67 @@
 # Geraina POS by DagangOS — PRD
 
 ## Problem Statement
-Build a SaaS POS (Point of Sale) for Indonesian SMEs (UMKM): warung kopi, butik fashion, retail, F&B. Affordable but premium-feeling, supports QRIS + e-wallet payments (Xendit), PDF receipts/invoices, multi-tenant (per-store), 14-day trial.
+SaaS POS untuk UMKM Indonesia (warung kopi, retail, F&B, toko kue, butik). Affordable tapi premium-feeling, support QRIS + e-wallet (Xendit), PDF receipt/invoice, multi-tenant per-store, 14-hari trial.
 
-## Implemented (Jan 2026, Phase 1 from scratch)
+## FINAL Pricing (locked — DO NOT MODIFY without explicit client approval)
 
+| Paket          | Bulanan       | Tahunan        | Catatan                  |
+| -------------- | ------------- | -------------- | ------------------------ |
+| Free Trial     | Gratis        | 14 hari        | 1 outlet, limited        |
+| Starter        | Rp 99.000     | Rp 990.000     | Small warung/toko        |
+| **Pro**        | **Rp 249.000**| **Rp 2.490.000**| **Main package** (highlighted) |
+| Business       | Rp 499.000    | Rp 4.990.000   | Bigger store, multi-kasir|
+| Multi-Branch   | Rp 799.000+   | Custom         | Multiple branches        |
+
+**Add-ons:**
+- Extra device: Rp 49.000/bulan
+- Extra branch: Rp 199.000/bulan
+- Remote setup: Rp 499.000 one-time
+- Product import setup: Rp 499.000–999.000 one-time
+- On-site setup: Rp 1.000.000–3.000.000 + transport, one-time
+
+## Implemented
 ### Public site
-- **Landing page** (`/`) — hero with Indonesian young-entrepreneur Unsplash image, feature grid, pricing teaser (4 tiers), final CTA, footer
-- **Pricing page** (`/pricing`) — 4 public tiers (Trial / Starter Rp 99K / Growth Rp 249K / Enterprise) with Growth highlighted as "Paling Populer", FAQ accordion
-- **Login / Register** — JWT-based custom auth, bcrypt password hashing, store auto-creation on register with 14-day trial
+- Landing (`/`) — hero pakai asset client (`customer-assets.../0kij0lxo_*.png`), features grid, pricing teaser 5 tier, CTA, footer
+- Pricing (`/pricing`) — 5 tier dengan monthly/yearly toggle (Hemat ~17% badge), Pro highlighted "Paling Direkomendasikan", section Add-ons, FAQ accordion
+- Login / Register — JWT auth, bcrypt, register auto-create store + 14-day trial
 
 ### Authenticated app (`/app/*`)
-- **Dashboard** — KPI stats (today/week/month sales), recent orders, trial upgrade banner with days-remaining, sidebar with logout
-- **Products** — CRUD table + drag-drop **Excel/CSV import** (with template download), per-row edit/delete
-- **POS Kasir** — bento product grid by category, search, cart with qty +/-, discount, tax%, 3 payment methods (Cash / QRIS / E-wallet OVO·DANA·ShopeePay·LinkAja), receipt dialog with QR display + PDF thermal/invoice download + auto-poll status
-- **Sales (Penjualan)** — orders table with status filter, per-row PDF receipt (thermal 80mm) + invoice (A4) download
+- Dashboard — KPI stats, recent orders, trial upgrade banner with days-remaining
+- Products — CRUD + drag-drop Excel/CSV import (template download), upsert by SKU
+- POS Kasir — bento grid by category, search, cart +/-, discount, tax, 3 payment methods (Cash / QRIS / E-wallet OVO·DANA·ShopeePay·LinkAja), receipt dialog with QR + PDF download
+- Sales — orders table dengan filter status, per-row PDF receipt (thermal 80mm) + invoice (A4)
 
-### Backend (FastAPI)
-- `routes_auth.py` — register/login/me, JWT (HS256), bcrypt
-- `routes_products.py` — CRUD + `/bulk-import` (xlsx/csv via pandas) + CSV template
-- `routes_orders.py` — checkout with stock decrement, payment method dispatch, stats aggregation
-- `routes_webhooks.py` — `/api/webhooks/xendit` (x-callback-token verified), `/simulate` dev hook
-- `routes_pdf.py` — thermal 80mm receipt + A4 invoice via ReportLab
-- `routes_pricing.py` — public pricing tiers
-- `xendit_client.py` — QRIS dynamic + e-wallet charge, **mock fallback** when key not real (graceful demo)
+### Backend
+- `routes_auth.py`, `routes_products.py` (CRUD + bulk-import), `routes_orders.py` (stock decrement + payment dispatch), `routes_webhooks.py` (Xendit token-verified), `routes_pdf.py` (thermal + A4), `routes_pricing.py` (tiers + addons), `xendit_client.py` (live API with mock fallback)
 
-### Integrations
-- **Xendit** — QRIS dynamic + e-wallet (OVO/DANA/ShopeePay/LinkAja) with webhook callback handling. Mock-mode active when `XENDIT_SECRET_KEY` is placeholder so demo works without real Xendit account.
-- **Stripe** — **DEFERRED** per user instruction
+### Integrations LIVE-Tested
+- **Xendit Test Mode** — real `XENDIT_SECRET_KEY` + `XENDIT_WEBHOOK_TOKEN` + `XENDIT_CALLBACK_URL` plugged
+  - QRIS Dynamic: real `qr_id` issued, end-to-end webhook → order `paid` verified
+  - E-wallet: needs client to set callback URL in Xendit dashboard (Settings → Developers → Callbacks → E-Wallets) → `https://dagangos-features.preview.emergentagent.com/api/webhooks/xendit`
+- **Stripe** — deferred per client decision
+
+## Deployment Readiness — PASS ✅
+- All env vars via `os.environ.get`/dotenv, no hardcoded secrets
+- Frontend uses `process.env.REACT_APP_BACKEND_URL`
+- CORS, MongoDB, supervisor config all valid
+- Console statements gated with `NODE_ENV !== 'production'`
+- Frontend compiles clean (zero warnings)
 
 ## Tech Stack
-- Backend: FastAPI + Motor (async MongoDB) + ReportLab + Pandas + httpx
-- Frontend: React 19 + react-router 7 + Tailwind (custom tokens, Cabinet Grotesk + Figtree fonts) + axios + qrcode.react + lucide-react
+- Backend: FastAPI + Motor (async MongoDB) + ReportLab + Pandas + httpx + bcrypt + pyjwt
+- Frontend: React 19 + react-router 7 + Tailwind (custom tokens, Cabinet Grotesk + Figtree) + axios + qrcode.react + lucide-react
 - DB: MongoDB (collections: users, stores, products, orders, counters)
 
 ## Test Credentials
-See `/app/memory/test_credentials.md`. Default: `owner@geraina.com` / `geraina123` (created on first register call; testing agent should register fresh or login).
+See `/app/memory/test_credentials.md`. Default: `owner@geraina.com` / `geraina123`.
 
-## P1 Backlog (not in this iteration)
-- Stripe Checkout multi-currency (tourist payments)
-- Real-time WebSocket order updates (instead of polling)
-- Multi-cashier user management UI (admin can add cashiers)
-- Reports page (top products, profit by category)
-- Customer database + loyalty
-- Receipt printing direct to thermal printer (ESC/POS)
-
-## P2 Backlog
-- Email notifications (SendGrid)
-- WhatsApp receipt delivery (Twilio)
-- Offline mode (PWA cache)
-- Mobile app wrapper (Capacitor)
+## Open Backlog
+- Stripe Checkout multi-currency untuk turis (deferred)
+- Real-time WebSocket order updates (currently polls 3.5s)
+- Multi-cashier admin UI
+- Reports page (top products, profit per kategori, low stock)
+- Customer DB + loyalty
+- WhatsApp/Email receipt delivery
+- Direct ESC/POS thermal printer
+- PWA offline mode
