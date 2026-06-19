@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { fmtIDR } from "@/api/client";
 
-const HERO_IMG = "https://customer-assets.emergentagent.com/job_dagangos-features/artifacts/0kij0lxo_ChatGPT%20Image%20Jun%2010%2C%202026%2C%2005_42_03%20PM.png";
+const HERO_IMG = "/hero_promo.jpg";
 
 function Nav() {
   return (
