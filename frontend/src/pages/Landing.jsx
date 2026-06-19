@@ -3,7 +3,7 @@ import {
   Leaf, Check, ArrowRight, Smartphone, Receipt, Banknote, BarChart3, Zap, Shield,
   ScanBarcode, CreditCard, Users, Package, Truck, ClipboardList, UserCheck,
   Wifi, WifiOff, Printer, Monitor, Tablet, ChevronDown, QrCode, Globe, FileText,
-  Star, TrendingUp, ShieldCheck
+  Star, TrendingUp, ShieldCheck, Download, Apple, Chrome, MonitorSmartphone
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "@/api/client";
@@ -544,6 +544,134 @@ function FAQ() {
   );
 }
 
+/* ──────────────── DOWNLOAD APP ──────────────── */
+const PLATFORMS = [
+  {
+    id: "android",
+    label: "Android APK",
+    sublabel: "Download langsung",
+    icon: Smartphone,
+    href: "#",
+    color: "bg-emerald-600 hover:bg-emerald-700",
+  },
+  {
+    id: "playstore",
+    label: "Google Play",
+    sublabel: "Segera hadir",
+    icon: MonitorSmartphone,
+    href: "#",
+    color: "bg-[hsl(var(--primary))] hover:bg-[hsl(151,39%,24%)]",
+    soon: true,
+  },
+  {
+    id: "appstore",
+    label: "App Store",
+    sublabel: "Segera hadir",
+    icon: Apple,
+    href: "#",
+    color: "bg-gray-900 hover:bg-gray-800",
+    soon: true,
+  },
+  {
+    id: "windows",
+    label: "Windows",
+    sublabel: "Desktop app",
+    icon: Monitor,
+    href: "#",
+    color: "bg-blue-600 hover:bg-blue-700",
+    soon: true,
+  },
+  {
+    id: "macos",
+    label: "macOS",
+    sublabel: "Desktop app",
+    icon: Apple,
+    href: "#",
+    color: "bg-gray-700 hover:bg-gray-600",
+    soon: true,
+  },
+  {
+    id: "webapp",
+    label: "Web App",
+    sublabel: "Buka di browser",
+    icon: Chrome,
+    href: "/login",
+    color: "bg-[hsl(var(--accent))] hover:bg-[hsl(9,65%,60%)]",
+    isLink: true,
+  },
+];
+
+function DownloadApp() {
+  return (
+    <section className="py-24 bg-[hsl(var(--surface))] border-y border-[hsl(var(--border))]" data-testid="download-section">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="text-center mb-14">
+          <span className="label-tiny">Download & Install</span>
+          <h2 className="font-display text-4xl lg:text-5xl font-extrabold mt-3">
+            Tersedia di <span className="text-[hsl(var(--primary))]">semua platform.</span>
+          </h2>
+          <p className="text-[hsl(var(--muted))] mt-4 text-lg max-w-2xl mx-auto">
+            Gunakan Geraina POS di perangkat favorit Anda. Download aplikasi native atau langsung akses via web browser.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {PLATFORMS.map((p) => {
+            const Inner = () => (
+              <>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+                    <p.icon size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-base font-bold leading-snug">{p.label}</p>
+                    <p className="text-xs opacity-75">{p.sublabel}</p>
+                  </div>
+                </div>
+                {p.soon ? (
+                  <span className="text-[10px] uppercase tracking-wider font-bold bg-white/20 px-2 py-0.5 rounded-full">Soon</span>
+                ) : (
+                  <Download size={18} className="opacity-70" />
+                )}
+              </>
+            );
+
+            if (p.isLink) {
+              return (
+                <Link
+                  key={p.id}
+                  to={p.href}
+                  className={`flex items-center justify-between gap-3 px-5 py-4 rounded-xl text-white transition-all duration-200 ${p.color} ${p.soon ? "opacity-60 cursor-not-allowed" : "hover:shadow-lg hover:scale-[1.02]"}`}
+                  data-testid={`download-${p.id}`}
+                >
+                  <Inner />
+                </Link>
+              );
+            }
+
+            return (
+              <a
+                key={p.id}
+                href={p.href}
+                className={`flex items-center justify-between gap-3 px-5 py-4 rounded-xl text-white transition-all duration-200 ${p.color} ${p.soon ? "opacity-60 pointer-events-none" : "hover:shadow-lg hover:scale-[1.02]"}`}
+                data-testid={`download-${p.id}`}
+                {...(p.soon ? {} : { download: true })}
+              >
+                <Inner />
+              </a>
+            );
+          })}
+        </div>
+
+        <p className="text-center text-sm text-[hsl(var(--muted))] mt-8">
+          <ShieldCheck size={14} className="inline mr-1.5 text-[hsl(var(--success))]" />
+          Semua download aman & terverifikasi. Minimum Android 8.0 / iOS 15 / Windows 10.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 /* ──────────────── FINAL CTA ──────────────── */
 function FinalCTA() {
   return (
@@ -589,6 +717,7 @@ export default function Landing() {
       <LocalRetailFocus />
       <PricingTeaser />
       <FAQ />
+      <DownloadApp />
       <FinalCTA />
       <Footer />
     </div>
