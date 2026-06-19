@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api, { fmtIDR } from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
 import { TrendingUp, Package, ShoppingCart, Calendar, Sparkles, ArrowRight, Crown } from "lucide-react";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 function trialDaysLeft(iso) {
   if (!iso) return null;
@@ -25,16 +26,61 @@ function Stat({ label, value, icon: Icon, hint, testid }) {
   );
 }
 
+function CustomTooltip({ active, payload }) {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-[hsl(0,0%,11%)] text-white p-3 rounded-md shadow-lg border-0 text-xs space-y-1">
+        <p className="font-semibold text-[hsl(36,17%,85%)]">{data.date}</p>
+        <p className="font-bold text-sm text-[hsl(9,65%,75%)]">{fmtIDR(data.sales)}</p>
+        <p className="text-[hsl(0,0%,75%)]">{data.ordersCount} transaksi</p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState([]);
+  const [chartData, setChartData] = useState([]);
   const days = trialDaysLeft(user?.trial_ends_at);
   const isTrial = (user?.plan || "trial") === "trial";
 
   useEffect(() => {
     api.get("/orders/stats").then((r) => setStats(r.data)).catch(() => {});
     api.get("/orders?limit=6").then((r) => setRecent(r.data)).catch(() => {});
+
+    api.get("/orders?limit=100").then((r) => {
+      const orders = r.data || [];
+      const daysList = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toLocaleDateString("id-ID", { weekday: "short", day: "numeric" });
+        const key = d.toISOString().split("T")[0];
+        daysList.push({
+          date: dateStr,
+          rawDate: key,
+          sales: 0,
+          ordersCount: 0
+        });
+      }
+
+      orders.forEach((o) => {
+        if (o.payment_status === "paid" && o.created_at) {
+          const oDate = o.created_at.split("T")[0];
+          const dayObj = daysList.find((day) => day.rawDate === oDate);
+          if (dayObj) {
+            dayObj.sales += o.total || 0;
+            dayObj.ordersCount += 1;
+          }
+        }
+      });
+
+      setChartData(daysList);
+    }).catch(() => {});
   }, []);
 
   return (
@@ -83,6 +129,58 @@ export default function Dashboard() {
               hint={`${stats?.month_orders || 0} transaksi`} testid="stat-month" />
         <Stat label="Produk Aktif" value={stats?.product_count || 0} icon={Package}
               hint="Jumlah SKU di toko" testid="stat-products" />
+      </div>
+
+      {/* Sales Chart Section */}
+      <div className="card-surface p-6" data-testid="sales-chart-card">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <span className="label-tiny">Laporan Mingguan</span>
+            <h2 className="font-display text-lg font-bold">Tren Penjualan (7 Hari Terakhir)</h2>
+          </div>
+          <div className="text-right">
+            <span className="text-xs text-[hsl(var(--muted))]">Total Omset: </span>
+            <span className="font-display font-bold text-[hsl(var(--primary))] text-lg">
+              {fmtIDR(chartData.reduce((acc, curr) => acc + curr.sales, 0))}
+            </span>
+          </div>
+        </div>
+        <div className="h-64 w-full" data-testid="sales-chart-container">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(151,39%,17%)" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="hsl(151,39%,17%)" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(36,15%,90%)" vertical={false} />
+              <XAxis 
+                dataKey="date" 
+                stroke="hsl(0,0%,45%)" 
+                fontSize={11} 
+                tickLine={false} 
+                axisLine={false} 
+              />
+              <YAxis 
+                stroke="hsl(0,0%,45%)" 
+                fontSize={11} 
+                tickLine={false} 
+                axisLine={false} 
+                tickFormatter={(v) => v >= 1000000 ? `${(v/1000000).toFixed(1)}jt` : v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Area 
+                type="monotone" 
+                dataKey="sales" 
+                stroke="hsl(151,39%,17%)" 
+                strokeWidth={2}
+                fillOpacity={1} 
+                fill="url(#colorSales)" 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <div className="grid grid-cols-12 gap-6">
