@@ -11,6 +11,8 @@ import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
 import POS from "@/pages/POS";
 import Sales from "@/pages/Sales";
+import About from "@/pages/About";
+import LicenseDevices from "@/pages/LicenseDevices";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -34,6 +36,8 @@ function App() {
             <Route path="pos" element={<POS />} />
             <Route path="products" element={<Products />} />
             <Route path="sales" element={<Sales />} />
+            <Route path="license" element={<LicenseDevices />} />
+            <Route path="about" element={<About />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

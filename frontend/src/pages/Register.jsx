@@ -38,10 +38,10 @@ export default function Register() {
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 relative bg-grain"
            style={{ background: "linear-gradient(135deg, hsl(151,39%,17%), hsl(151,39%,12%))" }}>
         <Link to="/" className="text-white font-display font-bold text-xl flex items-center gap-2">
-          <Leaf size={22} className="text-[hsl(9,65%,62%)]" /> Geraina
+          <Leaf size={22} className="text-[hsl(9,65%,62%)]" /> Geraina POS <span className="text-xs text-white/60 font-medium">by DagangOS</span>
         </Link>
         <div className="text-white space-y-5 max-w-md">
-          <p className="label-tiny" style={{ color: "hsl(9,65%,75%)" }}>Mulai dari nol</p>
+          <p className="label-tiny" style={{ color: "hsl(9,65%,75%)" }}>Geraina POS by DagangOS</p>
           <h2 className="font-display text-4xl font-bold leading-tight">
             Buka toko digital<br /> dalam 60 detik.
           </h2>
@@ -59,8 +59,12 @@ export default function Register() {
       <div className="flex-1 flex items-center justify-center p-8">
         <form onSubmit={submit} className="w-full max-w-sm space-y-6" data-testid="register-form">
           <div>
-            <h1 className="font-display text-3xl font-bold">Buat toko</h1>
-            <p className="text-sm text-[hsl(var(--muted))] mt-1">Daftar gratis, mulai jualan hari ini.</p>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-display text-xl font-bold">Geraina POS</span>
+              <span className="text-xs text-[hsl(var(--muted))] mt-1 font-semibold">by DagangOS</span>
+            </div>
+            <h1 className="font-display text-3xl font-bold">Buat Akun</h1>
+            <p className="text-sm text-[hsl(var(--muted))] mt-1.5">Daftar gratis, mulai jualan hari ini.</p>
           </div>
 
           <div className="space-y-3">

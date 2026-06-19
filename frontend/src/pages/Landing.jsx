@@ -33,16 +33,15 @@ function Hero() {
       <div className="max-w-7xl mx-auto px-6 pt-12 pb-20 lg:pt-20 lg:pb-28 grid lg:grid-cols-12 gap-10 items-center">
         <div className="lg:col-span-6 space-y-6 animate-fadeup" data-testid="hero-content">
           <span className="pill pill-muted" data-testid="hero-eyebrow">
-            <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--accent))] animate-pulse" /> POS untuk UMKM Indonesia
+            <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--accent))] animate-pulse" /> Geraina POS by DagangOS
           </span>
           <h1 className="font-display text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.05]" data-testid="hero-title">
-            Kasir digital yang<br />
-            <span className="text-[hsl(var(--primary))]">cepat,</span> stoknya akurat,<br />
-            laporannya <span className="text-[hsl(var(--accent))]">pintar.</span>
+            Kasir & Stok Pintar<br />
+            untuk <span className="text-[hsl(var(--primary))]">Toko Indonesia.</span>
           </h1>
           <p className="text-lg text-[hsl(var(--muted))] max-w-xl" data-testid="hero-subtitle">
-            Geraina POS membantu warung kopi, butik fashion, dan UMKM Anda berjualan
-            dengan QRIS, e-wallet, dan invoice PDF — semua dalam satu tablet.
+            Kelola penjualan, stok, supplier, dan laporan toko dari satu aplikasi.
+            Geraina POS membantu warung kopi, butik fashion, dan UMKM Anda berkembang lebih cepat.
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
             <Link to="/register" className="btn-primary" data-testid="hero-cta-primary">
@@ -86,10 +85,13 @@ function Features() {
     <section id="features" className="py-24 border-t border-[hsl(var(--border))]" data-testid="features-section">
       <div className="max-w-7xl mx-auto px-6">
         <div className="max-w-2xl mb-14">
-          <span className="label-tiny" data-testid="features-eyebrow">Mengapa Geraina</span>
+          <span className="label-tiny" data-testid="features-eyebrow">Mengapa Geraina POS</span>
           <h2 className="font-display text-4xl font-bold mt-2" data-testid="features-title">
             Built untuk UMKM, dipoles untuk skala franchise.
           </h2>
+          <p className="text-[hsl(var(--muted))] mt-3 text-lg" data-testid="features-subtitle">
+            DagangOS membantu UMKM mengelola bisnis lebih rapi.
+          </p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {FEATURES.map((f, i) => (

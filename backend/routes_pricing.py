@@ -2,7 +2,9 @@
 
 DO NOT modify prices without explicit client approval.
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from auth import get_current_user
+from database import get_db
 
 router = APIRouter(prefix="/api/pricing", tags=["pricing"])
 
@@ -120,3 +122,21 @@ async def list_tiers():
 @router.get("/addons")
 async def list_addons():
     return ADDONS
+
+
+@router.post("/upgrade")
+async def upgrade_plan(payload: dict, user: dict = Depends(get_current_user)):
+    tier_id = payload.get("tier_id")
+    if not tier_id or tier_id not in [t["id"] for t in TIERS]:
+        raise HTTPException(status_code=400, detail="Paket tidak valid")
+    
+    db = get_db()
+    await db.users.find_one_and_update(
+        {"id": user["id"]},
+        {"$set": {"plan": tier_id}}
+    )
+    await db.stores.find_one_and_update(
+        {"id": user["store_id"]},
+        {"$set": {"plan": tier_id}}
+    )
+    return {"ok": True, "plan": tier_id}

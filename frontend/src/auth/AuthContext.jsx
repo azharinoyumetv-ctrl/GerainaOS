@@ -50,9 +50,12 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const setPlan = (plan) => {
+    setUser((prev) => (prev ? { ...prev, plan } : null));
+  };
+
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refresh }),
-    // login/register/logout/refresh are stable closures over setUser only — safe to omit
+    () => ({ user, loading, login, register, logout, refresh, setPlan }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [user, loading]
   );

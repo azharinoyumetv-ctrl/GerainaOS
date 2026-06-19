@@ -2,7 +2,7 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import {
   LayoutDashboard, ShoppingCart, Package, ReceiptText,
-  Leaf, LogOut, Sparkles, Crown,
+  Leaf, LogOut, Sparkles, Crown, Shield, Info
 } from "lucide-react";
 
 const NAV = [
@@ -10,6 +10,8 @@ const NAV = [
   { to: "/app/pos", icon: ShoppingCart, label: "POS Kasir", testid: "nav-pos" },
   { to: "/app/products", icon: Package, label: "Produk", testid: "nav-products" },
   { to: "/app/sales", icon: ReceiptText, label: "Penjualan", testid: "nav-sales" },
+  { to: "/app/license", icon: Shield, label: "Lisensi & Perangkat", testid: "nav-license" },
+  { to: "/app/about", icon: Info, label: "Tentang Aplikasi", testid: "nav-about" },
 ];
 
 function trialDaysLeft(iso) {
@@ -29,7 +31,7 @@ export default function AppLayout() {
       <aside className="w-64 border-r border-[hsl(var(--border))] bg-[hsl(var(--surface))] flex flex-col" data-testid="app-sidebar">
         <div className="p-6 border-b border-[hsl(var(--border))]">
           <Link to="/app/dashboard" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="app-logo">
-            <Leaf className="text-[hsl(var(--accent))]" size={22} /> Geraina
+            <Leaf className="text-[hsl(var(--accent))]" size={22} /> Geraina POS <span className="text-[10px] text-[hsl(var(--muted))] font-normal">by DagangOS</span>
           </Link>
           <p className="text-xs text-[hsl(var(--muted))] mt-1.5">{user?.store_name || "Toko Anda"}</p>
         </div>

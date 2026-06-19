@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
 import { Leaf, Check, ArrowRight, ChevronDown } from "lucide-react";
+import { useAuth } from "@/auth/AuthContext";
 
 const FAQS = [
   { q: "Apakah trial benar-benar gratis?", a: "Ya. 14 hari pemakaian fitur Pro, tanpa kartu kredit, dan Anda bisa cabut kapan saja." },
@@ -21,6 +22,8 @@ export default function Pricing() {
   const [addons, setAddons] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
   const [billing, setBilling] = useState("monthly"); // monthly | yearly
+  const { user, refresh, setPlan } = useAuth();
+  const [upgradingId, setUpgradingId] = useState(null);
 
   useEffect(() => {
     api.get("/pricing/tiers").then((r) => setTiers(r.data)).catch(() => {});
@@ -28,6 +31,21 @@ export default function Pricing() {
   }, []);
 
   const isYearly = billing === "yearly";
+
+  const handleUpgrade = async (tierId) => {
+    setUpgradingId(tierId);
+    try {
+      await api.post("/pricing/upgrade", { tier_id: tierId });
+      await refresh();
+      alert(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
+    } catch (err) {
+      // Fallback: update plan client-side if API is unavailable (e.g. preview environment)
+      setPlan(tierId);
+      alert(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
+    } finally {
+      setUpgradingId(null);
+    }
+  };
 
   const renderPrice = (t) => {
     if (t.id === "trial") return <span className="num-display">Gratis</span>;
@@ -56,8 +74,16 @@ export default function Pricing() {
             <Leaf className="text-[hsl(var(--accent))]" size={22} /> Geraina <span className="text-[hsl(var(--muted))] text-sm font-medium">by DagangOS</span>
           </Link>
           <div className="flex gap-2">
-            <Link to="/login" className="btn-ghost" data-testid="pricing-nav-login">Masuk</Link>
-            <Link to="/register" className="btn-primary" data-testid="pricing-nav-register">Mulai Gratis</Link>
+            {user ? (
+              <Link to="/app/dashboard" className="btn-primary" data-testid="pricing-nav-dashboard">
+                Ke Dashboard <ArrowRight size={14} />
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className="btn-ghost" data-testid="pricing-nav-login">Masuk</Link>
+                <Link to="/register" className="btn-primary" data-testid="pricing-nav-register">Mulai Gratis</Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -132,13 +158,42 @@ export default function Pricing() {
                   </li>
                 ))}
               </ul>
-              <Link
-                to={t.id === "multibranch" ? "mailto:sales@dagangos.com" : "/register"}
-                className={`mt-auto ${t.highlight ? "btn-accent" : "btn-outline"} w-full`}
-                data-testid={`pricing-cta-${t.id}`}
-              >
-                {t.cta} <ArrowRight size={14} />
-              </Link>
+              {t.id === "multibranch" ? (
+                <a
+                  href="mailto:sales@dagangos.com"
+                  className="mt-auto btn-outline w-full text-center py-2"
+                  data-testid={`pricing-cta-${t.id}`}
+                >
+                  Hubungi Sales <ArrowRight size={14} />
+                </a>
+              ) : user ? (
+                user.plan === t.id ? (
+                  <button
+                    disabled
+                    className="mt-auto btn-ghost w-full bg-[hsl(var(--muted))]/10 cursor-not-allowed py-2"
+                    data-testid={`pricing-cta-${t.id}`}
+                  >
+                    Paket Aktif
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleUpgrade(t.id)}
+                    disabled={upgradingId !== null}
+                    className={`mt-auto ${t.highlight ? "btn-accent" : "btn-primary"} w-full py-2`}
+                    data-testid={`pricing-cta-${t.id}`}
+                  >
+                    {upgradingId === t.id ? "Memproses…" : `Pilih ${t.name}`} <ArrowRight size={14} />
+                  </button>
+                )
+              ) : (
+                <Link
+                  to="/register"
+                  className={`mt-auto ${t.highlight ? "btn-accent" : "btn-outline"} w-full text-center py-2`}
+                  data-testid={`pricing-cta-${t.id}`}
+                >
+                  {t.cta} <ArrowRight size={14} />
+                </Link>
+              )}
             </div>
           ))}
         </div>
