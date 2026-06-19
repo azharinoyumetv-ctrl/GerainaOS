@@ -14,6 +14,46 @@ import Sales from "@/pages/Sales";
 import About from "@/pages/About";
 import LicenseDevices from "@/pages/LicenseDevices";
 
+// Submodules
+import Categories from "@/pages/products/Categories";
+import Brands from "@/pages/products/Brands";
+import Units from "@/pages/products/Units";
+import StockAdjustment from "@/pages/products/StockAdjustment";
+import StockTransfer from "@/pages/products/StockTransfer";
+
+import StockOverview from "@/pages/inventory/StockOverview";
+import StockMovement from "@/pages/inventory/StockMovement";
+import InventoryValuation from "@/pages/inventory/InventoryValuation";
+import LowStock from "@/pages/inventory/LowStock";
+import DeadStock from "@/pages/inventory/DeadStock";
+
+import PurchaseOrder from "@/pages/purchase/PurchaseOrder";
+import GoodsReceiving from "@/pages/purchase/GoodsReceiving";
+import SupplierInvoice from "@/pages/purchase/SupplierInvoice";
+
+import SupplierList from "@/pages/supplier/SupplierList";
+
+import CustomerList from "@/pages/customer/CustomerList";
+import Membership from "@/pages/customer/Membership";
+import LoyaltyPoints from "@/pages/customer/LoyaltyPoints";
+
+import AccountsReceivable from "@/pages/debt/AccountsReceivable";
+import AccountsPayable from "@/pages/debt/AccountsPayable";
+
+import PaymentConfig from "@/pages/payments/PaymentConfig";
+import Reports from "@/pages/reports/Reports";
+
+import StaffManagement from "@/pages/staff/StaffManagement";
+import Roles from "@/pages/staff/Roles";
+import Permissions from "@/pages/staff/Permissions";
+import Attendance from "@/pages/staff/Attendance";
+
+import BranchManagement from "@/pages/branches/BranchManagement";
+import Integrations from "@/pages/integrations/Integrations";
+import Settings from "@/pages/settings/Settings";
+
+import RoleGuard from "@/components/RoleGuard";
+
 function Protected({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-10 text-sm text-center text-[hsl(var(--muted))]" data-testid="auth-loading">Memuat sesi…</div>;
@@ -32,12 +72,66 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/app" element={<Protected><AppLayout /></Protected>}>
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="pos" element={<POS />} />
-            <Route path="products" element={<Products />} />
-            <Route path="sales" element={<Sales />} />
-            <Route path="license" element={<LicenseDevices />} />
-            <Route path="about" element={<About />} />
+            
+            {/* General Routes */}
+            <Route path="dashboard" element={<RoleGuard><Dashboard /></RoleGuard>} />
+            <Route path="pos" element={<RoleGuard><POS /></RoleGuard>} />
+            <Route path="sales" element={<RoleGuard><Sales /></RoleGuard>} />
+            <Route path="license" element={<RoleGuard><LicenseDevices /></RoleGuard>} />
+            <Route path="about" element={<RoleGuard><About /></RoleGuard>} />
+
+            {/* Produk */}
+            <Route path="products" element={<RoleGuard><Products /></RoleGuard>} />
+            <Route path="products/categories" element={<RoleGuard><Categories /></RoleGuard>} />
+            <Route path="products/brands" element={<RoleGuard><Brands /></RoleGuard>} />
+            <Route path="products/units" element={<RoleGuard><Units /></RoleGuard>} />
+            <Route path="products/stock-adjustment" element={<RoleGuard><StockAdjustment /></RoleGuard>} />
+            <Route path="products/stock-transfer" element={<RoleGuard><StockTransfer /></RoleGuard>} />
+
+            {/* Inventory */}
+            <Route path="inventory/overview" element={<RoleGuard><StockOverview /></RoleGuard>} />
+            <Route path="inventory/movement" element={<RoleGuard><StockMovement /></RoleGuard>} />
+            <Route path="inventory/valuation" element={<RoleGuard><InventoryValuation /></RoleGuard>} />
+            <Route path="inventory/low-stock" element={<RoleGuard><LowStock /></RoleGuard>} />
+            <Route path="inventory/dead-stock" element={<RoleGuard><DeadStock /></RoleGuard>} />
+
+            {/* Purchase */}
+            <Route path="purchase/orders" element={<RoleGuard><PurchaseOrder /></RoleGuard>} />
+            <Route path="purchase/receiving" element={<RoleGuard><GoodsReceiving /></RoleGuard>} />
+            <Route path="purchase/invoices" element={<RoleGuard><SupplierInvoice /></RoleGuard>} />
+
+            {/* Supplier */}
+            <Route path="suppliers" element={<RoleGuard><SupplierList /></RoleGuard>} />
+
+            {/* Customer */}
+            <Route path="customers" element={<RoleGuard><CustomerList /></RoleGuard>} />
+            <Route path="customers/membership" element={<RoleGuard><Membership /></RoleGuard>} />
+            <Route path="customers/loyalty" element={<RoleGuard><LoyaltyPoints /></RoleGuard>} />
+
+            {/* Hutang Piutang */}
+            <Route path="debt/receivable" element={<RoleGuard><AccountsReceivable /></RoleGuard>} />
+            <Route path="debt/payable" element={<RoleGuard><AccountsPayable /></RoleGuard>} />
+
+            {/* Payments */}
+            <Route path="payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
+
+            {/* Reports */}
+            <Route path="reports/:type" element={<RoleGuard><Reports /></RoleGuard>} />
+
+            {/* Staff */}
+            <Route path="staff/management" element={<RoleGuard><StaffManagement /></RoleGuard>} />
+            <Route path="staff/roles" element={<RoleGuard><Roles /></RoleGuard>} />
+            <Route path="staff/permissions" element={<RoleGuard><Permissions /></RoleGuard>} />
+            <Route path="staff/attendance" element={<RoleGuard><Attendance /></RoleGuard>} />
+
+            {/* Branches */}
+            <Route path="branches" element={<RoleGuard><BranchManagement /></RoleGuard>} />
+
+            {/* Integrations */}
+            <Route path="integrations/:type" element={<RoleGuard><Integrations /></RoleGuard>} />
+
+            {/* Settings */}
+            <Route path="settings/:type" element={<RoleGuard><Settings /></RoleGuard>} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -47,3 +141,4 @@ function App() {
 }
 
 export default App;
+
