@@ -17,6 +17,11 @@ from routes_orders import router as orders_router
 from routes_webhooks import router as webhooks_router
 from routes_pdf import router as pdf_router
 from routes_pricing import router as pricing_router
+from routes_inventory import router as inventory_router
+from routes_purchase import router as purchase_router
+from routes_customers import router as customers_router
+from routes_staff import router as staff_router
+from routes_settings import router as settings_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger("geraina")
@@ -53,6 +58,11 @@ app.include_router(orders_router)
 app.include_router(webhooks_router)
 app.include_router(pdf_router)
 app.include_router(pricing_router)
+app.include_router(inventory_router)
+app.include_router(purchase_router)
+app.include_router(customers_router)
+app.include_router(staff_router)
+app.include_router(settings_router)
 
 app.add_middleware(
     CORSMiddleware,

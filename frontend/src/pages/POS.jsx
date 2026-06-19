@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import api, { fmtIDR, downloadPdf } from "@/api/client";
 import {
   Search, Plus, Minus, Trash2, X, Printer, Download, CheckCircle2,
-  Banknote, QrCode, Smartphone, RefreshCw,
+  Banknote, QrCode, Smartphone, RefreshCw, Barcode,
 } from "lucide-react";
 
 const EWALLET_CHANNELS = [
@@ -130,6 +130,7 @@ function ReceiptDialog({ order, onClose }) {
 export default function POS() {
   const [products, setProducts] = useState([]);
   const [q, setQ] = useState("");
+  const [barcodeInput, setBarcodeInput] = useState("");
   const [cart, setCart] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [ewallet, setEwallet] = useState("ID_DANA");
@@ -140,16 +141,59 @@ export default function POS() {
   const [receipt, setReceipt] = useState(null);
   const [categories, setCategories] = useState([]);
   const [activeCat, setActiveCat] = useState("all");
+  const [scannedProduct, setScannedProduct] = useState(null);
 
   useEffect(() => {
     api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
     api.get("/products/categories").then((r) => setCategories(r.data)).catch(() => {});
   }, []);
 
+  // Keyboard barcode scanner hardware listener
+  useEffect(() => {
+    let chars = [];
+    let lastTime = Date.now();
+
+    const handleKeyDown = (e) => {
+      // Ignore inputs inside active text fields like search or notes
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) {
+        return;
+      }
+
+      const now = Date.now();
+      if (e.key.length > 1 && e.key !== "Enter") return;
+
+      // Reset sequence if delay between keypresses is too long (typing vs scanner hardware)
+      if (now - lastTime > 50) {
+        chars = [];
+      }
+      lastTime = now;
+
+      if (e.key === "Enter") {
+        if (chars.length > 0) {
+          const barcode = chars.join("").trim();
+          const matched = products.find(p => p.sku === barcode || p.id === barcode);
+          if (matched) {
+            addToCart(matched);
+            setScannedProduct(matched);
+            const t = setTimeout(() => setScannedProduct(null), 3000);
+            e.preventDefault();
+          }
+        }
+        chars = [];
+      } else {
+        chars.push(e.key);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [products]);
+
   const filtered = useMemo(() => {
     let arr = products;
     if (activeCat !== "all") arr = arr.filter((p) => p.category === activeCat);
-    if (q) arr = arr.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+    if (q) arr = arr.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()) || p.sku?.toLowerCase().includes(q.toLowerCase()));
     return arr;
   }, [products, activeCat, q]);
 
@@ -163,6 +207,20 @@ export default function POS() {
       }
       return [...c, { product_id: p.id, name: p.name, price: p.price, quantity: 1, subtotal: p.price }];
     });
+  };
+
+  const handleManualBarcodeScan = (e) => {
+    e.preventDefault();
+    if (!barcodeInput) return;
+    const matched = products.find(p => p.sku?.toLowerCase() === barcodeInput.toLowerCase() || p.id === barcodeInput);
+    if (matched) {
+      addToCart(matched);
+      setScannedProduct(matched);
+      setTimeout(() => setScannedProduct(null), 3000);
+    } else {
+      alert("Produk dengan SKU/Barcode ini tidak ditemukan.");
+    }
+    setBarcodeInput("");
   };
 
   const setQty = (idx, qty) => {
@@ -202,18 +260,30 @@ export default function POS() {
   };
 
   return (
-    <div className="grid grid-cols-12 h-screen" data-testid="pos-page">
+    <div className="grid grid-cols-12 h-screen relative" data-testid="pos-page">
       {/* Left: products */}
       <div className="col-span-12 lg:col-span-8 p-6 overflow-y-auto">
-        <div className="flex items-end justify-between mb-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
           <div>
             <span className="label-tiny">Kasir</span>
             <h1 className="font-display text-2xl font-bold mt-1">Point of Sale</h1>
           </div>
-          <div className="relative w-72">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted))]" />
-            <input className="input-field pl-9" placeholder="Cari produk…"
-                   value={q} onChange={(e) => setQ(e.target.value)} data-testid="pos-search" />
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Search Input */}
+            <div className="relative w-64">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted))]" />
+              <input className="input-field pl-9" placeholder="Cari produk…"
+                     value={q} onChange={(e) => setQ(e.target.value)} data-testid="pos-search" />
+            </div>
+            {/* Manual Barcode Input (Allows simulating scanning manually) */}
+            <form onSubmit={handleManualBarcodeScan} className="relative w-64 flex items-center">
+              <Barcode size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted))]" />
+              <input className="input-field pl-9 pr-14" placeholder="Scan SKU / Barcode…"
+                     value={barcodeInput} onChange={(e) => setBarcodeInput(e.target.value)} data-testid="pos-barcode-input" />
+              <button type="submit" className="absolute right-1 px-2 py-1 bg-[hsl(var(--primary))] text-white rounded text-xs font-semibold hover:bg-[hsl(var(--primary))]/80 transition-colors">
+                Scan
+              </button>
+            </form>
           </div>
         </div>
 
@@ -231,14 +301,26 @@ export default function POS() {
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3" data-testid="pos-product-grid">
           {filtered.map((p) => (
             <button key={p.id} onClick={() => addToCart(p)}
-                    className="card-surface p-4 text-left hover:border-[hsl(var(--primary))] hover:shadow-sm transition-all"
+                    className="card-surface p-3 text-left hover:border-[hsl(var(--primary))] hover:shadow-sm transition-all flex flex-col justify-between"
                     data-testid={`pos-product-${p.id}`}>
-              <div className="flex items-start justify-between gap-2">
-                <span className="pill pill-muted text-[10px]">{p.category}</span>
-                <span className="text-xs text-[hsl(var(--muted))]">Stok {p.stock}</span>
+              <div>
+                {/* Product Image */}
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.name} className="w-full h-32 object-cover rounded-md mb-2 bg-[hsl(var(--secondary))]" />
+                ) : (
+                  <div className="w-full h-32 bg-[hsl(var(--secondary))] flex flex-col items-center justify-center rounded-md mb-2 text-[hsl(var(--muted))] text-xs font-semibold gap-1">
+                    <Barcode size={24} className="stroke-[1.5]" />
+                    <span>Tanpa Gambar</span>
+                  </div>
+                )}
+                <div className="flex items-start justify-between gap-2 mt-1">
+                  <span className="pill pill-muted text-[9px] px-1 py-0.5">{p.category}</span>
+                  <span className="text-[10px] text-[hsl(var(--muted))]">Stok {p.stock}</span>
+                </div>
+                <p className="font-display font-bold mt-1.5 text-sm leading-snug line-clamp-2">{p.name}</p>
+                {p.sku && <p className="text-[10px] text-[hsl(var(--muted))] mt-0.5">SKU: {p.sku}</p>}
               </div>
-              <p className="font-display font-bold mt-2 leading-tight">{p.name}</p>
-              <p className="num-display font-display text-lg font-bold text-[hsl(var(--primary))] mt-1">{fmtIDR(p.price)}</p>
+              <p className="num-display font-display text-base font-bold text-[hsl(var(--primary))] mt-2">{fmtIDR(p.price)}</p>
             </button>
           ))}
           {filtered.length === 0 && <p className="col-span-full text-center text-[hsl(var(--muted))] py-10" data-testid="pos-no-products">Tidak ada produk.</p>}
@@ -259,7 +341,7 @@ export default function POS() {
         <div className="flex-1 overflow-y-auto p-3">
           {cart.length === 0 && (
             <p className="text-sm text-center text-[hsl(var(--muted))] py-10" data-testid="cart-empty">
-              Keranjang kosong. Klik produk untuk menambah.
+              Keranjang kosong. Klik produk atau scan barcode untuk menambah.
             </p>
           )}
           {cart.map((it, idx) => (
@@ -356,6 +438,25 @@ export default function POS() {
       </aside>
 
       {receipt && <ReceiptDialog order={receipt} onClose={() => setReceipt(null)} />}
+
+      {/* Floating Scanned Barcode Overlay */}
+      {scannedProduct && (
+        <div className="fixed bottom-6 left-72 z-[100] animate-bounce bg-white border-2 border-[hsl(var(--success))] p-4 rounded-xl shadow-2xl flex items-center gap-4 max-w-sm" data-testid="scanned-overlay">
+          {scannedProduct.image_url ? (
+            <img src={scannedProduct.image_url} alt={scannedProduct.name} className="w-16 h-16 object-cover rounded-md border border-[hsl(var(--border))]" />
+          ) : (
+            <div className="w-16 h-16 bg-[hsl(var(--secondary))] flex flex-col items-center justify-center rounded-md border border-[hsl(var(--border))] text-[hsl(var(--muted))]">
+              <Barcode size={24} className="stroke-[1.5]" />
+            </div>
+          )}
+          <div className="flex-1">
+            <span className="pill pill-success text-[9px] px-1.5 py-0.5 inline-block font-semibold">Barcode Discan</span>
+            <p className="font-bold text-sm leading-tight mt-1 text-[hsl(var(--foreground))]">{scannedProduct.name}</p>
+            {scannedProduct.sku && <p className="text-[10px] text-[hsl(var(--muted))]">SKU: {scannedProduct.sku}</p>}
+            <p className="font-display font-extrabold text-[hsl(var(--primary))] text-sm mt-1">{fmtIDR(scannedProduct.price)}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

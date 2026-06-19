@@ -162,6 +162,8 @@ api.interceptors.request.use((cfg) => {
   const t = localStorage.getItem("geraina_token");
   if (t) cfg.headers.Authorization = `Bearer ${t}`;
 
+  // Disabled mock interceptor so request goes directly to the backend
+  /*
   const mockRes = handleMockRequest(cfg.url || "", cfg.method?.toLowerCase() || "get", cfg.data);
   if (mockRes !== null) {
     cfg.adapter = () => {
@@ -176,6 +178,7 @@ api.interceptors.request.use((cfg) => {
       });
     };
   }
+  */
 
   return cfg;
 });

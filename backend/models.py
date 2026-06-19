@@ -148,3 +148,194 @@ class BulkImportResult(BaseModel):
     updated: int
     skipped: int
     errors: List[str] = []
+
+
+# ---------- Expanded Modules Models ----------
+
+class CategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class Category(CategoryBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+    updated_at: str = Field(default_factory=utcnow_iso)
+
+class BrandBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class Brand(BrandBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+    updated_at: str = Field(default_factory=utcnow_iso)
+
+class UnitBase(BaseModel):
+    name: str
+    short_name: str
+
+class Unit(UnitBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+    updated_at: str = Field(default_factory=utcnow_iso)
+
+class StockAdjustmentCreate(BaseModel):
+    product_name: str
+    sku: Optional[str] = None
+    adjustment_qty: int
+    type: str  # add | sub
+    reason: str
+    created_by: str
+
+class StockAdjustment(StockAdjustmentCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+
+class StockTransferItem(BaseModel):
+    name: str
+    qty: int
+
+class StockTransferCreate(BaseModel):
+    from_branch: str
+    to_branch: str
+    items: List[StockTransferItem]
+    status: str = "Shipped"
+
+class StockTransfer(StockTransferCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+
+class SupplierBase(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+
+class Supplier(SupplierBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+    updated_at: str = Field(default_factory=utcnow_iso)
+
+class PurchaseOrderCreate(BaseModel):
+    po_no: str
+    supplier_id: str
+    supplier_name: str
+    total: float
+    status: str = "Ordered"
+
+class PurchaseOrder(PurchaseOrderCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+
+class GoodsReceivingCreate(BaseModel):
+    po_no: str
+    gr_no: str
+    received_by: str
+    received_at: str = Field(default_factory=utcnow_iso)
+
+class GoodsReceiving(GoodsReceivingCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+
+class SupplierInvoiceCreate(BaseModel):
+    invoice_no: str
+    po_no: str
+    amount: float
+    status: str = "Unpaid"
+    due_date: str
+
+class SupplierInvoice(SupplierInvoiceCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+
+class CustomerBase(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    membership_tier: Optional[str] = "Bronze"
+    loyalty_points: int = 0
+
+class Customer(CustomerBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+
+class MembershipBase(BaseModel):
+    name: str
+    min_points: int
+    discount_percent: float
+    description: Optional[str] = None
+
+class Membership(MembershipBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+
+class LoyaltyRules(BaseModel):
+    conversion_rate: int = 10000
+    point_value: int = 100
+    min_redeem_points: int = 50
+
+class DebtReceivableCreate(BaseModel):
+    customer_name: str
+    phone: Optional[str] = None
+    order_no: str
+    amount: float
+    paid_amount: float = 0
+    due_date: str
+    status: str = "Unpaid"  # Unpaid | Partial | Paid
+
+class DebtReceivable(DebtReceivableCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+
+class DebtPayableCreate(BaseModel):
+    supplier_name: str
+    invoice_no: str
+    amount: float
+    paid_amount: float = 0
+    due_date: str
+    status: str = "Unpaid"
+
+class DebtPayable(DebtPayableCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+
+class StaffBase(BaseModel):
+    name: str
+    email: EmailStr
+    role: str
+    phone: Optional[str] = None
+    status: str = "Aktif"
+
+class Staff(StaffBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
+
+class AttendanceCreate(BaseModel):
+    staff_name: str
+    clock_in: str
+    clock_out: Optional[str] = None
+    status: str = "Hadir"
+
+class Attendance(AttendanceCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+
+class BranchBase(BaseModel):
+    name: str
+    address: Optional[str] = None
+    phone: Optional[str] = None
+
+class Branch(BranchBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_at: str = Field(default_factory=utcnow_iso)
