@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { fmtIDR } from "@/api/client";
 
-const HERO_IMG = "/hero_promo.jpg";
+const HERO_IMG = "https://customer-assets.emergentagent.com/job_dagangos-features/artifacts/0kij0lxo_ChatGPT%20Image%20Jun%2010%2C%202026%2C%2005_42_03%20PM.png";
 
 function Nav() {
   return (
@@ -61,7 +61,7 @@ function Hero() {
         <div className="lg:col-span-6 relative" data-testid="hero-image-wrap">
           <img
             src={HERO_IMG}
-            alt="Pemilik toko Indonesia tersenyum di kasir modern dengan POS dan pembayaran QRIS"
+            alt="Pemilik toko Indonesia tersenyum di kasir modern dengan POS and pembayaran QRIS"
             className="w-full h-auto rounded-2xl"
             data-testid="hero-image"
           />
@@ -84,25 +84,42 @@ function Features() {
   return (
     <section id="features" className="py-24 border-t border-[hsl(var(--border))]" data-testid="features-section">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="max-w-2xl mb-14">
-          <span className="label-tiny" data-testid="features-eyebrow">Mengapa Geraina POS</span>
-          <h2 className="font-display text-4xl font-bold mt-2" data-testid="features-title">
-            Built untuk UMKM, dipoles untuk skala franchise.
-          </h2>
-          <p className="text-[hsl(var(--muted))] mt-3 text-lg" data-testid="features-subtitle">
-            DagangOS membantu UMKM mengelola bisnis lebih rapi.
-          </p>
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {FEATURES.map((f, i) => (
-            <div key={f.title} className="card-surface p-7 hover:border-[hsl(var(--primary))] transition-colors group" data-testid={`feature-card-${i}`}>
-              <div className="w-11 h-11 rounded-lg bg-[hsl(var(--primary))]/8 text-[hsl(var(--primary))] grid place-items-center mb-4 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-colors">
-                <f.icon size={20} />
-              </div>
-              <h3 className="font-display text-lg font-bold mb-1.5">{f.title}</h3>
-              <p className="text-sm text-[hsl(var(--muted))] leading-relaxed">{f.desc}</p>
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
+          {/* Left: High-quality promo mockup showing actual dashboard and phone layout */}
+          <div className="lg:col-span-6 relative" data-testid="features-image-wrap">
+            <img
+              src="/hero_promo.jpg"
+              alt="Mockup Geraina POS Kasir dan Stok Pintar"
+              className="w-full h-auto rounded-2xl border border-[hsl(var(--border))] shadow-xl"
+              data-testid="features-image"
+            />
+          </div>
+
+          {/* Right: Heading and Features list */}
+          <div className="lg:col-span-6 space-y-8">
+            <div>
+              <span className="label-tiny" data-testid="features-eyebrow">Mengapa Geraina POS</span>
+              <h2 className="font-display text-4xl font-bold mt-2 leading-tight" data-testid="features-title">
+                Built untuk UMKM, dipoles untuk skala franchise.
+              </h2>
+              <p className="text-[hsl(var(--muted))] mt-3 text-lg" data-testid="features-subtitle">
+                DagangOS membantu UMKM mengelola bisnis lebih rapi.
+              </p>
             </div>
-          ))}
+            <div className="grid sm:grid-cols-2 gap-4">
+              {FEATURES.map((f, i) => (
+                <div key={f.title} className="card-surface p-5 hover:border-[hsl(var(--primary))] transition-colors group flex items-start gap-4" data-testid={`feature-card-${i}`}>
+                  <div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary))]/8 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-colors">
+                    <f.icon size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-base font-bold mb-1 leading-snug">{f.title}</h3>
+                    <p className="text-xs text-[hsl(var(--muted))] leading-relaxed">{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
