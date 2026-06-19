@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Warehouse, ClipboardList,
   Truck, Users, Landmark, CreditCard, BarChart3, UserCheck,
   GitBranch, Cpu, Settings, Info, ChevronDown, ChevronRight,
-  LogOut, Sparkles, Crown, Shield
+  LogOut, Sparkles, Crown, Shield, Leaf
 } from "lucide-react";
 
 const ROLE_PERMISSIONS = {
