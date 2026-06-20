@@ -7,11 +7,18 @@ _client = None
 _db = None
 
 
+import logging
+
+logger = logging.getLogger("geraina.database")
+
 def get_db():
     global _client, _db
     if _db is None:
-        _client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-        _db = _client[os.environ["DB_NAME"]]
+        mongo_url = os.environ["MONGO_URL"].strip()
+        db_name = os.environ["DB_NAME"].strip()
+        logger.info(f"Initializing AsyncIOMotorClient. MONGO_URL length: {len(mongo_url)}, DB_NAME: {db_name}")
+        _client = AsyncIOMotorClient(mongo_url)
+        _db = _client[db_name]
     return _db
 
 
