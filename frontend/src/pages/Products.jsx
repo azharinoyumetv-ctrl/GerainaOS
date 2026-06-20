@@ -257,7 +257,7 @@ export default function Products() {
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowImport(true)} className="btn-outline" data-testid="open-import-btn">
-            <Upload size={16} /> Import Excel/CSV
+            <Upload size={16} /> Impor Excel/CSV
           </button>
           <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn-primary" data-testid="new-product-btn">
             <Plus size={16} /> Produk Baru

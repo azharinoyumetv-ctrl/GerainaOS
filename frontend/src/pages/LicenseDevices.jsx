@@ -23,9 +23,9 @@ export default function LicenseDevices() {
   return (
     <div className="p-8 space-y-6" data-testid="license-page">
       <div className="flex flex-col gap-1">
-        <span className="label-tiny">SaaS Management</span>
+        <span className="label-tiny">Manajemen SaaS</span>
         <h1 className="font-display text-3xl font-bold mt-1 text-[hsl(220,70%,15%)]" data-testid="license-title">
-          DagangOS License & Devices
+          Lisensi & Perangkat DagangOS
         </h1>
       </div>
 
@@ -83,11 +83,11 @@ export default function LicenseDevices() {
         <div className="card-surface p-6 bg-gradient-to-b from-[hsl(220,40%,98%)] to-[hsl(220,40%,95%)] border-[hsl(220,30%,85%)] space-y-4">
           <div className="flex items-center gap-2 text-[hsl(220,70%,20%)]">
             <Clock size={18} />
-            <h3 className="font-display font-bold">Cloud Sync Status</h3>
+            <h3 className="font-display font-bold">Status Sinkronisasi Cloud</h3>
           </div>
           <div className="space-y-3 text-sm text-[hsl(220,30%,25%)]">
             <div className="flex justify-between">
-              <span>Database Sync</span>
+              <span>Sinkronisasi Database</span>
               <span className="font-semibold text-emerald-600">Terhubung</span>
             </div>
             <div className="flex justify-between">

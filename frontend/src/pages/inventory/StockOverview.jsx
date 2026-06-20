@@ -11,8 +11,8 @@ export default function StockOverview() {
   return (
     <div className="p-8 space-y-6" data-testid="stock-overview-page">
       <div>
-        <span className="label-tiny">Inventory</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Stock Overview</h1>
+        <span className="label-tiny">Inventaris</span>
+        <h1 className="font-display text-3xl font-bold mt-1">Ringkasan Stok</h1>
       </div>
 
       <div className="card-surface p-6">

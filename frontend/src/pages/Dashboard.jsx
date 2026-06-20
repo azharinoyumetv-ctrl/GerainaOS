@@ -100,7 +100,7 @@ export default function Dashboard() {
     <div className="p-8 space-y-6" data-testid="dashboard-page">
       <div className="flex items-center justify-between">
         <div>
-          <span className="label-tiny">Commercial POS</span>
+          <span className="label-tiny">POS Komersial</span>
           <h1 className="font-display text-3xl font-bold mt-1" data-testid="dashboard-greeting">
             Dashboard: {user?.store_name || "DagangOS Store"}.
           </h1>
@@ -133,7 +133,7 @@ export default function Dashboard() {
             </p>
           </div>
           <Link to="/pricing" className="btn-accent shrink-0 text-xs" data-testid="trial-banner-upgrade-cta">
-            <Sparkles size={14} /> Upgrade Plan
+            <Sparkles size={14} /> Upgrade Paket
           </Link>
         </div>
       )}
@@ -141,7 +141,7 @@ export default function Dashboard() {
       {/* 5 KPI Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
-          label="Revenue Today"
+          label="Pendapatan Hari Ini"
           value={fmtIDR(stats?.today_sales || 0)}
           icon={TrendingUp}
           hint={`${stats?.today_orders || 0} transaksi hari ini`}
@@ -149,7 +149,7 @@ export default function Dashboard() {
           colorClass="bg-emerald-50 text-emerald-700"
         />
         <StatCard
-          label="Profit Today"
+          label="Keuntungan Hari Ini"
           value={fmtIDR((stats?.today_sales || 0) * 0.4)} // Estimated 40% margin
           icon={Percent}
           hint="Est. Margin Kotor 40%"
@@ -157,7 +157,7 @@ export default function Dashboard() {
           colorClass="bg-blue-50 text-blue-700"
         />
         <StatCard
-          label="Transactions Today"
+          label="Transaksi Hari Ini"
           value={stats?.today_orders || 0}
           icon={ShoppingCart}
           hint="Total transaksi sukses"
@@ -165,7 +165,7 @@ export default function Dashboard() {
           colorClass="bg-amber-50 text-amber-700"
         />
         <StatCard
-          label="Average Basket"
+          label="Rata-rata Keranjang"
           value={fmtIDR(avgBasket)}
           icon={Activity}
           hint="Rata-rata belanja"
@@ -173,7 +173,7 @@ export default function Dashboard() {
           colorClass="bg-purple-50 text-purple-700"
         />
         <StatCard
-          label="Cash Position"
+          label="Posisi Kas"
           value={fmtIDR((stats?.today_sales || 0) * 0.6 + 500000)} // Cash in hand mock
           icon={DollarSign}
           hint="Kas dalam laci kasir"
@@ -200,7 +200,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" fontSize={10} tickLine={false} />
                 <YAxis fontSize={10} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
-                <Tooltip formatter={(v) => [fmtIDR(v), "Sales"]} />
+                <Tooltip formatter={(v) => [fmtIDR(v), "Penjualan"]} />
                 <Area type="monotone" dataKey="Sales" stroke="hsl(151,39%,17%)" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -260,7 +260,7 @@ export default function Dashboard() {
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-[hsl(var(--border))]">
-                  <th className="py-2 font-semibold text-[hsl(var(--muted))]">Order No</th>
+                  <th className="py-2 font-semibold text-[hsl(var(--muted))]">No. Pesanan</th>
                   <th className="py-2 font-semibold text-[hsl(var(--muted))]">Bayar Via</th>
                   <th className="py-2 text-right font-semibold text-[hsl(var(--muted))]">Total</th>
                 </tr>
@@ -303,7 +303,7 @@ export default function Dashboard() {
         <div className="col-span-12 lg:col-span-4 card-surface p-6 flex flex-col justify-between">
           <h3 className="font-display font-bold text-sm">Nilai Aset Persediaan</h3>
           <div className="my-auto py-4">
-            <span className="text-[10px] text-[hsl(var(--muted))] uppercase font-bold tracking-wider">Total Inventory Value (Cost)</span>
+            <span className="text-[10px] text-[hsl(var(--muted))] uppercase font-bold tracking-wider">Total Nilai Persediaan (Harga Pokok)</span>
             <p className="font-display num-display text-3xl font-extrabold text-[hsl(var(--primary))] mt-1">
               {fmtIDR(inventoryValue)}
             </p>
@@ -339,14 +339,14 @@ export default function Dashboard() {
           <div className="space-y-4 my-auto py-2">
             <div className="flex justify-between items-center border-b border-[hsl(var(--border))]/50 pb-2">
               <div>
-                <span className="text-[10px] text-[hsl(var(--muted))] uppercase font-semibold">Total Piutang (A/R)</span>
+                <span className="text-[10px] text-[hsl(var(--muted))] uppercase font-semibold">Total Piutang</span>
                 <p className="font-mono font-bold text-emerald-600 text-sm">{fmtIDR(totalReceivable)}</p>
               </div>
               <Link to="/app/debt/receivable" className="text-[10px] font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/8 px-2.5 py-1 rounded">Kelola</Link>
             </div>
             <div className="flex justify-between items-center">
               <div>
-                <span className="text-[10px] text-[hsl(var(--muted))] uppercase font-semibold">Total Hutang (A/P)</span>
+                <span className="text-[10px] text-[hsl(var(--muted))] uppercase font-semibold">Total Utang</span>
                 <p className="font-mono font-bold text-red-500 text-sm">{fmtIDR(totalPayable)}</p>
               </div>
               <Link to="/app/debt/payable" className="text-[10px] font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/8 px-2.5 py-1 rounded">Kelola</Link>
@@ -357,7 +357,7 @@ export default function Dashboard() {
         {/* 10. Staff Performance Widget */}
         <div className="col-span-12 lg:col-span-4 card-surface p-6 flex flex-col justify-between">
           <h3 className="font-display font-bold text-sm flex items-center gap-1.5 text-[hsl(var(--primary))]">
-            <Briefcase size={16} /> Keaktifan & Shift Staff
+            <Briefcase size={16} /> Keaktifan & Shift Staf
           </h3>
           <div className="space-y-3 my-auto py-2">
             {attendance.slice(0, 2).map((att) => (
@@ -372,11 +372,11 @@ export default function Dashboard() {
               </div>
             ))}
             {attendance.length === 0 && (
-              <p className="text-xs text-[hsl(var(--muted))] text-center py-4">Belum ada staff melakukan shift hari ini.</p>
+              <p className="text-xs text-[hsl(var(--muted))] text-center py-4">Belum ada staf melakukan shift hari ini.</p>
             )}
           </div>
           <Link to="/app/staff/management" className="btn-outline w-full py-1.5 text-center text-[10px] font-semibold block">
-            Kelola Karyawan & Roles
+            Kelola Karyawan & Peran
           </Link>
         </div>
 

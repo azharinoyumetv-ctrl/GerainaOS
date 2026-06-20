@@ -30,7 +30,7 @@ export default function Sales() {
           <span className="label-tiny">Riwayat</span>
           <h1 className="font-display text-3xl font-bold mt-1">Penjualan</h1>
         </div>
-        <button onClick={load} className="btn-outline" data-testid="sales-refresh"><RefreshCw size={15} /> Refresh</button>
+        <button onClick={load} className="btn-outline" data-testid="sales-refresh"><RefreshCw size={15} /> Segarkan</button>
       </div>
 
       <div className="card-surface p-4 flex flex-wrap gap-3 items-center">

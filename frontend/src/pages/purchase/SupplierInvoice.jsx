@@ -27,8 +27,8 @@ export default function SupplierInvoice() {
   return (
     <div className="p-8 space-y-6" data-testid="supplier-invoice-page">
       <div>
-        <span className="label-tiny">Purchase</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Supplier Invoice</h1>
+        <span className="label-tiny">Pembelian</span>
+        <h1 className="font-display text-3xl font-bold mt-1">Faktur Supplier</h1>
       </div>
 
       <div className="card-surface p-6">

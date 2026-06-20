@@ -31,7 +31,7 @@ export default function LoyaltyPoints() {
     <div className="p-8 space-y-6" data-testid="loyalty-page">
       <div>
         <span className="label-tiny">Pelanggan</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Loyalty Points</h1>
+        <h1 className="font-display text-3xl font-bold mt-1">Poin Loyalitas</h1>
       </div>
 
       <div className="max-w-2xl card-surface p-6 space-y-6">

@@ -57,7 +57,7 @@ export default function StaffManagement() {
   };
 
   const handleDelete = (id) => {
-    if (confirm("Apakah Anda yakin ingin menonaktifkan staff ini?")) {
+    if (confirm("Apakah Anda yakin ingin menonaktifkan staf ini?")) {
       api.delete(`/staff/${id}`).then(() => fetchStaff());
     }
   };
@@ -65,8 +65,8 @@ export default function StaffManagement() {
   return (
     <div className="p-8 space-y-6" data-testid="staff-page">
       <div>
-        <span className="label-tiny">Staff</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Staff Management</h1>
+        <span className="label-tiny">Karyawan</span>
+        <h1 className="font-display text-3xl font-bold mt-1">Manajemen Staf</h1>
       </div>
 
       <div className="grid grid-cols-12 gap-6">

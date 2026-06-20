@@ -30,45 +30,45 @@ const MENU_STRUCTURE = [
     icon: Package,
     key: "products",
     sub: [
-      { to: "/app/products", label: "Produk" },
+      { to: "/app/products", label: "Daftar Produk" },
       { to: "/app/products/categories", label: "Kategori" },
-      { to: "/app/products/brands", label: "Brand" },
-      { to: "/app/products/units", label: "Unit" },
-      { to: "/app/products/stock-adjustment", label: "Stock Adjustment" },
-      { to: "/app/products/stock-transfer", label: "Stock Transfer" }
+      { to: "/app/products/brands", label: "Merek" },
+      { to: "/app/products/units", label: "Satuan" },
+      { to: "/app/products/stock-adjustment", label: "Penyesuaian Stok" },
+      { to: "/app/products/stock-transfer", label: "Transfer Stok" }
     ]
   },
   {
-    label: "Inventory",
+    label: "Inventaris",
     icon: Warehouse,
     key: "inventory",
     sub: [
-      { to: "/app/inventory/overview", label: "Stock Overview" },
-      { to: "/app/inventory/movement", label: "Stock Movement" },
-      { to: "/app/inventory/valuation", label: "Inventory Valuation" },
-      { to: "/app/inventory/low-stock", label: "Low Stock" },
-      { to: "/app/inventory/dead-stock", label: "Dead Stock" }
+      { to: "/app/inventory/overview", label: "Ringkasan Stok" },
+      { to: "/app/inventory/movement", label: "Mutasi Stok" },
+      { to: "/app/inventory/valuation", label: "Penilaian Inventaris" },
+      { to: "/app/inventory/low-stock", label: "Stok Menipis" },
+      { to: "/app/inventory/dead-stock", label: "Stok Mati" }
     ]
   },
   {
-    label: "Purchase",
+    label: "Pembelian",
     icon: ClipboardList,
     key: "purchase",
     sub: [
-      { to: "/app/purchase/orders", label: "Purchase Order" },
-      { to: "/app/purchase/receiving", label: "Goods Receiving" },
-      { to: "/app/purchase/invoices", label: "Supplier Invoice" }
+      { to: "/app/purchase/orders", label: "Order Pembelian (PO)" },
+      { to: "/app/purchase/receiving", label: "Penerimaan Barang" },
+      { to: "/app/purchase/invoices", label: "Faktur Supplier" }
     ]
   },
   { to: "/app/suppliers", icon: Truck, label: "Supplier", key: "suppliers" },
   {
-    label: "Customer",
+    label: "Pelanggan",
     icon: Users,
     key: "customers",
     sub: [
-      { to: "/app/customers", label: "Customer List" },
-      { to: "/app/customers/membership", label: "Membership" },
-      { to: "/app/customers/loyalty", label: "Loyalty Points" }
+      { to: "/app/customers", label: "Daftar Pelanggan" },
+      { to: "/app/customers/membership", label: "Keanggotaan" },
+      { to: "/app/customers/loyalty", label: "Poin Loyalitas" }
     ]
   },
   {
@@ -76,50 +76,50 @@ const MENU_STRUCTURE = [
     icon: Landmark,
     key: "debt",
     sub: [
-      { to: "/app/debt/receivable", label: "Accounts Receivable" },
-      { to: "/app/debt/payable", label: "Accounts Payable" }
+      { to: "/app/debt/receivable", label: "Piutang Usaha" },
+      { to: "/app/debt/payable", label: "Utang Usaha" }
     ]
   },
   {
-    label: "Payments",
+    label: "Pembayaran",
     icon: CreditCard,
     key: "payments",
     sub: [
-      { to: "/app/payments/cash", label: "Cash" },
+      { to: "/app/payments/cash", label: "Tunai" },
       { to: "/app/payments/qris", label: "QRIS" },
       { to: "/app/payments/ewallet", label: "E-Wallet" },
       { to: "/app/payments/va", label: "Virtual Account" },
-      { to: "/app/payments/credit-card", label: "Credit Card" },
-      { to: "/app/payments/bank-transfer", label: "Bank Transfer" }
+      { to: "/app/payments/credit-card", label: "Kartu Kredit" },
+      { to: "/app/payments/bank-transfer", label: "Transfer Bank" }
     ]
   },
   {
-    label: "Reports",
+    label: "Laporan",
     icon: BarChart3,
     key: "reports",
     sub: [
-      { to: "/app/reports/sales", label: "Sales" },
-      { to: "/app/reports/product", label: "Product" },
-      { to: "/app/reports/inventory", label: "Inventory" },
-      { to: "/app/reports/profit", label: "Profit" },
-      { to: "/app/reports/cashflow", label: "Cashflow" },
-      { to: "/app/reports/tax", label: "Tax" }
+      { to: "/app/reports/sales", label: "Penjualan" },
+      { to: "/app/reports/product", label: "Produk" },
+      { to: "/app/reports/inventory", label: "Stok / Inventaris" },
+      { to: "/app/reports/profit", label: "Laba Rugi" },
+      { to: "/app/reports/cashflow", label: "Arus Kas" },
+      { to: "/app/reports/tax", label: "Pajak" }
     ]
   },
   {
-    label: "Staff",
+    label: "Staf & Karyawan",
     icon: UserCheck,
     key: "staff",
     sub: [
-      { to: "/app/staff/management", label: "Staff Management" },
-      { to: "/app/staff/roles", label: "Roles" },
-      { to: "/app/staff/permissions", label: "Permissions" },
-      { to: "/app/staff/attendance", label: "Attendance" }
+      { to: "/app/staff/management", label: "Manajemen Staf" },
+      { to: "/app/staff/roles", label: "Peran" },
+      { to: "/app/staff/permissions", label: "Izin Akses" },
+      { to: "/app/staff/attendance", label: "Absensi" }
     ]
   },
-  { to: "/app/branches", icon: GitBranch, label: "Branches", key: "branches" },
+  { to: "/app/branches", icon: GitBranch, label: "Cabang", key: "branches" },
   {
-    label: "Integrations",
+    label: "Integrasi",
     icon: Cpu,
     key: "integrations",
     sub: [
@@ -132,19 +132,19 @@ const MENU_STRUCTURE = [
     ]
   },
   {
-    label: "Settings",
+    label: "Pengaturan",
     icon: Settings,
     key: "settings",
     sub: [
-      { to: "/app/settings/general", label: "General" },
-      { to: "/app/settings/store", label: "Store" },
-      { to: "/app/settings/receipt", label: "Receipt" },
+      { to: "/app/settings/general", label: "Umum" },
+      { to: "/app/settings/store", label: "Toko" },
+      { to: "/app/settings/receipt", label: "Struk" },
       { to: "/app/settings/printer", label: "Printer" },
-      { to: "/app/settings/users", label: "Users" },
-      { to: "/app/settings/license", label: "License" }
+      { to: "/app/settings/users", label: "Pengguna" },
+      { to: "/app/settings/license", label: "Lisensi" }
     ]
   },
-  { to: "/app/about", icon: Info, label: "About", key: "about" }
+  { to: "/app/about", icon: Info, label: "Tentang", key: "about" }
 ];
 
 function trialDaysLeft(iso) {

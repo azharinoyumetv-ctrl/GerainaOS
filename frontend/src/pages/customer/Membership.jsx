@@ -40,7 +40,7 @@ export default function Membership() {
     <div className="p-8 space-y-6" data-testid="membership-page">
       <div>
         <span className="label-tiny">Pelanggan</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Membership Tiers</h1>
+        <h1 className="font-display text-3xl font-bold mt-1">Tingkatan Keanggotaan</h1>
       </div>
 
       <div className="grid grid-cols-12 gap-6">

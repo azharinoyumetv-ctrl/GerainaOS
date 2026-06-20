@@ -18,8 +18,8 @@ export default function LowStock() {
   return (
     <div className="p-8 space-y-6" data-testid="low-stock-page">
       <div>
-        <span className="label-tiny">Inventory</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Low Stock Alert</h1>
+        <span className="label-tiny">Inventaris</span>
+        <h1 className="font-display text-3xl font-bold mt-1">Peringatan Stok Menipis</h1>
       </div>
 
       <div className="card-surface p-6">

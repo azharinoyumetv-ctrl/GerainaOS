@@ -56,7 +56,7 @@ export default function AccountsReceivable() {
     <div className="p-8 space-y-6" data-testid="receivables-page">
       <div>
         <span className="label-tiny">Hutang Piutang</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Accounts Receivable (Piutang Dagang)</h1>
+        <h1 className="font-display text-3xl font-bold mt-1">Piutang Usaha (Accounts Receivable)</h1>
       </div>
 
       <div className="grid grid-cols-12 gap-6">

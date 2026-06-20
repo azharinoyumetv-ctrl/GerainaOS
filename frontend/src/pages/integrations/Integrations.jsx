@@ -246,11 +246,11 @@ export default function Integrations() {
     <div className="p-8 space-y-6" data-testid="integrations-page">
       <div className="flex items-center justify-between">
         <div>
-          <span className="label-tiny">Integrations</span>
+          <span className="label-tiny">Integrasi</span>
           <h1 className="font-display text-3xl font-bold mt-1 capitalize">Kanal {type}</h1>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/8 px-3 py-1 rounded border border-[hsl(var(--primary))]/20">
-          <Link2 size={14} /> Terhubung Cloud Service
+          <Link2 size={14} /> Terhubung Layanan Cloud
         </div>
       </div>
 

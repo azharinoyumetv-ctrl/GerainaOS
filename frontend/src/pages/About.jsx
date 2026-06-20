@@ -25,7 +25,7 @@ export default function About() {
                 </span>
               </div>
               <p className="text-sm text-[hsl(var(--muted))]">
-                Grocery & Retail POS module inside the DagangOS business platform.
+                Modul POS Grosir & Ritel di dalam platform bisnis DagangOS.
               </p>
             </div>
             <span className="pill pill-success">v1.0.0</span>

@@ -80,7 +80,7 @@ export default function PaymentConfig() {
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Provider Integration</label>
+                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Integrasi Provider</label>
                 <select
                   value={config.qris.provider}
                   onChange={(e) => setConfig({ ...config, qris: { ...config.qris, provider: e.target.value } })}
@@ -117,7 +117,7 @@ export default function PaymentConfig() {
               />
             </div>
             <div className="flex flex-col space-y-1 pb-4">
-              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Payment Gateway Provider</label>
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Provider Payment Gateway</label>
               <select
                 value={config.ewallet.provider}
                 onChange={(e) => setConfig({ ...config, ewallet: { ...config.ewallet, provider: e.target.value } })}
@@ -127,7 +127,7 @@ export default function PaymentConfig() {
                 <option value="Midtrans">Midtrans</option>
               </select>
             </div>
-            <h3 className="text-xs font-bold text-[hsl(var(--muted))] uppercase">E-Wallet Channels</h3>
+            <h3 className="text-xs font-bold text-[hsl(var(--muted))] uppercase">Saluran E-Wallet</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {Object.keys(config.ewallet.channels).map((ch) => (
                 <div key={ch} className="flex items-center justify-between p-3 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--surface))]">
@@ -160,7 +160,7 @@ export default function PaymentConfig() {
               />
             </div>
             <div className="flex flex-col space-y-1 pb-4">
-              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Payment Gateway Provider</label>
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Provider Payment Gateway</label>
               <select
                 value={config.va.provider}
                 onChange={(e) => setConfig({ ...config, va: { ...config.va, provider: e.target.value } })}
@@ -170,7 +170,7 @@ export default function PaymentConfig() {
                 <option value="Xendit">Xendit</option>
               </select>
             </div>
-            <h3 className="text-xs font-bold text-[hsl(var(--muted))] uppercase">Supported Bank Virtual Accounts</h3>
+            <h3 className="text-xs font-bold text-[hsl(var(--muted))] uppercase">Virtual Account Bank yang Didukung</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {Object.keys(config.va.banks).map((bk) => (
                 <div key={bk} className="flex items-center justify-between p-3 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--surface))]">
@@ -204,7 +204,7 @@ export default function PaymentConfig() {
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Processor Gateway</label>
+                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Gateway Pemroses</label>
                 <select
                   value={config.credit_card.provider}
                   onChange={(e) => setConfig({ ...config, credit_card: { ...config.credit_card, provider: e.target.value } })}
@@ -296,7 +296,7 @@ export default function PaymentConfig() {
     <div className="p-8 space-y-6" data-testid="payment-config-page">
       <div className="flex items-center justify-between">
         <div>
-          <span className="label-tiny">Payments</span>
+          <span className="label-tiny">Pembayaran</span>
           <h1 className="font-display text-3xl font-bold mt-1 capitalize">Metode {type}</h1>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded border border-emerald-100">

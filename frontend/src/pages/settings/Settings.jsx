@@ -205,7 +205,7 @@ export default function Settings() {
   return (
     <div className="p-8 space-y-6" data-testid="settings-page">
       <div>
-        <span className="label-tiny">Settings</span>
+        <span className="label-tiny">Pengaturan</span>
         <h1 className="font-display text-3xl font-bold mt-1 capitalize">Pengaturan {type}</h1>
       </div>
 

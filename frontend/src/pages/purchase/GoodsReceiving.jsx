@@ -39,8 +39,8 @@ export default function GoodsReceiving() {
   return (
     <div className="p-8 space-y-6" data-testid="goods-receiving-page">
       <div>
-        <span className="label-tiny">Purchase</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Goods Receiving</h1>
+        <span className="label-tiny">Pembelian</span>
+        <h1 className="font-display text-3xl font-bold mt-1">Penerimaan Barang</h1>
       </div>
 
       <div className="grid grid-cols-12 gap-6">

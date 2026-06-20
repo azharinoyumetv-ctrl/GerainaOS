@@ -73,8 +73,8 @@ export default function PurchaseOrder() {
   return (
     <div className="p-8 space-y-6" data-testid="purchase-orders-page">
       <div>
-        <span className="label-tiny">Purchase</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Purchase Order</h1>
+        <span className="label-tiny">Pembelian</span>
+        <h1 className="font-display text-3xl font-bold mt-1">Order Pembelian</h1>
       </div>
 
       <div className="grid grid-cols-12 gap-6">
@@ -176,7 +176,7 @@ export default function PurchaseOrder() {
         </div>
 
         <div className="col-span-12 lg:col-span-7 card-surface p-6" data-testid="po-list">
-          <h2 className="font-display font-bold text-lg mb-4">Daftar Purchase Order</h2>
+          <h2 className="font-display font-bold text-lg mb-4">Daftar Order Pembelian</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead>

@@ -14,8 +14,8 @@ export default function InventoryValuation() {
   return (
     <div className="p-8 space-y-6" data-testid="inventory-valuation-page">
       <div>
-        <span className="label-tiny">Inventory</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Inventory Valuation</h1>
+        <span className="label-tiny">Inventaris</span>
+        <h1 className="font-display text-3xl font-bold mt-1">Penilaian Inventaris</h1>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">

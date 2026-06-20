@@ -76,7 +76,7 @@ export default function CustomerList() {
     <div className="p-8 space-y-6" data-testid="customers-page">
       <div>
         <span className="label-tiny">Pelanggan</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Customer List</h1>
+        <h1 className="font-display text-3xl font-bold mt-1">Daftar Pelanggan</h1>
       </div>
 
       <div className="grid grid-cols-12 gap-6">
@@ -118,7 +118,7 @@ export default function CustomerList() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col space-y-1">
-              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Membership</label>
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Keanggotaan</label>
               <select
                 value={tier}
                 onChange={(e) => setTier(e.target.value)}
@@ -130,7 +130,7 @@ export default function CustomerList() {
               </select>
             </div>
             <div className="flex flex-col space-y-1">
-              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Loyalty Points</label>
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Poin Loyalitas</label>
               <input
                 type="number"
                 value={points}

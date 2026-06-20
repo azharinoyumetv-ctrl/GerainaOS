@@ -195,7 +195,6 @@ class TestOrders:
         assert d["payment_status"] == "pending"
         assert d.get("xendit_qr_string"), "QR string missing"
         assert d.get("xendit_reference_id") == d["order_no"]
-        return d
 
     def test_ewallet_order(self, authed, first_product):
         p = first_product

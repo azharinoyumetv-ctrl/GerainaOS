@@ -3,7 +3,7 @@ import { Shield } from "lucide-react";
 export default function Roles() {
   const defaultRoles = [
     { name: "Owner", desc: "Akses penuh tanpa batasan ke semua menu, laporan keuangan, dan pengaturan integrasi cloud." },
-    { name: "Manager", desc: "Akses operasional penuh, termasuk edit produk, inventory, customer, staff, dan laporan harian. Tidak diizinkan mengakses menu integrasi API & lisensi perangkat." },
+    { name: "Manager", desc: "Akses operasional penuh, termasuk edit produk, inventaris, pelanggan, staf/karyawan, dan laporan harian. Tidak diizinkan mengakses menu integrasi API & lisensi perangkat." },
     { name: "Cashier", desc: "Akses khusus layar penjualan POS Kasir, tambah pelanggan, dan riwayat transaksi retail. Produk bersifat Read-Only." },
     { name: "Warehouse", desc: "Akses khusus modul logistik: Stok masuk, opname stok, transfer cabang, purchase order, dan list supplier." }
   ];
@@ -11,7 +11,7 @@ export default function Roles() {
   return (
     <div className="p-8 space-y-6" data-testid="roles-page">
       <div>
-        <span className="label-tiny">Staff</span>
+        <span className="label-tiny">Karyawan</span>
         <h1 className="font-display text-3xl font-bold mt-1">Jabatan & Peran (Roles)</h1>
       </div>
 

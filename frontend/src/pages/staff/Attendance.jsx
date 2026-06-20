@@ -37,7 +37,7 @@ export default function Attendance() {
     <div className="p-8 space-y-6" data-testid="attendance-page">
       <div className="flex items-center justify-between">
         <div>
-          <span className="label-tiny">Staff</span>
+          <span className="label-tiny">Karyawan</span>
           <h1 className="font-display text-3xl font-bold mt-1">Absensi & Shift Karyawan</h1>
         </div>
         <button onClick={handleClockIn} className="btn-primary py-2 px-4 flex items-center gap-2 text-xs font-semibold">
@@ -76,7 +76,7 @@ export default function Attendance() {
                   <td className="py-3 text-right">
                     {!att.clock_out && (
                       <button onClick={() => handleClockOut(att.id)} className="btn-outline py-1 px-3 text-xs ml-auto">
-                        Clock Out
+                        Absen Keluar
                       </button>
                     )}
                     {att.clock_out && <span className="text-xs text-[hsl(var(--muted))]">Shift Selesai</span>}

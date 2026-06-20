@@ -51,8 +51,8 @@ export default function StockMovement() {
   return (
     <div className="p-8 space-y-6" data-testid="stock-movement-page">
       <div>
-        <span className="label-tiny">Inventory</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Stock Movement</h1>
+        <span className="label-tiny">Inventaris</span>
+        <h1 className="font-display text-3xl font-bold mt-1">Mutasi Stok</h1>
       </div>
 
       <div className="card-surface p-6">

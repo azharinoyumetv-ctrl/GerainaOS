@@ -30,8 +30,8 @@ export default function DeadStock() {
   return (
     <div className="p-8 space-y-6" data-testid="dead-stock-page">
       <div>
-        <span className="label-tiny">Inventory</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Dead Stock</h1>
+        <span className="label-tiny">Inventaris</span>
+        <h1 className="font-display text-3xl font-bold mt-1">Stok Mati</h1>
       </div>
 
       <div className="card-surface p-6">

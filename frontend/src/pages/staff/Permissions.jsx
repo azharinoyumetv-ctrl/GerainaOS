@@ -8,7 +8,7 @@ export default function Permissions() {
     { key: "inventory", label: "Stok Opname & Kartu Stok" },
     { key: "purchase", label: "Purchase Order & Invoicing" },
     { key: "suppliers", label: "Database Supplier" },
-    { key: "customers", label: "Database Customer & Poin" },
+    { key: "customers", label: "Database Pelanggan & Poin" },
     { key: "debt", label: "Buku Hutang Piutang" },
     { key: "payments", label: "Konfigurasi Metode Bayar" },
     { key: "reports", label: "Laporan Profit & Laba Kotor" },
@@ -29,7 +29,7 @@ export default function Permissions() {
   return (
     <div className="p-8 space-y-6" data-testid="permissions-page">
       <div>
-        <span className="label-tiny">Staff</span>
+        <span className="label-tiny">Karyawan</span>
         <h1 className="font-display text-3xl font-bold mt-1">Hak Akses Modul (Permissions)</h1>
       </div>
 

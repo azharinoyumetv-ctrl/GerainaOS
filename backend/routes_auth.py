@@ -1,6 +1,7 @@
 """Auth routes: register store + login + me."""
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from database import get_db, utcnow, trial_end_iso
 from models import UserRegister, UserLogin, Token
 from auth import hash_password, verify_password, create_access_token, get_current_user
@@ -203,7 +204,6 @@ async def register(payload: UserRegister):
     await db.staff.insert_many(staff_docs)
 
     # Insert credentials for the other default staff so they can log in
-    from auth import hash_password
     other_staff_creds = [
         {"email": "manager@geraina.com", "role": "Manager", "id": staff_docs[1]["id"]},
         {"email": "cashier@geraina.com", "role": "Cashier", "id": staff_docs[2]["id"]},
@@ -236,6 +236,17 @@ async def login(payload: UserLogin):
     return Token(access_token=token, user=_user_public(user))
 
 
+@router.post("/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    db = get_db()
+    user = await db.users.find_one({"email": form_data.username})
+    if not user or not verify_password(form_data.password, user.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="Email atau password salah")
+    token = create_access_token(user["id"], user["store_id"], user.get("role", "admin"), user["email"])
+    return Token(access_token=token, user=_user_public(user))
+
+
 @router.get("/me")
 async def me(user: dict = Depends(get_current_user)):
     return _user_public(user)
+
