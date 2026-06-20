@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/api/client";
-import { Save, Link2 } from "lucide-react";
+import { Save, Link2, Zap } from "lucide-react";
 
 export default function Integrations() {
   const { type } = useParams();
   const [integrations, setIntegrations] = useState(null);
+  const [simRefId, setSimRefId] = useState("");
+  const [simStatus, setSimStatus] = useState("");
+  const [simLoading, setSimLoading] = useState(false);
 
   useEffect(() => {
     api.get("/integrations").then((r) => setIntegrations(r.data)).catch(() => {});
@@ -52,6 +55,30 @@ export default function Integrations() {
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
               />
             </div>
+
+            {/* Webhook Simulator */}
+            <div className="border-t border-[hsl(var(--border))] pt-4 mt-2" data-testid="webhook-simulator-xendit">
+              <h3 className="text-sm font-bold flex items-center gap-1.5 mb-3"><Zap size={14} className="text-amber-500" /> Simulasi Webhook Callback</h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Reference ID / Nomor Order</label>
+                  <input type="text" value={simRefId} onChange={(e) => setSimRefId(e.target.value)} placeholder="GR-20260620-0001" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs font-mono" data-testid="sim-ref-id" />
+                </div>
+                <div className="flex items-end">
+                  <button type="button" disabled={!simRefId || simLoading} onClick={async () => {
+                    setSimLoading(true); setSimStatus("");
+                    try {
+                      await api.post("/webhooks/xendit/simulate", { event: "qr.payment", reference_id: simRefId, status: "SUCCEEDED" });
+                      setSimStatus("\u2705 Webhook berhasil dikirim!");
+                    } catch { setSimStatus("\u274c Gagal mengirim webhook."); }
+                    finally { setSimLoading(false); }
+                  }} className="btn-outline py-1.5 px-4 text-xs w-full" data-testid="sim-trigger-btn">
+                    <Zap size={12} /> {simLoading ? "Mengirim…" : "Kirim Simulasi"}
+                  </button>
+                </div>
+              </div>
+              {simStatus && <p className="text-xs mt-2 font-semibold" data-testid="sim-status">{simStatus}</p>}
+            </div>
           </div>
         );
 
@@ -87,6 +114,30 @@ export default function Integrations() {
                 />
               </div>
             </div>
+
+            {/* Midtrans Webhook Simulator */}
+            <div className="border-t border-[hsl(var(--border))] pt-4 mt-2" data-testid="webhook-simulator-midtrans">
+              <h3 className="text-sm font-bold flex items-center gap-1.5 mb-3"><Zap size={14} className="text-amber-500" /> Simulasi Webhook Callback</h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Order ID / Reference ID</label>
+                  <input type="text" value={simRefId} onChange={(e) => setSimRefId(e.target.value)} placeholder="GR-20260620-0001" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs font-mono" data-testid="sim-ref-id-midtrans" />
+                </div>
+                <div className="flex items-end">
+                  <button type="button" disabled={!simRefId || simLoading} onClick={async () => {
+                    setSimLoading(true); setSimStatus("");
+                    try {
+                      await api.post("/webhooks/midtrans/simulate", { order_id: simRefId, transaction_status: "settlement" });
+                      setSimStatus("\u2705 Webhook berhasil dikirim!");
+                    } catch { setSimStatus("\u274c Gagal mengirim webhook."); }
+                    finally { setSimLoading(false); }
+                  }} className="btn-outline py-1.5 px-4 text-xs w-full" data-testid="sim-trigger-btn-midtrans">
+                    <Zap size={12} /> {simLoading ? "Mengirim\u2026" : "Kirim Simulasi"}
+                  </button>
+                </div>
+              </div>
+              {simStatus && <p className="text-xs mt-2 font-semibold" data-testid="sim-status-midtrans">{simStatus}</p>}
+            </div>
           </div>
         );
 
@@ -121,6 +172,30 @@ export default function Integrations() {
                   className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
                 />
               </div>
+            </div>
+
+            {/* Stripe Webhook Simulator */}
+            <div className="border-t border-[hsl(var(--border))] pt-4 mt-2" data-testid="webhook-simulator-stripe">
+              <h3 className="text-sm font-bold flex items-center gap-1.5 mb-3"><Zap size={14} className="text-amber-500" /> Simulasi Webhook Callback</h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Payment Intent / Reference ID</label>
+                  <input type="text" value={simRefId} onChange={(e) => setSimRefId(e.target.value)} placeholder="pi_xxx or GR-20260620-0001" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs font-mono" data-testid="sim-ref-id-stripe" />
+                </div>
+                <div className="flex items-end">
+                  <button type="button" disabled={!simRefId || simLoading} onClick={async () => {
+                    setSimLoading(true); setSimStatus("");
+                    try {
+                      await api.post("/webhooks/stripe/simulate", { payment_intent: simRefId, status: "succeeded" });
+                      setSimStatus("\u2705 Webhook berhasil dikirim!");
+                    } catch { setSimStatus("\u274c Gagal mengirim webhook."); }
+                    finally { setSimLoading(false); }
+                  }} className="btn-outline py-1.5 px-4 text-xs w-full" data-testid="sim-trigger-btn-stripe">
+                    <Zap size={12} /> {simLoading ? "Mengirim\u2026" : "Kirim Simulasi"}
+                  </button>
+                </div>
+              </div>
+              {simStatus && <p className="text-xs mt-2 font-semibold" data-testid="sim-status-stripe">{simStatus}</p>}
             </div>
           </div>
         );

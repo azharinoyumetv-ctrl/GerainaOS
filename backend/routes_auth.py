@@ -191,6 +191,23 @@ async def register(payload: UserRegister):
         "created_at": utcnow().isoformat()
     })
 
+    # Seed Suppliers
+    supplier_docs = [
+        {
+            "id": "sup-1", "store_id": store_id,
+            "name": "PT. Harapan Makmur", "phone": "021-7788001",
+            "email": "order@harapanmakmur.co.id", "address": "Jl. Industri Raya No. 8, Tangerang",
+            "created_at": utcnow().isoformat(), "updated_at": utcnow().isoformat()
+        },
+        {
+            "id": "sup-2", "store_id": store_id,
+            "name": "CV. Sinar Distribusi", "phone": "021-5566002",
+            "email": "sales@sinardistribusi.com", "address": "Jl. Pasar Baru No. 22, Jakarta Pusat",
+            "created_at": utcnow().isoformat(), "updated_at": utcnow().isoformat()
+        },
+    ]
+    await db.suppliers.insert_many(supplier_docs)
+
     # Seed Default Staff Profiles (so role switcher and separate staff accounts work)
     staff_docs = [
         {"id": user_id, "name": "Azhar Owner", "email": payload.email, "role": "Owner", "phone": "0811111111", "status": "Aktif"},

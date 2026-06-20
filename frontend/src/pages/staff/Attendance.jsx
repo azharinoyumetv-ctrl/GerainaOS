@@ -23,11 +23,7 @@ export default function Attendance() {
   };
 
   const handleClockOut = (id) => {
-    const payload = {
-      id,
-      clock_out: new Date().toISOString()
-    };
-    api.post("/attendance", payload).then(() => {
+    api.put(`/attendance/${id}`).then(() => {
       api.get("/attendance").then((r) => setAttendance(r.data)).catch(() => {});
       alert("Absen Keluar (Clock Out) berhasil dicatat!");
     });

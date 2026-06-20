@@ -142,10 +142,13 @@ export default function POS() {
   const [categories, setCategories] = useState([]);
   const [activeCat, setActiveCat] = useState("all");
   const [scannedProduct, setScannedProduct] = useState(null);
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
 
   useEffect(() => {
     api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
     api.get("/products/categories").then((r) => setCategories(r.data)).catch(() => {});
+    api.get("/customers").then((r) => setCustomers(r.data)).catch(() => {});
   }, []);
 
   // Keyboard barcode scanner hardware listener
@@ -237,7 +240,7 @@ export default function POS() {
   const total = Math.max(0, subtotal - discount) + taxAmount;
   const change = parseFloat(cashReceived || 0) - total;
 
-  const clearCart = () => { setCart([]); setCashReceived(""); setDiscount(0); };
+  const clearCart = () => { setCart([]); setCashReceived(""); setDiscount(0); setSelectedCustomerId(""); };
 
   const checkout = async () => {
     if (cart.length === 0) return;
@@ -251,6 +254,13 @@ export default function POS() {
         tax_percent: parseFloat(taxPercent) || 0,
         cash_received: paymentMethod === "cash" ? parseFloat(cashReceived) : undefined,
       };
+      // Attach selected customer info
+      const selCust = customers.find(c => c.id === selectedCustomerId);
+      if (selCust) {
+        payload.customer_name = selCust.name;
+        payload.customer_phone = selCust.phone || undefined;
+        payload.customer_email = selCust.email || undefined;
+      }
       const r = await api.post("/orders", payload);
       setReceipt(r.data);
       clearCart();
@@ -335,6 +345,27 @@ export default function POS() {
             <button onClick={clearCart} className="btn-ghost text-xs text-[hsl(var(--destructive))]" data-testid="pos-clear-cart">
               <Trash2 size={13} /> Bersihkan
             </button>
+          )}
+        </div>
+
+        {/* In-checkout Customer Selector */}
+        <div className="px-4 pt-3 pb-2 border-b border-[hsl(var(--border))]" data-testid="pos-customer-selector">
+          <label className="label-tiny mb-1 block">Pelanggan</label>
+          <select
+            value={selectedCustomerId}
+            onChange={(e) => setSelectedCustomerId(e.target.value)}
+            className="input-field py-1.5 text-sm w-full"
+            data-testid="pos-customer-dropdown"
+          >
+            <option value="">— Tanpa Pelanggan —</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}{c.phone ? ` (${c.phone})` : ""}</option>
+            ))}
+          </select>
+          {selectedCustomerId && (
+            <p className="text-xs text-[hsl(var(--success))] mt-1 font-semibold" data-testid="pos-selected-customer">
+              ✓ {customers.find(c => c.id === selectedCustomerId)?.name}
+            </p>
           )}
         </div>
 

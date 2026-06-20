@@ -228,19 +228,21 @@ export default function Products() {
   const [editing, setEditing] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const [filterCat, setFilterCat] = useState("all");
 
   const load = async () => {
     setLoading(true);
     try {
-      const r = await api.get("/products", { params: { q: q || undefined } });
+      const r = await api.get("/products", { params: { q: q || undefined, category: filterCat !== "all" ? filterCat : undefined } });
       setItems(r.data);
     } finally { setLoading(false); }
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); api.get("/products/categories").then((r) => setCategories(r.data)).catch(() => {}); }, []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t); }, [q]);
+  useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t); }, [q, filterCat]);
 
   const remove = async (p) => {
     if (!window.confirm(`Hapus "${p.name}"?`)) return;
@@ -266,15 +268,28 @@ export default function Products() {
       </div>
 
       <div className="card-surface p-4">
-        <div className="relative max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted))]" />
-          <input
-            className="input-field pl-9"
-            placeholder="Cari nama produk…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            data-testid="products-search"
-          />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted))]" />
+            <input
+              className="input-field pl-9"
+              placeholder="Cari nama produk…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              data-testid="products-search"
+            />
+          </div>
+          <select
+            value={filterCat}
+            onChange={(e) => setFilterCat(e.target.value)}
+            className="input-field w-48"
+            data-testid="products-category-filter"
+          >
+            <option value="all">Semua Kategori</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
       </div>
 

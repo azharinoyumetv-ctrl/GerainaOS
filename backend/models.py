@@ -262,6 +262,7 @@ class CustomerBase(BaseModel):
     email: Optional[str] = None
     membership_tier: Optional[str] = "Bronze"
     loyalty_points: int = 0
+    notes: Optional[str] = None
 
 class Customer(CustomerBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

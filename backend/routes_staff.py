@@ -110,3 +110,17 @@ async def log_attendance(payload: AttendanceCreate, user: dict = Depends(get_cur
     await db.attendance.insert_one(doc)
     doc.pop("_id", None)
     return doc
+
+@router.put("/api/attendance/{att_id}", response_model=Attendance)
+async def update_attendance(att_id: str, user: dict = Depends(get_current_user)):
+    """Clock-out: update an existing attendance record with clock_out time."""
+    db = get_db()
+    res = await db.attendance.find_one_and_update(
+        {"id": att_id, "store_id": user["store_id"]},
+        {"$set": {"clock_out": utcnow().isoformat()}},
+        return_document=True,
+        projection={"_id": 0}
+    )
+    if not res:
+        raise HTTPException(status_code=404, detail="Data absensi tidak ditemukan")
+    return res

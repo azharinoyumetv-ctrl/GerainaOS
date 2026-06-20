@@ -11,6 +11,7 @@ export default function CustomerList() {
   const [email, setEmail] = useState("");
   const [tier, setTier] = useState("Bronze");
   const [points, setPoints] = useState(0);
+  const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState(null);
 
   const fetchData = () => {
@@ -32,6 +33,7 @@ export default function CustomerList() {
       email,
       membership_tier: tier,
       loyalty_points: parseInt(points) || 0,
+      notes: notes || null,
       created_at: new Date().toISOString()
     };
 
@@ -55,6 +57,7 @@ export default function CustomerList() {
     setEmail("");
     setTier("Bronze");
     setPoints(0);
+    setNotes("");
   };
 
   const handleEdit = (c) => {
@@ -64,6 +67,7 @@ export default function CustomerList() {
     setEmail(c.email || "");
     setTier(c.membership_tier || "Bronze");
     setPoints(c.loyalty_points || 0);
+    setNotes(c.notes || "");
   };
 
   const handleDelete = (id) => {
@@ -139,6 +143,18 @@ export default function CustomerList() {
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none text-sm"
               />
             </div>
+          </div>
+
+          <div className="flex flex-col space-y-1">
+            <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Catatan</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Catatan tentang pelanggan ini..."
+              rows={3}
+              className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none text-sm resize-none"
+              data-testid="customer-notes"
+            />
           </div>
 
           <button type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="customer-submit">

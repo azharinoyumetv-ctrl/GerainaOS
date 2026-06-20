@@ -32,6 +32,7 @@ async def create_customer(payload: CustomerBase, user: dict = Depends(get_curren
         "email": payload.email,
         "membership_tier": payload.membership_tier or "Bronze",
         "loyalty_points": payload.loyalty_points or 0,
+        "notes": payload.notes,
         "created_at": utcnow().isoformat()
     }
     await db.customers.insert_one(doc)
@@ -48,7 +49,8 @@ async def update_customer(cust_id: str, payload: CustomerBase, user: dict = Depe
             "phone": payload.phone,
             "email": payload.email,
             "membership_tier": payload.membership_tier,
-            "loyalty_points": payload.loyalty_points
+            "loyalty_points": payload.loyalty_points,
+            "notes": payload.notes
         }},
         return_document=True,
         projection={"_id": 0}

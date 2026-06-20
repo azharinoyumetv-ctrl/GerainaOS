@@ -73,3 +73,35 @@ async def simulate_webhook(payload: dict, req: Request):
         raise HTTPException(status_code=403, detail="Simulator disabled")
     await _process(payload)
     return {"ok": True}
+
+
+@router.post("/midtrans/simulate")
+async def simulate_midtrans_webhook(payload: dict, req: Request):
+    """Dev-only Midtrans webhook simulator (no token required)."""
+    if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "true").lower() not in ("1", "true", "yes")):
+        raise HTTPException(status_code=403, detail="Simulator disabled")
+    # Map Midtrans-style payload to internal format
+    mapped = {
+        "reference_id": payload.get("order_id") or payload.get("reference_id"),
+        "status": payload.get("transaction_status", payload.get("status", "settlement")).upper(),
+    }
+    if mapped["status"] in ("SETTLEMENT", "CAPTURE"):
+        mapped["status"] = "SUCCEEDED"
+    await _process(mapped)
+    return {"ok": True}
+
+
+@router.post("/stripe/simulate")
+async def simulate_stripe_webhook(payload: dict, req: Request):
+    """Dev-only Stripe webhook simulator (no token required)."""
+    if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "true").lower() not in ("1", "true", "yes")):
+        raise HTTPException(status_code=403, detail="Simulator disabled")
+    # Map Stripe-style payload to internal format
+    mapped = {
+        "reference_id": payload.get("payment_intent") or payload.get("reference_id"),
+        "status": payload.get("status", "succeeded").upper(),
+    }
+    if mapped["status"] == "SUCCEEDED":
+        mapped["status"] = "SUCCEEDED"
+    await _process(mapped)
+    return {"ok": True}
