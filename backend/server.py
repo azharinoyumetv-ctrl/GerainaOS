@@ -66,10 +66,15 @@ app.include_router(customers_router)
 app.include_router(staff_router)
 app.include_router(settings_router)
 
+cors_origins = os.environ.get("CORS_ORIGINS", "").split(",")
+cors_origins = [o.strip() for o in cors_origins if o.strip()]
+cors_origin_regex = r"https://.*\.pages\.dev|http://localhost(:\d+)?"
+
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=cors_origins or ["http://localhost:3000"],
+    allow_origin_regex=cors_origin_regex,
     allow_credentials=True,
-    allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
     allow_methods=["*"],
     allow_headers=["*"],
 )
