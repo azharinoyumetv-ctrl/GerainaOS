@@ -115,8 +115,14 @@ async def log_attendance(payload: AttendanceCreate, user: dict = Depends(get_cur
 async def update_attendance(att_id: str, user: dict = Depends(get_current_user)):
     """Clock-out: update an existing attendance record with clock_out time."""
     db = get_db()
+    from bson import ObjectId
+    id_or_oid = [att_id]
+    try:
+        id_or_oid.append(ObjectId(att_id))
+    except Exception:
+        pass
     res = await db.attendance.find_one_and_update(
-        {"id": att_id, "store_id": user["store_id"]},
+        {"store_id": user["store_id"], "$or": [{"id": {"$in": id_or_oid}}, {"_id": {"$in": id_or_oid}}]},
         {"$set": {"clock_out": utcnow().isoformat()}},
         return_document=True,
         projection={"_id": 0}
@@ -124,3 +130,4 @@ async def update_attendance(att_id: str, user: dict = Depends(get_current_user))
     if not res:
         raise HTTPException(status_code=404, detail="Data absensi tidak ditemukan")
     return res
+

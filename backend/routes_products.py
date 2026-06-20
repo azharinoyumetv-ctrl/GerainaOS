@@ -26,7 +26,11 @@ async def list_products(
     db = get_db()
     flt = {"store_id": user["store_id"]}
     if q:
-        flt["name"] = {"$regex": q, "$options": "i"}
+        flt["$or"] = [
+            {"name": {"$regex": q, "$options": "i"}},
+            {"sku": {"$regex": q, "$options": "i"}},
+            {"category": {"$regex": q, "$options": "i"}},
+        ]
     if category and category != "all":
         flt["category"] = category
     cursor = db.products.find(flt, {"_id": 0}).sort("name", 1).limit(limit)
@@ -61,8 +65,16 @@ async def update_product(product_id: str, payload: ProductUpdate, user: dict = D
     if not update:
         raise HTTPException(status_code=400, detail="Tidak ada perubahan")
     update["updated_at"] = utcnow().isoformat()
+    
+    from bson import ObjectId
+    id_or_oid = [product_id]
+    try:
+        id_or_oid.append(ObjectId(product_id))
+    except Exception:
+        pass
+    
     res = await db.products.find_one_and_update(
-        {"id": product_id, "store_id": user["store_id"]},
+        {"store_id": user["store_id"], "$or": [{"id": {"$in": id_or_oid}}, {"_id": {"$in": id_or_oid}}]},
         {"$set": update},
         return_document=True,
         projection={"_id": 0},
@@ -75,7 +87,17 @@ async def update_product(product_id: str, payload: ProductUpdate, user: dict = D
 @router.delete("/{product_id}")
 async def delete_product(product_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
-    res = await db.products.delete_one({"id": product_id, "store_id": user["store_id"]})
+    
+    from bson import ObjectId
+    id_or_oid = [product_id]
+    try:
+        id_or_oid.append(ObjectId(product_id))
+    except Exception:
+        pass
+        
+    res = await db.products.delete_one(
+        {"store_id": user["store_id"], "$or": [{"id": {"$in": id_or_oid}}, {"_id": {"$in": id_or_oid}}]}
+    )
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
     return {"ok": True}
