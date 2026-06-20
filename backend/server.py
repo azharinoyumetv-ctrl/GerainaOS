@@ -4,7 +4,9 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
+import sys
 ROOT_DIR = Path(__file__).parent
+sys.path.append(str(ROOT_DIR))
 load_dotenv(ROOT_DIR / ".env")
 
 from fastapi import FastAPI, APIRouter
