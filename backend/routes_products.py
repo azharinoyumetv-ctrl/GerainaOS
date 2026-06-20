@@ -2,7 +2,6 @@
 import io
 import uuid
 from typing import List, Optional
-import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 
 from database import get_db, utcnow
@@ -95,11 +94,55 @@ async def bulk_import(
     db = get_db()
     contents = await file.read()
     fname = (file.filename or "").lower()
+    
+    rows_data = []
     try:
         if fname.endswith(".csv"):
-            df = pd.read_csv(io.BytesIO(contents))
+            import csv
+            try:
+                text = contents.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                text = contents.decode("latin1")
+            
+            reader = csv.DictReader(io.StringIO(text))
+            if reader.fieldnames:
+                field_map = {f: str(f).strip().lower() for f in reader.fieldnames if f is not None}
+                for row in reader:
+                    row_dict = {}
+                    for orig_k, val in row.items():
+                        if orig_k in field_map:
+                            row_dict[field_map[orig_k]] = val
+                    rows_data.append(row_dict)
+            else:
+                raise Exception("File CSV tidak memiliki header")
+                
         elif fname.endswith(".xlsx") or fname.endswith(".xls"):
-            df = pd.read_excel(io.BytesIO(contents))
+            import openpyxl
+            wb = openpyxl.load_workbook(io.BytesIO(contents), data_only=True)
+            ws = wb.active
+            rows = list(ws.iter_rows(values_only=True))
+            if not rows or len(rows) < 1:
+                raise Exception("File Excel kosong")
+            
+            header = []
+            for cell in rows[0]:
+                if cell is not None:
+                    header.append(str(cell).strip().lower())
+                else:
+                    header.append("")
+                    
+            header_map = {name: i for i, name in enumerate(header) if name}
+            
+            for row in rows[1:]:
+                if all(cell is None for cell in row):
+                    continue
+                row_dict = {}
+                for name, idx in header_map.items():
+                    if idx < len(row):
+                        row_dict[name] = row[idx]
+                    else:
+                        row_dict[name] = None
+                rows_data.append(row_dict)
         else:
             raise HTTPException(status_code=400, detail="Format file harus .csv, .xls, atau .xlsx")
     except HTTPException:
@@ -107,30 +150,68 @@ async def bulk_import(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Gagal membaca file: {e}")
 
-    df.columns = [str(c).strip().lower() for c in df.columns]
-    if "name" not in df.columns or "price" not in df.columns:
+    # Check headers
+    headers_parsed = []
+    if fname.endswith(".csv") and 'field_map' in locals():
+        headers_parsed = list(field_map.values())
+    elif (fname.endswith(".xlsx") or fname.endswith(".xls")) and 'header_map' in locals():
+        headers_parsed = list(header_map.keys())
+
+    if "name" not in headers_parsed or "price" not in headers_parsed:
         raise HTTPException(status_code=400, detail="Kolom 'name' dan 'price' wajib ada")
 
     inserted = updated = skipped = 0
     errors: List[str] = []
-    for idx, row in df.iterrows():
+
+    def _is_not_empty(val) -> bool:
+        if val is None:
+            return False
+        s = str(val).strip()
+        if s == "" or s.lower() == "nan" or s.lower() == "null":
+            return False
+        return True
+
+    for idx, row in enumerate(rows_data):
         try:
             name = str(row.get("name") or "").strip()
             if not name or name.lower() == "nan":
                 skipped += 1
                 continue
-            price = float(row.get("price") or 0)
+            
+            price_val = row.get("price")
+            price = float(price_val) if _is_not_empty(price_val) else 0.0
+            
+            sku = str(row.get("sku")).strip() if _is_not_empty(row.get("sku")) else None
+            
+            cost_val = row.get("cost")
+            cost = float(cost_val) if _is_not_empty(cost_val) else 0.0
+            
+            stock_val = row.get("stock")
+            stock = int(float(stock_val)) if _is_not_empty(stock_val) else 0
+            
+            category = str(row.get("category")).strip() if _is_not_empty(row.get("category")) else "Umum"
+            unit = str(row.get("unit")).strip() if _is_not_empty(row.get("unit")) else "pcs"
+            description = str(row.get("description")).strip() if _is_not_empty(row.get("description")) else None
+            image_url = str(row.get("image_url")).strip() if _is_not_empty(row.get("image_url")) else None
+            
+            active_val = row.get("active")
+            if _is_not_empty(active_val):
+                active_str = str(active_val).lower().strip()
+                active = active_str not in ("false", "0", "no", "f", "n")
+            else:
+                active = True
+
             doc = {
                 "name": name,
-                "sku": str(row["sku"]).strip() if "sku" in df.columns and pd.notna(row.get("sku")) else None,
+                "sku": sku,
                 "price": price,
-                "cost": float(row.get("cost") or 0) if "cost" in df.columns and pd.notna(row.get("cost")) else 0,
-                "stock": int(row.get("stock") or 0) if "stock" in df.columns and pd.notna(row.get("stock")) else 0,
-                "category": str(row.get("category") or "Umum") if "category" in df.columns and pd.notna(row.get("category")) else "Umum",
-                "unit": str(row.get("unit") or "pcs") if "unit" in df.columns and pd.notna(row.get("unit")) else "pcs",
-                "description": str(row.get("description")) if "description" in df.columns and pd.notna(row.get("description")) else None,
-                "image_url": str(row.get("image_url")) if "image_url" in df.columns and pd.notna(row.get("image_url")) else None,
-                "active": bool(row.get("active")) if "active" in df.columns and pd.notna(row.get("active")) else True,
+                "cost": cost,
+                "stock": stock,
+                "category": category,
+                "unit": unit,
+                "description": description,
+                "image_url": image_url,
+                "active": active,
                 "store_id": user["store_id"],
                 "updated_at": utcnow().isoformat(),
             }
@@ -149,7 +230,7 @@ async def bulk_import(
                 await db.products.insert_one(doc)
                 inserted += 1
         except Exception as e:
-            errors.append(f"Baris {int(idx)+2}: {e}")
+            errors.append(f"Baris {idx + 2}: {e}")
 
     return BulkImportResult(inserted=inserted, updated=updated, skipped=skipped, errors=errors[:20])
 
