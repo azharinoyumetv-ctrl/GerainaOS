@@ -36,7 +36,7 @@ export default function DagangOS() {
           </h1>
           
           <p className="text-[hsl(var(--muted))] text-base md:text-lg max-w-2xl mx-auto mt-6 leading-relaxed">
-            DagangOS menyediakan sistem operasi kasir, inventaris, dan keuangan terpadu yang disesuaikan khusus untuk keunikan bisnis retail, bakery, butik fashion, hingga restoran & kafe.
+            DagangOS menyediakan sistem operasi kasir, inventaris, dan keuangan terpadu yang disesuaikan khusus untuk keunikan bisnis retail, minimarket, serta industri food & beverage (F&B).
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
@@ -60,7 +60,7 @@ export default function DagangOS() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8">
           {/* Active: Geraina POS */}
           <div className="card-surface p-8 flex flex-col justify-between border-2 border-[hsl(var(--primary))]/20 hover:border-[hsl(var(--primary))] hover:shadow-lg transition-all duration-300 relative bg-white">
             <span className="absolute top-4 right-4 pill pill-success">Tersedia</span>
@@ -78,50 +78,16 @@ export default function DagangOS() {
             </Link>
           </div>
 
-          {/* Active: DagangOS Bakery */}
-          <div className="card-surface p-8 flex flex-col justify-between border-2 border-[hsl(var(--accent))]/20 hover:border-[hsl(var(--accent))] hover:shadow-lg transition-all duration-300 relative bg-white">
-            <span className="absolute top-4 right-4 pill pill-success">Tersedia</span>
-            <div>
-              <div className="w-12 h-12 rounded-lg bg-[hsl(var(--accent))]/10 flex items-center justify-center text-[hsl(var(--accent))] mb-6">
-                <Cake size={24} />
-              </div>
-              <h3 className="font-display text-xl font-bold text-[hsl(var(--accent))]">DagangOS Bakery</h3>
-              <p className="text-xs text-[hsl(var(--muted))] mt-3 leading-relaxed">
-                Sistem kasir dan pelacakan inventaris bahan kue, resep produksi, serta tanggal kedaluwarsa khusus untuk bisnis bakery dan pastry modern.
-              </p>
-            </div>
-            <Link to="/geraina" className="btn-primary w-full mt-8 py-2.5 flex items-center justify-center gap-2 text-xs" style={{ backgroundColor: "hsl(var(--accent))" }}>
-              Kunjungi Web App <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          {/* Active: DagangOS Boutique */}
-          <div className="card-surface p-8 flex flex-col justify-between border-2 border-indigo-100 hover:border-indigo-600 hover:shadow-lg transition-all duration-300 relative bg-white">
-            <span className="absolute top-4 right-4 pill pill-success">Tersedia</span>
-            <div>
-              <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 mb-6">
-                <LayoutGrid size={24} />
-              </div>
-              <h3 className="font-display text-xl font-bold text-indigo-600">DagangOS Boutique</h3>
-              <p className="text-xs text-[hsl(var(--muted))] mt-3 leading-relaxed">
-                Manajemen stok SKU varian warna/ukuran, katalog etalase pakaian, dan pencatatan komisi staff SPG terpadu untuk butik fashion retail Anda.
-              </p>
-            </div>
-            <Link to="/geraina" className="btn-primary w-full mt-8 py-2.5 flex items-center justify-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-700">
-              Kunjungi Web App <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          {/* Coming Soon: DagangOS Restaurant & Cafe (F&B) */}
+          {/* Coming Soon: DapurOS */}
           <div className="card-surface p-8 flex flex-col justify-between bg-white/50 border-[hsl(var(--border))] opacity-90 hover:opacity-100 transition-all duration-300 relative">
             <span className="absolute top-4 right-4 pill pill-warning">Segera Hadir</span>
             <div>
               <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 mb-6">
                 <Utensils size={24} />
               </div>
-              <h3 className="font-display text-xl font-bold">Restaurant & Cafe</h3>
+              <h3 className="font-display text-xl font-bold text-amber-600">DapurOS</h3>
               <p className="text-xs text-[hsl(var(--muted))] mt-3 leading-relaxed">
-                Sistem POS meja, manajemen multi-dapur (KDS), split-bill, menu digital QR self-order, dan pemesanan meja terpadu untuk industri F&B.
+                Sistem kasir meja, kitchen display (KDS), split-bill, dan menu digital QR self-order khusus kafe, restoran, dan industri F&B.
               </p>
             </div>
             <button disabled className="btn-outline w-full mt-8 py-2.5 text-[hsl(var(--muted))] cursor-not-allowed bg-[hsl(var(--secondary))]/20 border-[hsl(var(--border))]/55 text-xs">
