@@ -68,7 +68,7 @@ app.include_router(settings_router)
 
 cors_origins = os.environ.get("CORS_ORIGINS", "").split(",")
 cors_origins = [o.strip() for o in cors_origins if o.strip()]
-cors_origin_regex = r"https://.*\.pages\.dev|http://localhost(:\d+)?"
+cors_origin_regex = r"https://.*\.pages\.dev|http://localhost(:\d+)?|https://(.*\.)?dagangos\.com"
 
 app.add_middleware(
     CORSMiddleware,
