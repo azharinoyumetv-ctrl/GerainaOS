@@ -433,16 +433,27 @@ function PricingTeaser() {
               : "/bulan";
             return (
               <div key={t.id}
-                   className={`card-surface p-5 ${t.highlight ? "border-[hsl(var(--accent))] shadow-sm ring-1 ring-[hsl(var(--accent))]/30 relative" : ""}`}
+                   className={`card-surface p-5 flex flex-col justify-between ${t.highlight ? "border-[hsl(var(--accent))] shadow-sm ring-1 ring-[hsl(var(--accent))]/30 relative bg-[hsl(36,17%,99%)]" : ""}`}
                    data-testid={`pricing-teaser-card-${t.id}`}>
-                {t.badge && <span className="pill pill-warning mb-2 inline-block text-[10px]">{t.badge}</span>}
-                <h3 className="font-display text-lg font-bold">{t.name}</h3>
-                <p className="num-display font-display text-2xl font-extrabold mt-2 leading-tight">
-                  {price}
-                </p>
-                <p className="text-xs text-[hsl(var(--muted))]">{period}</p>
-                <p className="text-xs text-[hsl(var(--muted))] mt-2 mb-3 min-h-[32px]">{t.tagline}</p>
-                <Link to="/geraina/pricing" className={`${t.highlight ? "btn-accent" : "btn-outline"} w-full text-xs`} data-testid={`pricing-teaser-cta-${t.id}`}>
+                <div>
+                  {t.badge && <span className="pill pill-warning mb-2 inline-block text-[10px]">{t.badge}</span>}
+                  <h3 className="font-display text-lg font-bold">{t.name}</h3>
+                  <p className="num-display font-display text-2xl font-extrabold mt-2 leading-tight">
+                    {price}
+                  </p>
+                  <p className="text-xs text-[hsl(var(--muted))]">{period}</p>
+                  <p className="text-xs text-[hsl(var(--muted))] mt-2 mb-3 min-h-[32px]">{t.tagline}</p>
+                  
+                  <ul className="space-y-2 mt-4 mb-6 text-left text-xs border-t border-[hsl(var(--border))]/40 pt-4" data-testid={`pricing-teaser-features-${t.id}`}>
+                    {t.features && t.features.slice(0, 4).map((f) => (
+                      <li key={f} className="flex gap-2">
+                        <Check size={14} className={`shrink-0 mt-0.5 ${t.highlight ? "text-[hsl(var(--accent))]" : "text-[hsl(var(--primary))]"}`} />
+                        <span className="leading-tight">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Link to="/geraina/pricing" className={`${t.highlight ? "btn-accent" : "btn-outline"} w-full text-xs mt-auto`} data-testid={`pricing-teaser-cta-${t.id}`}>
                   {t.cta}
                 </Link>
               </div>
