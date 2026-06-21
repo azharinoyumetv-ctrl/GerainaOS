@@ -173,7 +173,7 @@ export default function Settings() {
             <p className="text-xs text-[hsl(var(--muted))]">
               Manajemen kredensial login sistem kasir offline / backoffice DagangOS.
             </p>
-            <Link to="/app/staff/management" className="btn-outline py-2 px-4 text-xs flex items-center gap-2 w-max">
+            <Link to="/geraina/app/staff/management" className="btn-outline py-2 px-4 text-xs flex items-center gap-2 w-max">
               <UserPlus size={14} /> Kelola User & Karyawan
             </Link>
           </div>
@@ -190,7 +190,7 @@ export default function Settings() {
                 <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted))]">Perangkat Terkoneksi</span>
                 <p className="text-sm font-semibold">2 Perangkat Kasir Aktif</p>
               </div>
-              <Link to="/app/license" className="btn-primary py-2 px-4 text-xs font-semibold">
+              <Link to="/geraina/app/license" className="btn-primary py-2 px-4 text-xs font-semibold">
                 Kelola Lisensi Cabang & Alat
               </Link>
             </div>

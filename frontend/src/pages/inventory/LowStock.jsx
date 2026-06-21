@@ -26,7 +26,7 @@ export default function LowStock() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-bold text-lg">Peringatan Stok Menipis (Stok ≤ 5)</h2>
           {lowStockProducts.length > 0 && (
-            <Link to="/app/purchase/orders" className="btn-primary py-2 px-4 flex items-center gap-2 text-xs font-semibold">
+            <Link to="/geraina/app/purchase/orders" className="btn-primary py-2 px-4 flex items-center gap-2 text-xs font-semibold">
               <ShoppingBag size={14} /> Buat PO Baru <ArrowRight size={14} />
             </Link>
           )}

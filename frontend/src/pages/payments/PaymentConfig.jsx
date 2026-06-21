@@ -6,6 +6,8 @@ import { Save, ShieldCheck } from "lucide-react";
 export default function PaymentConfig() {
   const { type } = useParams();
   const [config, setConfig] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     api.get("/payments/config").then((r) => setConfig(r.data)).catch(() => {});
@@ -13,9 +15,22 @@ export default function PaymentConfig() {
 
   const handleSave = (e) => {
     e.preventDefault();
-    api.post("/payments/config", config).then(() => {
-      alert(`Konfigurasi pembayaran ${type.toUpperCase()} berhasil disimpan!`);
-    });
+    setErrors({});
+    if (type === "qris" && (!config.qris.merchant_id || !config.qris.merchant_id.trim())) {
+      setErrors({ merchant_id: "Merchant ID wajib diisi" });
+      return;
+    }
+    setSaving(true);
+    api.post("/payments/config", config)
+      .then(() => {
+        alert(`Konfigurasi pembayaran ${type.toUpperCase()} berhasil disimpan!`);
+      })
+      .catch((err) => {
+        alert("Gagal menyimpan konfigurasi: " + (err.response?.data?.detail || err.message));
+      })
+      .finally(() => {
+        setSaving(false);
+      });
   };
 
   if (!config) return <div className="p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data pembayaran...</div>;
@@ -96,9 +111,24 @@ export default function PaymentConfig() {
                 <input
                   type="text"
                   value={config.qris.merchant_id}
-                  onChange={(e) => setConfig({ ...config, qris: { ...config.qris, merchant_id: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
+                  onChange={(e) => {
+                    setConfig({ ...config, qris: { ...config.qris, merchant_id: e.target.value } });
+                    if (e.target.value.trim()) {
+                      setErrors((prev) => {
+                        const newErr = { ...prev };
+                        delete newErr.merchant_id;
+                        return newErr;
+                      });
+                    }
+                  }}
+                  className={`border ${errors.merchant_id ? 'border-red-500' : 'border-[hsl(var(--border))]'} rounded-md px-4 py-2 bg-white text-sm font-mono`}
+                  data-testid="qris-merchant-id-input"
                 />
+                {errors.merchant_id && (
+                  <span className="text-xs text-red-500 mt-1" data-testid="qris-validation-error">
+                    {errors.merchant_id}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -313,8 +343,13 @@ export default function PaymentConfig() {
           {renderConfigForm()}
 
           <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-end">
-            <button type="submit" className="btn-primary py-2 px-6 flex items-center gap-2 text-sm font-semibold">
-              <Save size={16} /> Simpan Pengaturan
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn-primary py-2 px-6 flex items-center gap-2 text-sm font-semibold disabled:opacity-50"
+              data-testid="payment-config-save-btn"
+            >
+              <Save size={16} /> {saving ? "Menyimpan..." : "Simpan Pengaturan"}
             </button>
           </div>
         </form>

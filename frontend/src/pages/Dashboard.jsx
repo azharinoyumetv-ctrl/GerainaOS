@@ -109,7 +109,7 @@ export default function Dashboard() {
           <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 px-3 py-1 rounded border border-emerald-100 flex items-center gap-1">
             <ShieldCheck size={14} /> Peran: {user?.role || "Owner"}
           </span>
-          <Link to="/app/pos" className="btn-primary flex items-center gap-1 text-xs py-2 px-4">
+          <Link to="/geraina/app/pos" className="btn-primary flex items-center gap-1 text-xs py-2 px-4">
             Buka Kasir <ArrowRight size={14} />
           </Link>
         </div>
@@ -132,7 +132,7 @@ export default function Dashboard() {
               Pilih paket Starter / Pro / Business sebelum trial berakhir agar operasional toko tidak terputus.
             </p>
           </div>
-          <Link to="/pricing" className="btn-accent shrink-0 text-xs" data-testid="trial-banner-upgrade-cta">
+          <Link to="/geraina/pricing" className="btn-accent shrink-0 text-xs" data-testid="trial-banner-upgrade-cta">
             <Sparkles size={14} /> Upgrade Paket
           </Link>
         </div>
@@ -254,7 +254,7 @@ export default function Dashboard() {
         <div className="col-span-12 lg:col-span-6 card-surface p-6 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-bold text-sm">Transaksi POS Terbaru</h3>
-            <Link to="/app/sales" className="text-xs text-[hsl(var(--primary))] font-semibold">Semua →</Link>
+            <Link to="/geraina/app/sales" className="text-xs text-[hsl(var(--primary))] font-semibold">Semua →</Link>
           </div>
           <div className="overflow-x-auto flex-1">
             <table className="w-full text-left text-xs border-collapse">
@@ -294,7 +294,7 @@ export default function Dashboard() {
               <p className="text-xs text-[hsl(var(--muted))] py-4 text-center">Semua stok aman dan mencukupi.</p>
             )}
           </div>
-          <Link to="/app/inventory/low-stock" className="btn-outline w-full py-1.5 text-center text-[10px] font-semibold block">
+          <Link to="/geraina/app/inventory/low-stock" className="btn-outline w-full py-1.5 text-center text-[10px] font-semibold block">
             Kelola Stok Menipis ({lowStockCount})
           </Link>
         </div>
@@ -309,7 +309,7 @@ export default function Dashboard() {
             </p>
             <p className="text-[10px] text-[hsl(var(--muted))] mt-1">Berdasarkan akumulasi harga pokok beli.</p>
           </div>
-          <Link to="/app/inventory/valuation" className="btn-outline w-full py-1.5 text-center text-[10px] font-semibold block">
+          <Link to="/geraina/app/inventory/valuation" className="btn-outline w-full py-1.5 text-center text-[10px] font-semibold block">
             Detail Aset Persediaan
           </Link>
         </div>
@@ -342,14 +342,14 @@ export default function Dashboard() {
                 <span className="text-[10px] text-[hsl(var(--muted))] uppercase font-semibold">Total Piutang</span>
                 <p className="font-mono font-bold text-emerald-600 text-sm">{fmtIDR(totalReceivable)}</p>
               </div>
-              <Link to="/app/debt/receivable" className="text-[10px] font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/8 px-2.5 py-1 rounded">Kelola</Link>
+              <Link to="/geraina/app/debt/receivable" className="text-[10px] font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/8 px-2.5 py-1 rounded">Kelola</Link>
             </div>
             <div className="flex justify-between items-center">
               <div>
                 <span className="text-[10px] text-[hsl(var(--muted))] uppercase font-semibold">Total Utang</span>
                 <p className="font-mono font-bold text-red-500 text-sm">{fmtIDR(totalPayable)}</p>
               </div>
-              <Link to="/app/debt/payable" className="text-[10px] font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/8 px-2.5 py-1 rounded">Kelola</Link>
+              <Link to="/geraina/app/debt/payable" className="text-[10px] font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/8 px-2.5 py-1 rounded">Kelola</Link>
             </div>
           </div>
         </div>
@@ -375,7 +375,7 @@ export default function Dashboard() {
               <p className="text-xs text-[hsl(var(--muted))] text-center py-4">Belum ada staf melakukan shift hari ini.</p>
             )}
           </div>
-          <Link to="/app/staff/management" className="btn-outline w-full py-1.5 text-center text-[10px] font-semibold block">
+          <Link to="/geraina/app/staff/management" className="btn-outline w-full py-1.5 text-center text-[10px] font-semibold block">
             Kelola Karyawan & Peran
           </Link>
         </div>

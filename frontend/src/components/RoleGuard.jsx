@@ -40,7 +40,7 @@ export default function RoleGuard({ children }) {
   const location = useLocation();
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/geraina/login" replace />;
   }
 
   const role = user.role || "Owner";
@@ -50,9 +50,9 @@ export default function RoleGuard({ children }) {
     return children;
   }
 
-  // Get module name from URL path, e.g. "/app/products/categories" -> "products"
+  // Get module name from URL path, e.g. "/geraina/app/products/categories" -> "products"
   const pathParts = location.pathname.split("/");
-  const moduleName = pathParts[2]; // Index 2 contains the path after /app/
+  const moduleName = pathParts[3]; // Index 3 contains the path after /geraina/app/
 
   // Allow about page for everyone
   if (moduleName === "about") {

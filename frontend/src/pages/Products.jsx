@@ -286,9 +286,10 @@ export default function Products() {
             data-testid="products-category-filter"
           >
             <option value="all">Semua Kategori</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {categories.map((c) => {
+              const name = typeof c === "string" ? c : c.name;
+              return <option key={name} value={name}>{name}</option>;
+            })}
           </select>
         </div>
       </div>

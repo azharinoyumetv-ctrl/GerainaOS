@@ -25,15 +25,15 @@ async def get_settings(user: dict = Depends(get_current_user)):
 @router.post("/api/settings")
 async def save_settings(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
     db = get_db()
-    doc = dict(payload)
-    doc["store_id"] = user["store_id"]
-    await db.settings.find_one_and_replace(
+    update_data = {k: v for k, v in payload.items() if k not in ("_id", "store_id")}
+    res = await db.settings.find_one_and_update(
         {"store_id": user["store_id"]},
-        doc,
-        upsert=True
+        {"$set": update_data},
+        upsert=True,
+        return_document=True,
+        projection={"_id": 0}
     )
-    doc.pop("_id", None)
-    return doc
+    return res
 
 # ---------- Payments Config ----------
 @router.get("/api/payments/config")
@@ -69,15 +69,15 @@ async def get_payments_config(user: dict = Depends(get_current_user)):
 @router.post("/api/payments/config")
 async def save_payments_config(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
     db = get_db()
-    doc = dict(payload)
-    doc["store_id"] = user["store_id"]
-    await db.payments_config.find_one_and_replace(
+    update_data = {k: v for k, v in payload.items() if k not in ("_id", "store_id")}
+    res = await db.payments_config.find_one_and_update(
         {"store_id": user["store_id"]},
-        doc,
-        upsert=True
+        {"$set": update_data},
+        upsert=True,
+        return_document=True,
+        projection={"_id": 0}
     )
-    doc.pop("_id", None)
-    return doc
+    return res
 
 # ---------- Integrations ----------
 @router.get("/api/integrations")
@@ -98,15 +98,15 @@ async def get_integrations(user: dict = Depends(get_current_user)):
 @router.post("/api/integrations")
 async def save_integrations(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
     db = get_db()
-    doc = dict(payload)
-    doc["store_id"] = user["store_id"]
-    await db.integrations.find_one_and_replace(
+    update_data = {k: v for k, v in payload.items() if k not in ("_id", "store_id")}
+    res = await db.integrations.find_one_and_update(
         {"store_id": user["store_id"]},
-        doc,
-        upsert=True
+        {"$set": update_data},
+        upsert=True,
+        return_document=True,
+        projection={"_id": 0}
     )
-    doc.pop("_id", None)
-    return doc
+    return res
 
 # ---------- Branches ----------
 @router.get("/api/branches", response_model=List[Branch])

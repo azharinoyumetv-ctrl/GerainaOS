@@ -23,19 +23,19 @@ const ROLE_PERMISSIONS = {
 };
 
 const MENU_STRUCTURE = [
-  { to: "/app/dashboard", icon: LayoutDashboard, label: "Dashboard", key: "dashboard" },
-  { to: "/app/pos", icon: ShoppingCart, label: "POS Kasir", key: "pos" },
+  { to: "/geraina/app/dashboard", icon: LayoutDashboard, label: "Dashboard", key: "dashboard" },
+  { to: "/geraina/app/pos", icon: ShoppingCart, label: "POS Kasir", key: "pos" },
   {
     label: "Produk",
     icon: Package,
     key: "products",
     sub: [
-      { to: "/app/products", label: "Daftar Produk" },
-      { to: "/app/products/categories", label: "Kategori" },
-      { to: "/app/products/brands", label: "Merek" },
-      { to: "/app/products/units", label: "Satuan" },
-      { to: "/app/products/stock-adjustment", label: "Penyesuaian Stok" },
-      { to: "/app/products/stock-transfer", label: "Transfer Stok" }
+      { to: "/geraina/app/products", label: "Daftar Produk" },
+      { to: "/geraina/app/products/categories", label: "Kategori" },
+      { to: "/geraina/app/products/brands", label: "Merek" },
+      { to: "/geraina/app/products/units", label: "Satuan" },
+      { to: "/geraina/app/products/stock-adjustment", label: "Penyesuaian Stok" },
+      { to: "/geraina/app/products/stock-transfer", label: "Transfer Stok" }
     ]
   },
   {
@@ -43,11 +43,11 @@ const MENU_STRUCTURE = [
     icon: Warehouse,
     key: "inventory",
     sub: [
-      { to: "/app/inventory/overview", label: "Ringkasan Stok" },
-      { to: "/app/inventory/movement", label: "Mutasi Stok" },
-      { to: "/app/inventory/valuation", label: "Penilaian Inventaris" },
-      { to: "/app/inventory/low-stock", label: "Stok Menipis" },
-      { to: "/app/inventory/dead-stock", label: "Stok Mati" }
+      { to: "/geraina/app/inventory/overview", label: "Ringkasan Stok" },
+      { to: "/geraina/app/inventory/movement", label: "Mutasi Stok" },
+      { to: "/geraina/app/inventory/valuation", label: "Penilaian Inventaris" },
+      { to: "/geraina/app/inventory/low-stock", label: "Stok Menipis" },
+      { to: "/geraina/app/inventory/dead-stock", label: "Stok Mati" }
     ]
   },
   {
@@ -55,20 +55,20 @@ const MENU_STRUCTURE = [
     icon: ClipboardList,
     key: "purchase",
     sub: [
-      { to: "/app/purchase/orders", label: "Order Pembelian (PO)" },
-      { to: "/app/purchase/receiving", label: "Penerimaan Barang" },
-      { to: "/app/purchase/invoices", label: "Faktur Supplier" }
+      { to: "/geraina/app/purchase/orders", label: "Order Pembelian (PO)" },
+      { to: "/geraina/app/purchase/receiving", label: "Penerimaan Barang" },
+      { to: "/geraina/app/purchase/invoices", label: "Faktur Supplier" }
     ]
   },
-  { to: "/app/suppliers", icon: Truck, label: "Supplier", key: "suppliers" },
+  { to: "/geraina/app/suppliers", icon: Truck, label: "Supplier", key: "suppliers" },
   {
     label: "Pelanggan",
     icon: Users,
     key: "customers",
     sub: [
-      { to: "/app/customers", label: "Daftar Pelanggan" },
-      { to: "/app/customers/membership", label: "Keanggotaan" },
-      { to: "/app/customers/loyalty", label: "Poin Loyalitas" }
+      { to: "/geraina/app/customers", label: "Daftar Pelanggan" },
+      { to: "/geraina/app/customers/membership", label: "Keanggotaan" },
+      { to: "/geraina/app/customers/loyalty", label: "Poin Loyalitas" }
     ]
   },
   {
@@ -76,8 +76,8 @@ const MENU_STRUCTURE = [
     icon: Landmark,
     key: "debt",
     sub: [
-      { to: "/app/debt/receivable", label: "Piutang Usaha" },
-      { to: "/app/debt/payable", label: "Utang Usaha" }
+      { to: "/geraina/app/debt/receivable", label: "Piutang Usaha" },
+      { to: "/geraina/app/debt/payable", label: "Utang Usaha" }
     ]
   },
   {
@@ -85,12 +85,12 @@ const MENU_STRUCTURE = [
     icon: CreditCard,
     key: "payments",
     sub: [
-      { to: "/app/payments/cash", label: "Tunai" },
-      { to: "/app/payments/qris", label: "QRIS" },
-      { to: "/app/payments/ewallet", label: "E-Wallet" },
-      { to: "/app/payments/va", label: "Virtual Account" },
-      { to: "/app/payments/credit-card", label: "Kartu Kredit" },
-      { to: "/app/payments/bank-transfer", label: "Transfer Bank" }
+      { to: "/geraina/app/payments/cash", label: "Tunai" },
+      { to: "/geraina/app/payments/qris", label: "QRIS" },
+      { to: "/geraina/app/payments/ewallet", label: "E-Wallet" },
+      { to: "/geraina/app/payments/va", label: "Virtual Account" },
+      { to: "/geraina/app/payments/credit-card", label: "Kartu Kredit" },
+      { to: "/geraina/app/payments/bank-transfer", label: "Transfer Bank" }
     ]
   },
   {
@@ -98,12 +98,12 @@ const MENU_STRUCTURE = [
     icon: BarChart3,
     key: "reports",
     sub: [
-      { to: "/app/reports/sales", label: "Penjualan" },
-      { to: "/app/reports/product", label: "Produk" },
-      { to: "/app/reports/inventory", label: "Stok / Inventaris" },
-      { to: "/app/reports/profit", label: "Laba Rugi" },
-      { to: "/app/reports/cashflow", label: "Arus Kas" },
-      { to: "/app/reports/tax", label: "Pajak" }
+      { to: "/geraina/app/reports/sales", label: "Penjualan" },
+      { to: "/geraina/app/reports/product", label: "Produk" },
+      { to: "/geraina/app/reports/inventory", label: "Stok / Inventaris" },
+      { to: "/geraina/app/reports/profit", label: "Laba Rugi" },
+      { to: "/geraina/app/reports/cashflow", label: "Arus Kas" },
+      { to: "/geraina/app/reports/tax", label: "Pajak" }
     ]
   },
   {
@@ -111,24 +111,24 @@ const MENU_STRUCTURE = [
     icon: UserCheck,
     key: "staff",
     sub: [
-      { to: "/app/staff/management", label: "Manajemen Staf" },
-      { to: "/app/staff/roles", label: "Peran" },
-      { to: "/app/staff/permissions", label: "Izin Akses" },
-      { to: "/app/staff/attendance", label: "Absensi" }
+      { to: "/geraina/app/staff/management", label: "Manajemen Staf" },
+      { to: "/geraina/app/staff/roles", label: "Peran" },
+      { to: "/geraina/app/staff/permissions", label: "Izin Akses" },
+      { to: "/geraina/app/staff/attendance", label: "Absensi" }
     ]
   },
-  { to: "/app/branches", icon: GitBranch, label: "Cabang", key: "branches" },
+  { to: "/geraina/app/branches", icon: GitBranch, label: "Cabang", key: "branches" },
   {
     label: "Integrasi",
     icon: Cpu,
     key: "integrations",
     sub: [
-      { to: "/app/integrations/xendit", label: "Xendit" },
-      { to: "/app/integrations/midtrans", label: "Midtrans" },
-      { to: "/app/integrations/stripe", label: "Stripe" },
-      { to: "/app/integrations/whatsapp", label: "WhatsApp" },
-      { to: "/app/integrations/telegram", label: "Telegram" },
-      { to: "/app/integrations/email", label: "Email" }
+      { to: "/geraina/app/integrations/xendit", label: "Xendit" },
+      { to: "/geraina/app/integrations/midtrans", label: "Midtrans" },
+      { to: "/geraina/app/integrations/stripe", label: "Stripe" },
+      { to: "/geraina/app/integrations/whatsapp", label: "WhatsApp" },
+      { to: "/geraina/app/integrations/telegram", label: "Telegram" },
+      { to: "/geraina/app/integrations/email", label: "Email" }
     ]
   },
   {
@@ -136,15 +136,15 @@ const MENU_STRUCTURE = [
     icon: Settings,
     key: "settings",
     sub: [
-      { to: "/app/settings/general", label: "Umum" },
-      { to: "/app/settings/store", label: "Toko" },
-      { to: "/app/settings/receipt", label: "Struk" },
-      { to: "/app/settings/printer", label: "Printer" },
-      { to: "/app/settings/users", label: "Pengguna" },
-      { to: "/app/settings/license", label: "Lisensi" }
+      { to: "/geraina/app/settings/general", label: "Umum" },
+      { to: "/geraina/app/settings/store", label: "Toko" },
+      { to: "/geraina/app/settings/receipt", label: "Struk" },
+      { to: "/geraina/app/settings/printer", label: "Printer" },
+      { to: "/geraina/app/settings/users", label: "Pengguna" },
+      { to: "/geraina/app/settings/license", label: "Lisensi" }
     ]
   },
-  { to: "/app/about", icon: Info, label: "Tentang", key: "about" }
+  { to: "/geraina/app/about", icon: Info, label: "Tentang", key: "about" }
 ];
 
 function trialDaysLeft(iso) {
@@ -177,7 +177,7 @@ export default function AppLayout() {
     <div className="min-h-screen flex bg-[hsl(var(--background))]" data-testid="app-layout">
       <aside className="w-64 border-r border-[hsl(var(--border))] bg-[hsl(var(--surface))] flex flex-col h-screen overflow-hidden" data-testid="app-sidebar">
         <div className="p-5 border-b border-[hsl(var(--border))]">
-          <Link to="/app/dashboard" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="app-logo">
+          <Link to="/geraina/app/dashboard" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="app-logo">
             <Leaf className="text-[hsl(var(--accent))]" size={22} /> Geraina POS <span className="text-[10px] text-[hsl(var(--muted))] font-normal">by DagangOS</span>
           </Link>
           <p className="text-xs text-[hsl(var(--muted))] mt-1.5">{user?.store_name || "Toko Anda"}</p>
@@ -252,7 +252,7 @@ export default function AppLayout() {
               {days !== null ? `${days} hari` : "—"}
             </p>
             <p className="text-xs text-white/70 mt-0.5">tersisa</p>
-            <Link to="/pricing" className="btn-accent w-full mt-3 text-xs text-center block" data-testid="trial-upgrade-cta">
+            <Link to="/geraina/pricing" className="btn-accent w-full mt-3 text-xs text-center block" data-testid="trial-upgrade-cta">
               <Sparkles size={14} /> Upgrade Sekarang
             </Link>
           </div>
@@ -284,7 +284,7 @@ export default function AppLayout() {
             </div>
             <button
               className="p-1 rounded text-red-600 hover:bg-red-50 transition-colors"
-              onClick={() => { logout(); nav("/login"); }}
+              onClick={() => { logout(); nav("/geraina/login"); }}
               title="Keluar"
               data-testid="logout-btn"
             >

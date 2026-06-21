@@ -16,18 +16,18 @@ function Nav() {
   return (
     <header className="border-b border-[hsl(var(--border))] bg-[hsl(var(--surface))]/80 backdrop-blur-md sticky top-0 z-50" data-testid="landing-nav">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="landing-logo">
+        <Link to="/geraina" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="landing-logo">
           <Leaf className="text-[hsl(var(--accent))]" size={22} /> Geraina <span className="text-[hsl(var(--muted))] text-sm font-medium">by DagangOS</span>
         </Link>
         <nav className="hidden md:flex gap-7 text-sm font-medium text-[hsl(var(--foreground))]">
           <a href="#features" className="hover:text-[hsl(var(--primary))] transition-colors" data-testid="nav-features">Fitur</a>
           <a href="#modules" className="hover:text-[hsl(var(--primary))] transition-colors" data-testid="nav-modules">Modul</a>
-          <Link to="/pricing" className="hover:text-[hsl(var(--primary))] transition-colors" data-testid="nav-pricing">Harga</Link>
+          <Link to="/geraina/pricing" className="hover:text-[hsl(var(--primary))] transition-colors" data-testid="nav-pricing">Harga</Link>
           <a href="#faq" className="hover:text-[hsl(var(--primary))] transition-colors" data-testid="nav-faq">FAQ</a>
         </nav>
         <div className="flex gap-2">
-          <Link to="/login" className="btn-ghost" data-testid="nav-login-btn">Masuk</Link>
-          <Link to="/register" className="btn-primary" data-testid="nav-register-btn">Mulai Gratis <ArrowRight size={14} /></Link>
+          <Link to="/geraina/login" className="btn-ghost" data-testid="nav-login-btn">Masuk</Link>
+          <Link to="/geraina/register" className="btn-primary" data-testid="nav-register-btn">Mulai Gratis <ArrowRight size={14} /></Link>
         </div>
       </div>
     </header>
@@ -49,13 +49,13 @@ function Hero() {
           </h1>
           <p className="text-lg text-[hsl(var(--muted))] max-w-xl" data-testid="hero-subtitle">
             Kelola penjualan, stok, supplier, dan laporan toko dari satu aplikasi.
-            Geraina POS membantu warung kopi, butik fashion, dan UMKM Anda berkembang lebih cepat.
+            Geraina POS membantu retail, minimarket, toko kelontong, dan UMKM Anda berkembang lebih cepat.
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
-            <Link to="/register" className="btn-primary" data-testid="hero-cta-primary">
+            <Link to="/geraina/register" className="btn-primary" data-testid="hero-cta-primary">
               Mulai Trial 14 Hari <ArrowRight size={16} />
             </Link>
-            <Link to="/pricing" className="btn-outline" data-testid="hero-cta-secondary">
+            <Link to="/geraina/pricing" className="btn-outline" data-testid="hero-cta-secondary">
               Lihat Harga
             </Link>
           </div>
@@ -442,7 +442,7 @@ function PricingTeaser() {
                 </p>
                 <p className="text-xs text-[hsl(var(--muted))]">{period}</p>
                 <p className="text-xs text-[hsl(var(--muted))] mt-2 mb-3 min-h-[32px]">{t.tagline}</p>
-                <Link to="/pricing" className={`${t.highlight ? "btn-accent" : "btn-outline"} w-full text-xs`} data-testid={`pricing-teaser-cta-${t.id}`}>
+                <Link to="/geraina/pricing" className={`${t.highlight ? "btn-accent" : "btn-outline"} w-full text-xs`} data-testid={`pricing-teaser-cta-${t.id}`}>
                   {t.cta}
                 </Link>
               </div>
@@ -595,7 +595,7 @@ const PLATFORMS = [
     label: "Web App",
     sublabel: "Buka di browser",
     icon: Chrome,
-    href: "/login",
+    href: "/geraina/login",
     color: "bg-[hsl(var(--accent))] hover:bg-[hsl(9,65%,60%)]",
     isLink: true,
   },
@@ -683,8 +683,8 @@ function FinalCTA() {
         </h2>
         <p className="text-[hsl(var(--muted))] mt-5 text-lg">14 hari trial. Tidak ada komitmen. Cabut kapan saja.</p>
         <div className="flex justify-center gap-3 mt-8">
-          <Link to="/register" className="btn-primary" data-testid="final-cta-register">Mulai Trial Gratis <ArrowRight size={16} /></Link>
-          <Link to="/pricing" className="btn-outline" data-testid="final-cta-pricing">Lihat Harga</Link>
+          <Link to="/geraina/register" className="btn-primary" data-testid="final-cta-register">Mulai Trial Gratis <ArrowRight size={16} /></Link>
+          <Link to="/geraina/pricing" className="btn-outline" data-testid="final-cta-pricing">Lihat Harga</Link>
         </div>
       </div>
     </section>

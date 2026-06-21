@@ -2,6 +2,7 @@ import "@/index.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 
+import DagangOS from "@/pages/DagangOS";
 import Landing from "@/pages/Landing";
 import Pricing from "@/pages/Pricing";
 import Login from "@/pages/Login";
@@ -57,7 +58,7 @@ import RoleGuard from "@/components/RoleGuard";
 function Protected({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-10 text-sm text-center text-[hsl(var(--muted))]" data-testid="auth-loading">Memuat sesi…</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/geraina/login" replace />;
   return children;
 }
 
@@ -66,73 +67,80 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/app" element={<Protected><AppLayout /></Protected>}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            
-            {/* General Routes */}
-            <Route path="dashboard" element={<RoleGuard><Dashboard /></RoleGuard>} />
-            <Route path="pos" element={<RoleGuard><POS /></RoleGuard>} />
-            <Route path="sales" element={<RoleGuard><Sales /></RoleGuard>} />
-            <Route path="license" element={<RoleGuard><LicenseDevices /></RoleGuard>} />
-            <Route path="about" element={<RoleGuard><About /></RoleGuard>} />
+          {/* Parent Company Landing Page */}
+          <Route path="/" element={<DagangOS />} />
 
-            {/* Produk */}
-            <Route path="products" element={<RoleGuard><Products /></RoleGuard>} />
-            <Route path="products/categories" element={<RoleGuard><Categories /></RoleGuard>} />
-            <Route path="products/brands" element={<RoleGuard><Brands /></RoleGuard>} />
-            <Route path="products/units" element={<RoleGuard><Units /></RoleGuard>} />
-            <Route path="products/stock-adjustment" element={<RoleGuard><StockAdjustment /></RoleGuard>} />
-            <Route path="products/stock-transfer" element={<RoleGuard><StockTransfer /></RoleGuard>} />
+          {/* Geraina POS Brand Routes */}
+          <Route path="/geraina">
+            <Route index element={<Landing />} />
+            <Route path="pricing" element={<Pricing />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="app" element={<Protected><AppLayout /></Protected>}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              
+              {/* General Routes */}
+              <Route path="dashboard" element={<RoleGuard><Dashboard /></RoleGuard>} />
+              <Route path="pos" element={<RoleGuard><POS /></RoleGuard>} />
+              <Route path="sales" element={<RoleGuard><Sales /></RoleGuard>} />
+              <Route path="license" element={<RoleGuard><LicenseDevices /></RoleGuard>} />
+              <Route path="about" element={<RoleGuard><About /></RoleGuard>} />
 
-            {/* Inventory */}
-            <Route path="inventory/overview" element={<RoleGuard><StockOverview /></RoleGuard>} />
-            <Route path="inventory/movement" element={<RoleGuard><StockMovement /></RoleGuard>} />
-            <Route path="inventory/valuation" element={<RoleGuard><InventoryValuation /></RoleGuard>} />
-            <Route path="inventory/low-stock" element={<RoleGuard><LowStock /></RoleGuard>} />
-            <Route path="inventory/dead-stock" element={<RoleGuard><DeadStock /></RoleGuard>} />
+              {/* Produk */}
+              <Route path="products" element={<RoleGuard><Products /></RoleGuard>} />
+              <Route path="products/categories" element={<RoleGuard><Categories /></RoleGuard>} />
+              <Route path="products/brands" element={<RoleGuard><Brands /></RoleGuard>} />
+              <Route path="products/units" element={<RoleGuard><Units /></RoleGuard>} />
+              <Route path="products/stock-adjustment" element={<RoleGuard><StockAdjustment /></RoleGuard>} />
+              <Route path="products/stock-transfer" element={<RoleGuard><StockTransfer /></RoleGuard>} />
 
-            {/* Purchase */}
-            <Route path="purchase/orders" element={<RoleGuard><PurchaseOrder /></RoleGuard>} />
-            <Route path="purchase/receiving" element={<RoleGuard><GoodsReceiving /></RoleGuard>} />
-            <Route path="purchase/invoices" element={<RoleGuard><SupplierInvoice /></RoleGuard>} />
+              {/* Inventory */}
+              <Route path="inventory/overview" element={<RoleGuard><StockOverview /></RoleGuard>} />
+              <Route path="inventory/movement" element={<RoleGuard><StockMovement /></RoleGuard>} />
+              <Route path="inventory/valuation" element={<RoleGuard><InventoryValuation /></RoleGuard>} />
+              <Route path="inventory/low-stock" element={<RoleGuard><LowStock /></RoleGuard>} />
+              <Route path="inventory/dead-stock" element={<RoleGuard><DeadStock /></RoleGuard>} />
 
-            {/* Supplier */}
-            <Route path="suppliers" element={<RoleGuard><SupplierList /></RoleGuard>} />
+              {/* Purchase */}
+              <Route path="purchase/orders" element={<RoleGuard><PurchaseOrder /></RoleGuard>} />
+              <Route path="purchase/receiving" element={<RoleGuard><GoodsReceiving /></RoleGuard>} />
+              <Route path="purchase/invoices" element={<RoleGuard><SupplierInvoice /></RoleGuard>} />
 
-            {/* Customer */}
-            <Route path="customers" element={<RoleGuard><CustomerList /></RoleGuard>} />
-            <Route path="customers/membership" element={<RoleGuard><Membership /></RoleGuard>} />
-            <Route path="customers/loyalty" element={<RoleGuard><LoyaltyPoints /></RoleGuard>} />
+              {/* Supplier */}
+              <Route path="suppliers" element={<RoleGuard><SupplierList /></RoleGuard>} />
 
-            {/* Hutang Piutang */}
-            <Route path="debt/receivable" element={<RoleGuard><AccountsReceivable /></RoleGuard>} />
-            <Route path="debt/payable" element={<RoleGuard><AccountsPayable /></RoleGuard>} />
+              {/* Customer */}
+              <Route path="customers" element={<RoleGuard><CustomerList /></RoleGuard>} />
+              <Route path="customers/membership" element={<RoleGuard><Membership /></RoleGuard>} />
+              <Route path="customers/loyalty" element={<RoleGuard><LoyaltyPoints /></RoleGuard>} />
 
-            {/* Payments */}
-            <Route path="payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
+              {/* Hutang Piutang */}
+              <Route path="debt/receivable" element={<RoleGuard><AccountsReceivable /></RoleGuard>} />
+              <Route path="debt/payable" element={<RoleGuard><AccountsPayable /></RoleGuard>} />
 
-            {/* Reports */}
-            <Route path="reports/:type" element={<RoleGuard><Reports /></RoleGuard>} />
+              {/* Payments */}
+              <Route path="payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
 
-            {/* Staff */}
-            <Route path="staff/management" element={<RoleGuard><StaffManagement /></RoleGuard>} />
-            <Route path="staff/roles" element={<RoleGuard><Roles /></RoleGuard>} />
-            <Route path="staff/permissions" element={<RoleGuard><Permissions /></RoleGuard>} />
-            <Route path="staff/attendance" element={<RoleGuard><Attendance /></RoleGuard>} />
+              {/* Reports */}
+              <Route path="reports/:type" element={<RoleGuard><Reports /></RoleGuard>} />
 
-            {/* Branches */}
-            <Route path="branches" element={<RoleGuard><BranchManagement /></RoleGuard>} />
+              {/* Staff */}
+              <Route path="staff/management" element={<RoleGuard><StaffManagement /></RoleGuard>} />
+              <Route path="staff/roles" element={<RoleGuard><Roles /></RoleGuard>} />
+              <Route path="staff/permissions" element={<RoleGuard><Permissions /></RoleGuard>} />
+              <Route path="staff/attendance" element={<RoleGuard><Attendance /></RoleGuard>} />
 
-            {/* Integrations */}
-            <Route path="integrations/:type" element={<RoleGuard><Integrations /></RoleGuard>} />
+              {/* Branches */}
+              <Route path="branches" element={<RoleGuard><BranchManagement /></RoleGuard>} />
 
-            {/* Settings */}
-            <Route path="settings/:type" element={<RoleGuard><Settings /></RoleGuard>} />
+              {/* Integrations */}
+              <Route path="integrations/:type" element={<RoleGuard><Integrations /></RoleGuard>} />
+
+              {/* Settings */}
+              <Route path="settings/:type" element={<RoleGuard><Settings /></RoleGuard>} />
+            </Route>
           </Route>
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

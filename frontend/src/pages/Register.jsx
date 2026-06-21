@@ -18,7 +18,7 @@ export default function Register() {
     setLoading(true);
     try {
       await register(email, password, storeName);
-      nav("/app/dashboard");
+      nav("/geraina/app/dashboard");
     } catch (err) {
       setError(err?.response?.data?.detail || "Gagal mendaftar");
     } finally {
@@ -37,7 +37,7 @@ export default function Register() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 relative bg-grain"
            style={{ background: "linear-gradient(135deg, hsl(151,39%,17%), hsl(151,39%,12%))" }}>
-        <Link to="/" className="text-white font-display font-bold text-xl flex items-center gap-2">
+        <Link to="/geraina" className="text-white font-display font-bold text-xl flex items-center gap-2">
           <Leaf size={22} className="text-[hsl(9,65%,62%)]" /> Geraina POS <span className="text-xs text-white/60 font-medium">by DagangOS</span>
         </Link>
         <div className="text-white space-y-5 max-w-md">
@@ -114,7 +114,7 @@ export default function Register() {
 
           <p className="text-sm text-center text-[hsl(var(--muted))]">
             Sudah punya akun?{" "}
-            <Link to="/login" className="text-[hsl(var(--primary))] font-semibold" data-testid="register-to-login-link">
+            <Link to="/geraina/login" className="text-[hsl(var(--primary))] font-semibold" data-testid="register-to-login-link">
               Masuk
             </Link>
           </p>

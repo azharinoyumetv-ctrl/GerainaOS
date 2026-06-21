@@ -70,18 +70,18 @@ export default function Pricing() {
     <div data-testid="pricing-page">
       <header className="border-b border-[hsl(var(--border))]">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="pricing-nav-logo">
+          <Link to="/geraina" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="pricing-nav-logo">
             <Leaf className="text-[hsl(var(--accent))]" size={22} /> Geraina <span className="text-[hsl(var(--muted))] text-sm font-medium">by DagangOS</span>
           </Link>
           <div className="flex gap-2">
             {user ? (
-              <Link to="/app/dashboard" className="btn-primary" data-testid="pricing-nav-dashboard">
+              <Link to="/geraina/app/dashboard" className="btn-primary" data-testid="pricing-nav-dashboard">
                 Ke Dashboard <ArrowRight size={14} />
               </Link>
             ) : (
               <>
-                <Link to="/login" className="btn-ghost" data-testid="pricing-nav-login">Masuk</Link>
-                <Link to="/register" className="btn-primary" data-testid="pricing-nav-register">Mulai Gratis</Link>
+                <Link to="/geraina/login" className="btn-ghost" data-testid="pricing-nav-login">Masuk</Link>
+                <Link to="/geraina/register" className="btn-primary" data-testid="pricing-nav-register">Mulai Gratis</Link>
               </>
             )}
           </div>
@@ -187,7 +187,7 @@ export default function Pricing() {
                 )
               ) : (
                 <Link
-                  to="/register"
+                  to="/geraina/register"
                   className={`mt-auto ${t.highlight ? "btn-accent" : "btn-outline"} w-full text-center py-2`}
                   data-testid={`pricing-cta-${t.id}`}
                 >
