@@ -37,7 +37,11 @@ async def list_products(
     return await cursor.to_list(length=limit)
 
 
-# Categories handled by routes_inventory.py
+@router.get("/categories")
+async def list_categories(user: dict = Depends(get_current_user)):
+    db = get_db()
+    cats = await db.products.distinct("category", {"store_id": user["store_id"]})
+    return [c for c in cats if c]
 
 
 @router.post("")
