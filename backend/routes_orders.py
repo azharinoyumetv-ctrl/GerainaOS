@@ -130,34 +130,20 @@ async def stats(user: dict = Depends(get_current_user)):
     week_start = (now - timedelta(days=7)).isoformat()
     month_start = (now - timedelta(days=30)).isoformat()
 
-    # Load all products to get their cost
-    products_cursor = db.products.find({"store_id": user["store_id"]})
-    products_list = await products_cursor.to_list(length=1000)
-    cost_map = {p["id"]: p.get("cost", 0) for p in products_list}
-
-    async def get_sales_and_cost(after: str, paid_only: bool = True) -> dict:
+    async def sum_in(after: str, paid_only: bool = True) -> dict:
         match = {"store_id": user["store_id"], "created_at": {"$gte": after}}
         if paid_only:
             match["payment_status"] = "paid"
-        cursor = db.orders.find(match)
-        orders = await cursor.to_list(length=1000)
-        
-        total_sales = 0
-        total_cost = 0
-        order_count = len(orders)
-        
-        for order in orders:
-            total_sales += order.get("total", 0)
-            for item in order.get("items", []):
-                pid = item.get("product_id")
-                qty = item.get("quantity", 0)
-                cost = cost_map.get(pid, 0)
-                total_cost += qty * cost
-        return {"total": total_sales, "cost": total_cost, "count": order_count}
+        cur = db.orders.aggregate([
+            {"$match": match},
+            {"$group": {"_id": None, "total": {"$sum": "$total"}, "count": {"$sum": 1}}},
+        ])
+        rows = await cur.to_list(length=1)
+        return rows[0] if rows else {"total": 0, "count": 0}
 
-    today = await get_sales_and_cost(today_start)
-    week = await get_sales_and_cost(week_start)
-    month = await get_sales_and_cost(month_start)
+    today = await sum_in(today_start)
+    week = await sum_in(week_start)
+    month = await sum_in(month_start)
     product_count = await db.products.count_documents({"store_id": user["store_id"]})
     return {
         "today_sales": today.get("total", 0),
@@ -166,8 +152,6 @@ async def stats(user: dict = Depends(get_current_user)):
         "week_orders": week.get("count", 0),
         "month_sales": month.get("total", 0),
         "month_orders": month.get("count", 0),
-        "month_cost": month.get("cost", 0),
-        "month_profit": max(0, month.get("total", 0) - month.get("cost", 0)),
         "product_count": product_count,
     }
 

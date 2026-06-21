@@ -33,7 +33,6 @@ export default function CustomerList() {
       email,
       membership_tier: tier,
       loyalty_points: parseInt(points) || 0,
-      loyaltyPoints: parseInt(points) || 0,
       notes: notes || null,
       created_at: new Date().toISOString()
     };
@@ -67,7 +66,7 @@ export default function CustomerList() {
     setPhone(c.phone || "");
     setEmail(c.email || "");
     setTier(c.membership_tier || "Bronze");
-    setPoints(c.loyalty_points ?? c.loyaltyPoints ?? 0);
+    setPoints(c.loyalty_points || 0);
     setNotes(c.notes || "");
   };
 
@@ -96,7 +95,6 @@ export default function CustomerList() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Budi Gunawan"
               className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none text-sm"
-              data-testid="customer-name-input"
             />
           </div>
 
@@ -108,7 +106,6 @@ export default function CustomerList() {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="08..."
               className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none text-sm"
-              data-testid="customer-phone-input"
             />
           </div>
 
@@ -120,7 +117,6 @@ export default function CustomerList() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="budi@email.com"
               className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none text-sm"
-              data-testid="customer-email-input"
             />
           </div>
 
@@ -131,7 +127,6 @@ export default function CustomerList() {
                 value={tier}
                 onChange={(e) => setTier(e.target.value)}
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none text-sm"
-                data-testid="customer-tier-select"
               >
                 {memberships.map(m => (
                   <option key={m.id} value={m.name}>{m.name}</option>
@@ -146,7 +141,6 @@ export default function CustomerList() {
                 onChange={(e) => setPoints(e.target.value)}
                 placeholder="Poin"
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none text-sm"
-                data-testid="customer-points-input"
               />
             </div>
           </div>
@@ -193,14 +187,7 @@ export default function CustomerList() {
               <tbody className="divide-y divide-[hsl(var(--border))]">
                 {customers.map((c) => (
                   <tr key={c.id} className="hover:bg-[hsl(var(--background))]/50 transition-colors">
-                    <td className="py-3 font-medium text-xs">
-                      <div>{c.name}</div>
-                      {c.notes && (
-                        <div className="text-[10px] text-gray-500 italic mt-0.5" data-testid="customer-notes-display">
-                          {c.notes}
-                        </div>
-                      )}
-                    </td>
+                    <td className="py-3 font-medium text-xs">{c.name}</td>
                     <td className="py-3 text-xs">
                       <div>{c.phone || "-"}</div>
                       <div className="text-[hsl(var(--muted))]">{c.email || "-"}</div>
@@ -213,7 +200,7 @@ export default function CustomerList() {
                         {c.membership_tier}
                       </span>
                     </td>
-                    <td className="py-3 text-center font-mono font-bold text-xs">{c.loyalty_points ?? c.loyaltyPoints ?? 0}</td>
+                    <td className="py-3 text-center font-mono font-bold text-xs">{c.loyalty_points}</td>
                     <td className="py-3 text-right flex justify-end gap-2">
                       <button onClick={() => handleEdit(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit">
                         <Edit size={16} />

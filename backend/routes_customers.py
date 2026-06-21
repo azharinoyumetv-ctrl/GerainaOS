@@ -16,10 +16,7 @@ router = APIRouter(tags=["customers_debt"])
 async def list_customers(user: dict = Depends(get_current_user)):
     db = get_db()
     cursor = db.customers.find({"store_id": user["store_id"]}, {"_id": 0}).sort("name", 1)
-    res = await cursor.to_list(length=200)
-    for r in res:
-        r["loyaltyPoints"] = r.get("loyalty_points", 0)
-    return res
+    return await cursor.to_list(length=200)
 
 @router.post("/api/customers", response_model=Customer)
 async def create_customer(payload: CustomerBase, user: dict = Depends(get_current_user)):
@@ -27,7 +24,6 @@ async def create_customer(payload: CustomerBase, user: dict = Depends(get_curren
     existing = await db.customers.find_one({"store_id": user["store_id"], "phone": payload.phone} if payload.phone else {"_id": None})
     if existing:
         raise HTTPException(status_code=400, detail="Nomor telepon pelanggan sudah ada")
-    pts = payload.loyaltyPoints if payload.loyaltyPoints is not None else (payload.loyalty_points or 0)
     doc = {
         "id": str(uuid.uuid4()),
         "store_id": user["store_id"],
@@ -35,8 +31,7 @@ async def create_customer(payload: CustomerBase, user: dict = Depends(get_curren
         "phone": payload.phone,
         "email": payload.email,
         "membership_tier": payload.membership_tier or "Bronze",
-        "loyalty_points": pts,
-        "loyaltyPoints": pts,
+        "loyalty_points": payload.loyalty_points or 0,
         "notes": payload.notes,
         "created_at": utcnow().isoformat()
     }
@@ -47,7 +42,6 @@ async def create_customer(payload: CustomerBase, user: dict = Depends(get_curren
 @router.put("/api/customers/{cust_id}", response_model=Customer)
 async def update_customer(cust_id: str, payload: CustomerBase, user: dict = Depends(get_current_user)):
     db = get_db()
-    pts = payload.loyaltyPoints if payload.loyaltyPoints is not None else (payload.loyalty_points or 0)
     res = await db.customers.find_one_and_update(
         {"id": cust_id, "store_id": user["store_id"]},
         {"$set": {
@@ -55,7 +49,7 @@ async def update_customer(cust_id: str, payload: CustomerBase, user: dict = Depe
             "phone": payload.phone,
             "email": payload.email,
             "membership_tier": payload.membership_tier,
-            "loyalty_points": pts,
+            "loyalty_points": payload.loyalty_points,
             "notes": payload.notes
         }},
         return_document=True,
@@ -63,7 +57,6 @@ async def update_customer(cust_id: str, payload: CustomerBase, user: dict = Depe
     )
     if not res:
         raise HTTPException(status_code=404, detail="Pelanggan tidak ditemukan")
-    res["loyaltyPoints"] = res.get("loyalty_points", 0)
     return res
 
 @router.delete("/api/customers/{cust_id}")

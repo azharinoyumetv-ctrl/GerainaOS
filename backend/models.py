@@ -262,7 +262,6 @@ class CustomerBase(BaseModel):
     email: Optional[str] = None
     membership_tier: Optional[str] = "Bronze"
     loyalty_points: int = 0
-    loyaltyPoints: Optional[int] = None
     notes: Optional[str] = None
 
 class Customer(CustomerBase):
