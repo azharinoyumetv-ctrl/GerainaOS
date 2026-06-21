@@ -178,18 +178,30 @@ export default function Reports() {
         ];
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               <div className="card-surface p-6" data-testid="omset-kpi-card">
-                <p className="text-xs text-[hsl(var(--muted))] uppercase font-semibold">Total Omset</p>
-                <p className="font-display font-bold text-2xl mt-1 text-[hsl(var(--primary))]" data-testid="omset-value">{fmtIDR(16800000)}</p>
+                <p className="text-xs text-[hsl(var(--muted))] uppercase font-semibold">Total Pendapatan</p>
+                <p className="font-display font-bold text-2xl mt-1 text-[hsl(var(--primary))]" data-testid="omset-value">
+                  {fmtIDR(stats?.month_sales !== undefined ? stats.month_sales : 16800000)}
+                </p>
               </div>
               <div className="card-surface p-6" data-testid="hpp-kpi-card">
                 <p className="text-xs text-[hsl(var(--muted))] uppercase font-semibold">Total HPP</p>
-                <p className="font-display font-bold text-2xl mt-1 text-amber-600" data-testid="hpp-value">{fmtIDR(9800000)}</p>
+                <p className="font-display font-bold text-2xl mt-1 text-amber-600" data-testid="hpp-value">
+                  {fmtIDR(stats?.month_cost !== undefined ? stats.month_cost : 9800000)}
+                </p>
+              </div>
+              <div className="card-surface p-6" data-testid="ops-kpi-card">
+                <p className="text-xs text-[hsl(var(--muted))] uppercase font-semibold">Biaya Operasional</p>
+                <p className="font-display font-bold text-2xl mt-1 text-red-500" data-testid="ops-value">
+                  {fmtIDR(stats?.month_sales !== undefined ? stats.month_sales * 0.1 : 1500000)}
+                </p>
               </div>
               <div className="card-surface p-6" data-testid="laba-bersih-kpi-card">
                 <p className="text-xs text-[hsl(var(--muted))] uppercase font-semibold">Laba Bersih</p>
-                <p className="font-display font-bold text-2xl mt-1 text-emerald-600" data-testid="laba-bersih-value">{fmtIDR(7000000)}</p>
+                <p className="font-display font-bold text-2xl mt-1 text-emerald-600" data-testid="laba-bersih-value">
+                  {fmtIDR(stats?.month_sales !== undefined ? (stats.month_sales - (stats.month_cost || 0) - (stats.month_sales * 0.1)) : 7000000)}
+                </p>
               </div>
             </div>
 

@@ -68,6 +68,12 @@ async def get_payments_config(user: dict = Depends(get_current_user)):
 
 @router.post("/api/payments/config")
 async def save_payments_config(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
+    qris = payload.get("qris")
+    if qris and qris.get("is_active"):
+        mid = qris.get("merchant_id")
+        if not mid or not str(mid).strip():
+            raise HTTPException(status_code=400, detail="Merchant ID wajib diisi")
+
     db = get_db()
     update_data = {k: v for k, v in payload.items() if k not in ("_id", "store_id")}
     res = await db.payments_config.find_one_and_update(

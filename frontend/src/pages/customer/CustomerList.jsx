@@ -33,6 +33,7 @@ export default function CustomerList() {
       email,
       membership_tier: tier,
       loyalty_points: parseInt(points) || 0,
+      loyaltyPoints: parseInt(points) || 0,
       notes: notes || null,
       created_at: new Date().toISOString()
     };
@@ -66,7 +67,7 @@ export default function CustomerList() {
     setPhone(c.phone || "");
     setEmail(c.email || "");
     setTier(c.membership_tier || "Bronze");
-    setPoints(c.loyalty_points || 0);
+    setPoints(c.loyalty_points ?? c.loyaltyPoints ?? 0);
     setNotes(c.notes || "");
   };
 
@@ -212,7 +213,7 @@ export default function CustomerList() {
                         {c.membership_tier}
                       </span>
                     </td>
-                    <td className="py-3 text-center font-mono font-bold text-xs">{c.loyalty_points}</td>
+                    <td className="py-3 text-center font-mono font-bold text-xs">{c.loyalty_points ?? c.loyaltyPoints ?? 0}</td>
                     <td className="py-3 text-right flex justify-end gap-2">
                       <button onClick={() => handleEdit(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit">
                         <Edit size={16} />

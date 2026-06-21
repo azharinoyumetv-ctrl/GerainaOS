@@ -37,6 +37,7 @@ export default function Categories() {
   };
 
   const handleEdit = (c) => {
+    if (typeof c === "string") return;
     setEditingId(c.id);
     setName(c.name);
     setDesc(c.description || "");
@@ -105,20 +106,26 @@ export default function Categories() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
-                {categories.map((c) => (
-                  <tr key={c.id} className="hover:bg-[hsl(var(--background))]/50 transition-colors">
-                    <td className="py-3 font-medium">{c.name}</td>
-                    <td className="py-3 text-[hsl(var(--muted))]">{c.description || "-"}</td>
-                    <td className="py-3 text-right flex justify-end gap-2">
-                      <button onClick={() => handleEdit(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit">
-                        <Edit size={16} />
-                      </button>
-                      <button onClick={() => handleDelete(c.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="Hapus">
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {categories.map((c) => {
+                  const isString = typeof c === "string";
+                  const nameVal = isString ? c : c.name;
+                  const descVal = isString ? "-" : (c.description || "-");
+                  const idVal = isString ? c : c.id;
+                  return (
+                    <tr key={idVal} className="hover:bg-[hsl(var(--background))]/50 transition-colors">
+                      <td className="py-3 font-medium">{nameVal}</td>
+                      <td className="py-3 text-[hsl(var(--muted))]">{descVal}</td>
+                      <td className="py-3 text-right flex justify-end gap-2">
+                        <button onClick={() => handleEdit(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit" disabled={isString}>
+                          <Edit size={16} />
+                        </button>
+                        <button onClick={() => handleDelete(idVal)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="Hapus" disabled={isString}>
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {categories.length === 0 && (
                   <tr>
                     <td colSpan="3" className="py-8 text-center text-[hsl(var(--muted))]">Belum ada kategori yang dibuat.</td>

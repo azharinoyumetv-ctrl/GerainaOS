@@ -16,17 +16,23 @@ export default function PaymentConfig() {
   const handleSave = (e) => {
     e.preventDefault();
     setErrors({});
-    if (type === "qris" && (!config.qris.merchant_id || !config.qris.merchant_id.trim())) {
+    if (type?.toLowerCase() === "qris" && config?.qris?.is_active && (!config?.qris?.merchant_id || !config.qris.merchant_id.trim())) {
       setErrors({ merchant_id: "Merchant ID wajib diisi" });
       return;
     }
     setSaving(true);
     api.post("/payments/config", config)
-      .then(() => {
+      .then((r) => {
+        setConfig(r.data);
         alert(`Konfigurasi pembayaran ${type.toUpperCase()} berhasil disimpan!`);
       })
       .catch((err) => {
-        alert("Gagal menyimpan konfigurasi: " + (err.response?.data?.detail || err.message));
+        const msg = err.response?.data?.detail || err.message;
+        if (msg && (msg.includes("Merchant ID") || msg.toLowerCase().includes("merchant id"))) {
+          setErrors({ merchant_id: msg });
+        } else {
+          alert("Gagal menyimpan konfigurasi: " + msg);
+        }
       })
       .finally(() => {
         setSaving(false);
@@ -110,7 +116,7 @@ export default function PaymentConfig() {
                 <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">QRIS Merchant ID</label>
                 <input
                   type="text"
-                  value={config.qris.merchant_id}
+                  value={config.qris.merchant_id || ""}
                   onChange={(e) => {
                     setConfig({ ...config, qris: { ...config.qris, merchant_id: e.target.value } });
                     if (e.target.value.trim()) {

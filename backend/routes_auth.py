@@ -60,7 +60,7 @@ async def register(payload: UserRegister):
         {"name": "Croissant Original", "price": 18000, "cost": 7500, "stock": 30, "category": "Roti", "unit": "pcs"},
         {"name": "Nasi Goreng Spesial", "price": 28000, "cost": 12000, "stock": 50, "category": "Makanan", "unit": "porsi"},
         {"name": "Teh Tarik Hangat", "price": 15000, "cost": 4000, "stock": 80, "category": "Minuman", "unit": "cup"},
-        {"name": "Roti Bakar Coklat", "price": 17000, "cost": 6000, "stock": 40, "category": "Roti", "unit": "pcs"},
+        {"name": "Roti Bakar Coklat", "price": 17000, "cost": 6000, "stock": 3, "category": "Roti", "unit": "pcs"},
         {"name": "Air Mineral 600ml", "price": 5000, "cost": 2500, "stock": 200, "category": "Minuman", "unit": "btl"},
     ]
     docs = []
