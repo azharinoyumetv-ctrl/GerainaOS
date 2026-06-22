@@ -19,11 +19,19 @@ function Nav() {
         <Link to="/geraina" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="landing-logo">
           <Leaf className="text-[hsl(var(--accent))]" size={22} /> Geraina <span className="text-[hsl(var(--muted))] text-sm font-medium">by DagangOS</span>
         </Link>
-        <nav className="hidden md:flex gap-7 text-sm font-medium text-[hsl(var(--foreground))]">
+        <nav className="hidden md:flex gap-7 text-sm font-medium text-[hsl(var(--foreground))] items-center">
           <a href="#features" className="hover:text-[hsl(var(--primary))] transition-colors" data-testid="nav-features">Fitur</a>
           <a href="#modules" className="hover:text-[hsl(var(--primary))] transition-colors" data-testid="nav-modules">Modul</a>
           <Link to="/geraina/pricing" className="hover:text-[hsl(var(--primary))] transition-colors" data-testid="nav-pricing">Harga</Link>
           <a href="#faq" className="hover:text-[hsl(var(--primary))] transition-colors" data-testid="nav-faq">FAQ</a>
+          <a
+            href="https://wa.me/628999155182?text=Halo%20Geraina%20POS%2C%20saya%20tertarik%20dengan%20layanan%20kasir%20digital%20Anda."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors flex items-center gap-1"
+          >
+            Hubungi Kami
+          </a>
         </nav>
         <div className="flex gap-2">
           <Link to="/geraina/login" className="btn-ghost" data-testid="nav-login-btn">Masuk</Link>
@@ -702,14 +710,128 @@ function FinalCTA() {
   );
 }
 
-/* ──────────────── FOOTER ──────────────── */
-function Footer() {
+/* ──────────────── TERMS & CONDITIONS MODAL ──────────────── */
+function TermsModal({ isOpen, onClose }) {
+  if (!isOpen) return null;
   return (
-    <footer className="border-t border-[hsl(var(--border))] py-10" data-testid="landing-footer">
-      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-4 items-center justify-between text-sm text-[hsl(var(--muted))]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-fadein">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--surface))]">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="text-[hsl(var(--accent))]" size={20} />
+            <h3 className="font-display font-bold text-lg text-[hsl(var(--foreground))]">Syarat & Ketentuan Geraina POS</h3>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors p-1.5 rounded-lg hover:bg-black/5"
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
+        </div>
+        
+        {/* Modal Body */}
+        <div className="p-6 overflow-y-auto space-y-5 text-sm text-[hsl(var(--muted))] leading-relaxed text-left">
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">1. Lisensi Penggunaan</h4>
+            <p>
+              Geraina POS memberikan lisensi non-eksklusif, tidak dapat dipindahtangankan, dan terbatas kepada Anda untuk mengakses serta menggunakan platform kasir pintar kami sesuai dengan paket langganan yang dipilih. Anda dilarang keras melakukan rekayasa balik (reverse engineering), memodifikasi, atau mendistribusikan ulang kode sumber aplikasi ini.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">2. Kewajiban & Akun Pengguna</h4>
+            <p>
+              Anda bertanggung jawab penuh untuk menjaga kerahasiaan informasi akun, termasuk kata sandi login sistem kasir offline maupun backoffice. Semua aktivitas yang terjadi di bawah akun Anda adalah tanggung jawab Anda sepenuhnya. Anda wajib memberikan data bisnis yang akurat dan sah.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">3. Kebijakan Pembayaran & Langganan</h4>
+            <p>
+              Layanan kami ditawarkan dengan metode pembayaran berulang (bulanan/tahunan) sesuai paket yang dipilih. Keterlambatan pembayaran dapat mengakibatkan pembatasan akses sementara atau penghentian layanan. Semua biaya yang telah dibayarkan tidak dapat dikembalikan (non-refundable), kecuali ditentukan lain oleh kebijakan DagangOS.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">4. Keamanan & Cadangan Data</h4>
+            <p>
+              Kami mengimplementasikan langkah-langkah keamanan tingkat industri untuk melindungi data transaksi dan pelanggan Anda. Transaksi dicadangkan otomatis ke server cloud aman kami. Namun, Anda disarankan untuk melakukan ekspor data berkala untuk arsip mandiri Anda.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">5. Batasan Tanggung Jawab</h4>
+            <p>
+              Geraina POS dan perusahaan induknya, DagangOS, tidak bertanggung jawab atas kerugian finansial, kehilangan data, atau gangguan bisnis yang disebabkan oleh kegagalan koneksi internet lokal, kerusakan perangkat keras pengguna, atau penggunaan platform yang tidak sesuai instruksi.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">6. Hukum yang Berlaku</h4>
+            <p>
+              Syarat dan Ketentuan ini diatur dan ditafsirkan sesuai dengan hukum Republik Indonesia. Setiap perselisihan yang timbul dari atau terkait dengan layanan ini akan diselesaikan secara musyawarah, atau melalui pengadilan yang berwenang di wilayah hukum domisili DagangOS.
+            </p>
+          </section>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="px-6 py-4 border-t border-[hsl(var(--border))] flex justify-end bg-[hsl(var(--surface))]">
+          <button 
+            onClick={onClose} 
+            className="btn-primary text-xs px-5 py-2.5"
+          >
+            Saya Mengerti
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────── FLOATING WHATSAPP ──────────────── */
+function FloatingWhatsApp() {
+  return (
+    <a
+      href="https://wa.me/628999155182?text=Halo%20Geraina%20POS%2C%20saya%20tertarik%20dengan%20layanan%20kasir%20digital%20Anda."
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 font-semibold text-sm"
+    >
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+      </span>
+      <span>Tanya via WhatsApp</span>
+    </a>
+  );
+}
+
+/* ──────────────── FOOTER ──────────────── */
+function Footer({ onOpenTerms }) {
+  return (
+    <footer className="border-t border-[hsl(var(--border))] py-10 bg-white" data-testid="landing-footer">
+      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-6 items-center justify-between text-sm text-[hsl(var(--muted))]">
         <span className="font-display font-bold text-[hsl(var(--foreground))] flex items-center gap-2">
           <Leaf className="text-[hsl(var(--accent))]" size={18} /> Geraina POS
         </span>
+        <div className="flex flex-wrap justify-center gap-6 text-xs font-semibold">
+          <button 
+            onClick={onOpenTerms} 
+            className="hover:text-[hsl(var(--foreground))] transition-colors"
+          >
+            Syarat & Ketentuan
+          </button>
+          <a 
+            href="https://wa.me/628999155182?text=Halo%20Geraina%20POS%2C%20saya%20ingin%20konsultasi%20mengenai%20sistem%20kasir." 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-emerald-600 transition-colors text-emerald-600 font-bold"
+          >
+            Hubungi Kami (WhatsApp)
+          </a>
+        </div>
         <span>© 2026 DagangOS. Dibuat untuk UMKM Indonesia.</span>
       </div>
     </footer>
@@ -718,8 +840,10 @@ function Footer() {
 
 /* ──────────────── PAGE ASSEMBLY ──────────────── */
 export default function Landing() {
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+
   return (
-    <div data-testid="landing-page">
+    <div data-testid="landing-page" className="relative">
       <Nav />
       <Hero />
       <Features />
@@ -730,7 +854,10 @@ export default function Landing() {
       <FAQ />
       <DownloadApp />
       <FinalCTA />
-      <Footer />
+      <Footer onOpenTerms={() => setIsTermsOpen(true)} />
+      
+      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
+      <FloatingWhatsApp />
     </div>
   );
 }

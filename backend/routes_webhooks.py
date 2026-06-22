@@ -69,7 +69,7 @@ async def xendit_webhook(req: Request, background: BackgroundTasks):
 @router.post("/xendit/simulate")
 async def simulate_webhook(payload: dict, req: Request):
     """Dev-only simulator (no token required) for local end-to-end tests."""
-    if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "true").lower() not in ("1", "true", "yes")):
+    if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "false").lower() not in ("1", "true", "yes")):
         raise HTTPException(status_code=403, detail="Simulator disabled")
     await _process(payload)
     return {"ok": True}
@@ -78,7 +78,7 @@ async def simulate_webhook(payload: dict, req: Request):
 @router.post("/midtrans/simulate")
 async def simulate_midtrans_webhook(payload: dict, req: Request):
     """Dev-only Midtrans webhook simulator (no token required)."""
-    if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "true").lower() not in ("1", "true", "yes")):
+    if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "false").lower() not in ("1", "true", "yes")):
         raise HTTPException(status_code=403, detail="Simulator disabled")
     # Map Midtrans-style payload to internal format
     mapped = {
@@ -94,7 +94,7 @@ async def simulate_midtrans_webhook(payload: dict, req: Request):
 @router.post("/stripe/simulate")
 async def simulate_stripe_webhook(payload: dict, req: Request):
     """Dev-only Stripe webhook simulator (no token required)."""
-    if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "true").lower() not in ("1", "true", "yes")):
+    if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "false").lower() not in ("1", "true", "yes")):
         raise HTTPException(status_code=403, detail="Simulator disabled")
     # Map Stripe-style payload to internal format
     mapped = {

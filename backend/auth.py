@@ -10,6 +10,9 @@ from fastapi.security import OAuth2PasswordBearer
 from database import get_db
 
 JWT_SECRET = os.environ.get("JWT_SECRET_KEY", "change-me")
+if JWT_SECRET == "change-me" and os.environ.get("ENV") == "production":
+    raise ValueError("JWT_SECRET_KEY must be set to a secure secret in a production environment!")
+
 JWT_ALG = os.environ.get("JWT_ALGORITHM", "HS256")
 JWT_EXPIRE_MIN = int(os.environ.get("JWT_EXPIRE_MINUTES", "1440"))
 
