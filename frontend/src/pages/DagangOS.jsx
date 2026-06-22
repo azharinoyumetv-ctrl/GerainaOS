@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Store, Cake, Sparkles, LayoutGrid, Cpu, LineChart, Shield, Leaf, Utensils } from "lucide-react";
+import { ArrowRight, Store, Cake, Sparkles, LayoutGrid, Cpu, LineChart, Shield, Leaf, Utensils, ShieldCheck } from "lucide-react";
 
 export default function DagangOS() {
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] selection:bg-[hsl(var(--accent))/0.2]">
+    <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] selection:bg-[hsl(var(--accent))/0.2] relative">
       {/* Navigation Header */}
       <header className="border-b border-[hsl(var(--border))] bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -15,6 +18,14 @@ export default function DagangOS() {
             <a href="#about" className="hover:text-[hsl(var(--foreground))] transition-colors">Tentang Kami</a>
             <a href="#products" className="hover:text-[hsl(var(--foreground))] transition-colors">Produk OS</a>
             <a href="#benefits" className="hover:text-[hsl(var(--foreground))] transition-colors">Keunggulan</a>
+            <a
+              href="https://wa.me/628999155182?text=Halo%20DagangOS%2C%20saya%20tertarik%20dengan%20sistem%20operasi%20bisnis%20Anda."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-600 hover:text-emerald-700 font-bold transition-colors"
+            >
+              Hubungi Kami
+            </a>
           </nav>
           <a href="#products" className="btn-primary text-xs font-semibold px-4 py-2">
             Jelajahi Produk
@@ -143,17 +154,132 @@ export default function DagangOS() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-[hsl(var(--border))]">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-sm text-[hsl(var(--muted))] gap-4">
+      <footer className="py-12 border-t border-[hsl(var(--border))] bg-white">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-sm text-[hsl(var(--muted))] gap-6">
           <div className="flex items-center gap-2 font-display text-base font-bold text-[hsl(var(--foreground))]">
             <Leaf className="text-[hsl(var(--primary))]" size={18} />
             <span>DagangOS Suite</span>
+          </div>
+          <div className="flex flex-wrap justify-center gap-6 text-xs font-semibold">
+            <button 
+              onClick={() => setIsTermsOpen(true)} 
+              className="hover:text-[hsl(var(--foreground))] transition-colors"
+            >
+              Syarat & Ketentuan
+            </button>
+            <a 
+              href="https://wa.me/628999155182?text=Halo%20DagangOS%2C%20saya%20ingin%20konsultasi%20mengenai%20produk%20sistem%20operasi%20bisnis." 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-emerald-600 transition-colors text-emerald-600 font-bold"
+            >
+              Hubungi Kami (WhatsApp)
+            </a>
           </div>
           <div>
             © 2026 DagangOS. All rights reserved.
           </div>
         </div>
       </footer>
+
+      {/* Terms & Conditions Modal */}
+      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
+
+      {/* Floating WhatsApp Widget */}
+      <FloatingWhatsApp />
     </div>
+  );
+}
+
+/* ──────────────── TERMS & CONDITIONS MODAL ──────────────── */
+function TermsModal({ isOpen, onClose }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-fadein">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--surface))]">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="text-[hsl(var(--accent))]" size={20} />
+            <h3 className="font-display font-bold text-lg text-[hsl(var(--foreground))]">Syarat & Ketentuan DagangOS</h3>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors p-1.5 rounded-lg hover:bg-black/5"
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
+        </div>
+        
+        {/* Modal Body */}
+        <div className="p-6 overflow-y-auto space-y-5 text-sm text-[hsl(var(--muted))] leading-relaxed text-left">
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">1. Layanan DagangOS</h4>
+            <p>
+              DagangOS menyediakan ekosistem sistem operasi digital terpadu untuk pelaku UMKM retail, minimarket, serta industri food & beverage (F&B) di Indonesia. Layanan meliputi modul kasir pintar, manajemen inventaris stok, pembukuan keuangan, dan integrasi pembayaran.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">2. Pendaftaran & Akun</h4>
+            <p>
+              Pengguna wajib memberikan informasi yang akurat dan sah saat melakukan pendaftaran. Keamanan kredensial masuk sistem diatur oleh pemilik bisnis. DagangOS tidak bertanggung jawab atas kebocoran akun akibat kelalaian pemilik/karyawan toko.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">3. Kebijakan Transaksi & Pembayaran</h4>
+            <p>
+              Layanan kami menggunakan model subscription berbayar. Pelanggan wajib membayar biaya paket secara tepat waktu. Segala bentuk integrasi pembayaran pihak ketiga (seperti Xendit, Stripe, Midtrans) terikat pada syarat & ketentuan masing-masing payment gateway.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">4. Hak Kekayaan Intelektual</h4>
+            <p>
+              Seluruh kekayaan intelektual, desain, perangkat lunak, dan merek DagangOS dilindungi undang-undang. Pengguna dilarang menduplikasi, menyebarluaskan, atau memodifikasi sistem operasi DagangOS tanpa izin tertulis dari manajemen perusahaan kami.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h4 className="font-bold text-[hsl(var(--foreground))] text-base">5. Hukum & Domisili Hukum</h4>
+            <p>
+              Persetujuan ini diatur berdasarkan hukum yang berlaku di Negara Kesatuan Republik Indonesia. Setiap perselisihan hukum yang tidak dapat diselesaikan secara kekeluargaan akan diselesaikan melalui pengadilan negeri yang disepakati bersama.
+            </p>
+          </section>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="px-6 py-4 border-t border-[hsl(var(--border))] flex justify-end bg-[hsl(var(--surface))]">
+          <button 
+            onClick={onClose} 
+            className="btn-primary text-xs px-5 py-2.5"
+          >
+            Saya Mengerti
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────── FLOATING WHATSAPP ──────────────── */
+function FloatingWhatsApp() {
+  return (
+    <a
+      href="https://wa.me/628999155182?text=Halo%20DagangOS%2C%20saya%20tertarik%20dengan%20sistem%20operasi%20bisnis%20Anda."
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 font-semibold text-sm"
+    >
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+      </span>
+      <span>Tanya via WhatsApp</span>
+    </a>
+  );
+}
   );
 }
