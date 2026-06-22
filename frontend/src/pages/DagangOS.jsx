@@ -281,5 +281,3 @@ function FloatingWhatsApp() {
     </a>
   );
 }
-  );
-}
