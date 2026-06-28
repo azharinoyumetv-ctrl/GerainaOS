@@ -3,13 +3,16 @@ import { mockDb } from "./mockDb";
 
 const getBackendUrl = () => {
   const envUrl = process.env.REACT_APP_BACKEND_URL;
-  if (window.location.origin.includes("localhost")) {
+  if (typeof window !== "undefined" && window.location.origin.includes("dagangos.com")) {
+    return window.location.origin;
+  }
+  if (typeof window !== "undefined" && window.location.origin.includes("localhost")) {
     return envUrl && envUrl !== "undefined" && envUrl !== "" ? envUrl : "http://localhost:8000";
   }
   if (envUrl && envUrl !== "undefined" && envUrl !== "" && !envUrl.includes("localhost")) {
     return envUrl;
   }
-  return "https://geraina-os.vercel.app";
+  return "https://dagangos.com";
 };
 
 const BACKEND_URL = getBackendUrl();
