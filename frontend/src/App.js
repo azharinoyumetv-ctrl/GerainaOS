@@ -62,6 +62,15 @@ function Protected({ children }) {
   return children;
 }
 
+function GerainaRootComponent() {
+  const { user } = useAuth();
+  const token = typeof window !== "undefined" ? (localStorage.getItem("dagangos_token") || localStorage.getItem("geraina_token") || localStorage.getItem("dapuros_token")) : null;
+  if (user || token) {
+    return <AppLayout />;
+  }
+  return <Landing />;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -80,11 +89,11 @@ function App() {
 
           {/* Geraina POS Brand Routes */}
           <Route path="/geraina/*">
-            <Route index element={<Landing />} />
+            <Route index element={<GerainaRootComponent />} />
             <Route path="pricing" element={<Pricing />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
-            <Route path="app/*" element={<Protected><AppLayout /></Protected>}>
+            <Route path="app/*" element={<AppLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
               
               {/* General Routes */}
@@ -158,13 +167,15 @@ function App() {
             </Route>
 
             {/* Direct un-prefixed management routes & deep links */}
+            <Route path="dashboard/*" element={<AppLayout />} />
             <Route path="settings/*" element={<AppLayout />} />
             <Route path="payments/*" element={<AppLayout />} />
             <Route path="inventory/*" element={<AppLayout />} />
             <Route path="products/*" element={<AppLayout />} />
+            <Route path="pos/*" element={<AppLayout />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<GerainaRootComponent />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
