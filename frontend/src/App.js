@@ -130,46 +130,38 @@ function App() {
               <Route path="debt/payable" element={<RoleGuard><AccountsPayable /></RoleGuard>} />
 
               {/* Payments */}
-              <Route path="settings/payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
+              <Route path="settings/payments/*" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
               <Route path="settings/payments" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
-              <Route path="payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
+              <Route path="payments/*" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
               <Route path="payments" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
 
               {/* Reports */}
-              <Route path="reports/:type" element={<RoleGuard><Reports /></RoleGuard>} />
+              <Route path="reports/*" element={<RoleGuard><Reports /></RoleGuard>} />
               <Route path="reports" element={<RoleGuard><Reports /></RoleGuard>} />
 
               {/* Staff */}
+              <Route path="staff/*" element={<RoleGuard><StaffManagement /></RoleGuard>} />
               <Route path="staff" element={<RoleGuard><StaffManagement /></RoleGuard>} />
-              <Route path="staff/management" element={<RoleGuard><StaffManagement /></RoleGuard>} />
-              <Route path="staff/roles" element={<RoleGuard><Roles /></RoleGuard>} />
-              <Route path="staff/permissions" element={<RoleGuard><Permissions /></RoleGuard>} />
-              <Route path="staff/attendance" element={<RoleGuard><Attendance /></RoleGuard>} />
 
               {/* Branches */}
               <Route path="branches" element={<RoleGuard><BranchManagement /></RoleGuard>} />
 
               {/* Integrations */}
-              <Route path="integrations/:type" element={<RoleGuard><Integrations /></RoleGuard>} />
+              <Route path="integrations/*" element={<RoleGuard><Integrations /></RoleGuard>} />
               <Route path="integrations" element={<RoleGuard><Integrations /></RoleGuard>} />
 
               {/* Settings */}
               <Route path="settings/billing" element={<RoleGuard><Settings /></RoleGuard>} />
               <Route path="billing" element={<RoleGuard><Settings /></RoleGuard>} />
-              <Route path="settings/:type" element={<RoleGuard><Settings /></RoleGuard>} />
+              <Route path="settings/*" element={<RoleGuard><Settings /></RoleGuard>} />
               <Route path="settings" element={<RoleGuard><Settings /></RoleGuard>} />
             </Route>
 
             {/* Direct un-prefixed management routes & deep links */}
-            <Route path="settings/payments/*" element={<AppLayout />} />
-            <Route path="settings/payments" element={<AppLayout />} />
+            <Route path="settings/*" element={<AppLayout />} />
             <Route path="payments/*" element={<AppLayout />} />
-            <Route path="payments" element={<AppLayout />} />
-            <Route path="inventory/*" element={<Navigate to="/geraina/app/inventory" replace />} />
-            <Route path="billing/*" element={<Navigate to="/geraina/app/settings/billing" replace />} />
-            <Route path="settings/*" element={<Navigate to="/geraina/app/settings/general" replace />} />
-            <Route path="pos/*" element={<Navigate to="/geraina/app/pos" replace />} />
-            <Route path="dashboard/*" element={<Navigate to="/geraina/app/dashboard" replace />} />
+            <Route path="inventory/*" element={<AppLayout />} />
+            <Route path="products/*" element={<AppLayout />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
