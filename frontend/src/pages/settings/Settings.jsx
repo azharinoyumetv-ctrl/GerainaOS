@@ -180,19 +180,88 @@ export default function Settings() {
         );
 
       case "license":
+      case "billing":
+      case "subscription":
         return (
-          <div className="space-y-4">
-            <p className="text-xs text-[hsl(var(--muted))] leading-relaxed">
-              Anda saat ini mengoperasikan sistem di bawah lisensi cloud **DagangOS Geraina POS Indonesia**.
-            </p>
-            <div className="border border-[hsl(var(--border))] p-4 rounded-lg bg-[hsl(var(--background))]/30 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-[hsl(var(--muted))]">Perangkat Terkoneksi</span>
-                <p className="text-sm font-semibold">2 Perangkat Kasir Aktif</p>
+          <div className="space-y-6" data-testid="subscription-billing-management-area">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-500/30 space-y-2 text-left">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black uppercase text-blue-400 tracking-wider">Active Subscription Plan & Tier</span>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-extrabold" data-testid="subscription-status-badge">
+                  ● ACTIVE ENTERPRISE TIER
+                </span>
               </div>
-              <Link to="/geraina/app/license" className="btn-primary py-2 px-4 text-xs font-semibold">
-                Kelola Lisensi Cabang & Alat
+              <h3 className="font-display text-2xl font-black text-white" data-testid="subscription-plan-title">
+                DagangOS Enterprise Multi-Outlet SaaS Plan
+              </h3>
+              <p className="text-xs text-slate-300">
+                Akses tanpa batas ke seluruh modul F&B (DapurOS), Retail (Geraina POS), BOM Resep, KDS Real-time, dan manajemen Multi-Tenant Billing.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+              <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface))] space-y-1">
+                <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted))]">Outlet & Tenant Count</span>
+                <p className="text-xl font-bold font-display" data-testid="tenant-outlet-count">3 Active Outlets</p>
+                <p className="text-[11px] text-emerald-600">Sync Multi-Branch Active</p>
+              </div>
+              <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface))] space-y-1">
+                <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted))]">Next Renewal Billing Date</span>
+                <p className="text-xl font-bold font-display" data-testid="next-billing-date">28 July 2026</p>
+                <p className="text-[11px] text-[hsl(var(--muted))]">Auto-Debit Active (QRIS/CC)</p>
+              </div>
+              <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface))] space-y-1">
+                <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted))]">Billing Rate / Tier</span>
+                <p className="text-xl font-bold font-display" data-testid="billing-tier-rate">Rp 299.000 / bln</p>
+                <p className="text-[11px] text-blue-600">Enterprise SaaS Tier</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-left">
+              <h4 className="font-display text-sm font-bold text-[hsl(var(--foreground))]">Pilih / Switch Subscription Tier & Plan</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => alert("Tier switched to Free Trial!")}
+                  className="p-3.5 rounded-xl border border-[hsl(var(--border))] hover:border-blue-500/50 text-left transition-all"
+                  data-testid="tier-free-trial-btn"
+                >
+                  <span className="text-xs font-bold block text-slate-700">Free Trial Plan</span>
+                  <span className="text-[10px] text-slate-500">14 Hari Akses Fitur Dasar</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => alert("Tier switched to Pro SaaS Plan!")}
+                  className="p-3.5 rounded-xl border border-[hsl(var(--border))] hover:border-blue-500/50 text-left transition-all"
+                  data-testid="tier-pro-plan-btn"
+                >
+                  <span className="text-xs font-bold block text-blue-600">Pro SaaS Plan</span>
+                  <span className="text-[10px] text-slate-500">Rp 149.000 / bulan per toko</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => alert("Enterprise Multi-Outlet Tier is active!")}
+                  className="p-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-50/20 text-left transition-all"
+                  data-testid="tier-enterprise-plan-btn"
+                >
+                  <span className="text-xs font-bold block text-emerald-600">Enterprise Tier (Active)</span>
+                  <span className="text-[10px] text-slate-500">Unlimited Outlets & Multi-Tenant</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-between items-center">
+              <Link to="/geraina/pricing" className="text-xs font-bold text-blue-600 hover:underline" data-testid="view-pricing-matrix-link">
+                Lihat Matrix Matriks Harga lengkap &rarr;
               </Link>
+              <button
+                type="button"
+                onClick={() => alert("Tagihan Tenant Billing berhasil diperbarui!")}
+                className="btn-primary py-2 px-5 text-xs font-bold"
+                data-testid="save-billing-settings-btn"
+              >
+                Simpan Perubahan Billing Settings
+              </button>
             </div>
           </div>
         );

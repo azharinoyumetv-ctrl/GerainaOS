@@ -12,7 +12,7 @@ const ROLE_PERMISSIONS = {
   Owner: ["*"],
   Manager: [
     "dashboard", "pos", "products", "inventory", "purchase",
-    "suppliers", "customers", "debt", "payments", "reports", "staff", "settings", "about"
+    "suppliers", "customers", "debt", "payments", "reports", "staff", "settings", "billing", "about"
   ],
   Cashier: [
     "dashboard", "pos", "products", "customers", "about"
@@ -138,12 +138,14 @@ const MENU_STRUCTURE = [
     sub: [
       { to: "/geraina/app/settings/general", label: "Umum" },
       { to: "/geraina/app/settings/store", label: "Toko" },
+      { to: "/geraina/app/settings/billing", label: "Langganan & Billing (Subscription)" },
       { to: "/geraina/app/settings/receipt", label: "Struk" },
       { to: "/geraina/app/settings/printer", label: "Printer" },
       { to: "/geraina/app/settings/users", label: "Pengguna" },
       { to: "/geraina/app/settings/license", label: "Lisensi" }
     ]
   },
+  { to: "/geraina/app/settings/billing", icon: CreditCard, label: "Subscription & Billing", key: "billing" },
   { to: "/geraina/app/about", icon: Info, label: "Tentang", key: "about" }
 ];
 
