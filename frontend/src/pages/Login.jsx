@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { Leaf, ArrowRight } from "lucide-react";
 
@@ -9,7 +9,11 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
-  const { login } = useAuth();
+  const { user, login } = useAuth();
+
+  if (user) {
+    return <Navigate to="/geraina/app/dashboard" replace />;
+  }
 
   const handleMasterDemo = async () => {
     setEmail("admin@dagangos.com");

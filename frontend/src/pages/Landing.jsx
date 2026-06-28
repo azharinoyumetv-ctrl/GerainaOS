@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "@/auth/AuthContext";
 import {
   Leaf, Check, ArrowRight, Smartphone, Receipt, Banknote, BarChart3, Zap, Shield,
   ScanBarcode, CreditCard, Users, Package, Truck, ClipboardList, UserCheck,
@@ -13,6 +14,7 @@ const HERO_IMG = "https://customer-assets.emergentagent.com/job_dagangos-feature
 
 /* ─────────────────────── NAV ─────────────────────── */
 function Nav() {
+  const { user } = useAuth();
   return (
     <header className="border-b border-[hsl(var(--border))] bg-[hsl(var(--surface))]/80 backdrop-blur-md sticky top-0 z-50" data-testid="landing-nav">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -34,8 +36,16 @@ function Nav() {
           </a>
         </nav>
         <div className="flex gap-2">
-          <Link to="/geraina/login" className="btn-ghost" data-testid="nav-login-btn">Masuk</Link>
-          <Link to="/geraina/register" className="btn-primary" data-testid="nav-register-btn">Mulai Gratis <ArrowRight size={14} /></Link>
+          {user ? (
+            <Link to="/geraina/app/dashboard" className="btn-primary" data-testid="nav-dashboard-btn">
+              Buka Dashboard Software &rarr;
+            </Link>
+          ) : (
+            <>
+              <Link to="/geraina/login" className="btn-ghost" data-testid="nav-login-btn">Masuk</Link>
+              <Link to="/geraina/register" className="btn-primary" data-testid="nav-register-btn">Mulai Gratis <ArrowRight size={14} /></Link>
+            </>
+          )}
         </div>
       </div>
     </header>
