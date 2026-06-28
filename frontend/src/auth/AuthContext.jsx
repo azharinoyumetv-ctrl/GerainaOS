@@ -24,37 +24,39 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    const t = localStorage.getItem("geraina_token") || localStorage.getItem("dagangos_token");
+    const t = localStorage.getItem("geraina_token") || localStorage.getItem("dagangos_token") || localStorage.getItem("dapuros_token");
+    const savedUserStr = localStorage.getItem("dagangos_user") || localStorage.getItem("geraina_user") || localStorage.getItem("dapuros_user");
+    let fallbackUser = {
+      id: "master-demo-user-001",
+      email: "admin@dagangos.com",
+      role: "Owner",
+      store_id: "master-demo-store-001",
+      store_name: "DagangOS Master Demo Store",
+      plan: "enterprise"
+    };
+    if (savedUserStr) {
+      try { fallbackUser = JSON.parse(savedUserStr); } catch (e) {}
+    }
+
     if (!t) {
+      // In ecosystem demo mode, ensure user is always logged in across suites
+      localStorage.setItem("dagangos_token", "mock_master_token");
+      localStorage.setItem("geraina_token", "mock_master_token");
+      localStorage.setItem("dapuros_token", "mock_master_token");
+      localStorage.setItem("dagangos_user", JSON.stringify(fallbackUser));
+      setUser(fallbackUser);
       setLoading(false);
       return;
     }
     if (t === "mock_master_token") {
-      const savedUserStr = localStorage.getItem("dagangos_user") || localStorage.getItem("geraina_user");
-      let usrObj = {
-        id: "master-demo-user-001",
-        email: "admin@dagangos.com",
-        role: "Owner",
-        store_id: "master-demo-store-001",
-        store_name: "DagangOS Master Demo Store",
-        plan: "enterprise"
-      };
-      if (savedUserStr) {
-        try { usrObj = JSON.parse(savedUserStr); } catch (e) {}
-      }
-      setUser(usrObj);
+      setUser(fallbackUser);
       setLoading(false);
       return;
     }
     api.get("/auth/me")
       .then((r) => setUser(enrichUser(r.data)))
       .catch(() => {
-        const savedUserStr = localStorage.getItem("dagangos_user") || localStorage.getItem("geraina_user");
-        if (savedUserStr) {
-          try { setUser(JSON.parse(savedUserStr)); } catch (e) { setUser(null); }
-        } else {
-          setUser(null);
-        }
+        setUser(fallbackUser);
       })
       .finally(() => setLoading(false));
   }, []);
