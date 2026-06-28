@@ -80,6 +80,5 @@ webpackConfig.devServer = (devServerConfig) => {
 
   return devServerConfig;
 };
-}
 
 module.exports = webpackConfig;
