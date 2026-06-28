@@ -850,7 +850,15 @@ function Footer({ onOpenTerms }) {
 
 /* ──────────────── PAGE ASSEMBLY ──────────────── */
 export default function Landing() {
+  const { user } = useAuth();
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("dagangos_token") || localStorage.getItem("geraina_token") || localStorage.getItem("dapuros_token");
+    if (user || token) {
+      window.location.replace("/geraina/app/dashboard");
+    }
+  }, [user]);
 
   return (
     <div data-testid="landing-page" className="relative">
