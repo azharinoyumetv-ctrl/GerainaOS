@@ -163,6 +163,7 @@ export default function AppLayout() {
   const permissions = ROLE_PERMISSIONS[role] || [];
   
   const [openMenus, setOpenMenus] = useState({});
+  const [showEcosystemSwitcher, setShowEcosystemSwitcher] = useState(false);
 
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -176,11 +177,64 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen flex bg-[hsl(var(--background))]" data-testid="app-layout">
       <aside className="w-64 border-r border-[hsl(var(--border))] bg-[hsl(var(--surface))] flex flex-col h-screen overflow-hidden" data-testid="app-sidebar">
-        <div className="p-5 border-b border-[hsl(var(--border))]">
-          <Link to="/geraina/app/dashboard" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="app-logo">
-            <Leaf className="text-[hsl(var(--accent))]" size={22} /> Geraina POS <span className="text-[10px] text-[hsl(var(--muted))] font-normal">by DagangOS</span>
-          </Link>
-          <p className="text-xs text-[hsl(var(--muted))] mt-1.5">{user?.store_name || "Toko Anda"}</p>
+        <div className="p-4 border-b border-[hsl(var(--border))] relative bg-[hsl(var(--surface))]">
+          <div className="flex items-center justify-between">
+            <Link to="/geraina/app/dashboard" className="font-display text-lg font-extrabold flex items-center gap-2" data-testid="app-logo">
+              <Leaf className="text-[hsl(var(--accent))]" size={20} /> Geraina POS
+            </Link>
+            
+            <button
+              onClick={() => setShowEcosystemSwitcher(!showEcosystemSwitcher)}
+              className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] text-[hsl(var(--foreground))] transition-all flex items-center gap-1 text-xs font-bold"
+              title="Switch Ecosystem App (Odoo Style)"
+              data-testid="odoo-ecosystem-switcher-btn"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[10px]">Suite</span>
+              <ChevronDown size={12} />
+            </button>
+          </div>
+          <p className="text-[11px] text-[hsl(var(--muted))] mt-1 truncate">{user?.store_name || "DagangOS Enterprise"}</p>
+
+          {showEcosystemSwitcher && (
+            <div className="absolute top-14 left-2 right-2 bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border border-slate-700 z-[100] animate-fadein space-y-2 text-left" data-testid="odoo-ecosystem-menu">
+              <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-800">
+                <span className="text-[10px] uppercase font-black text-slate-400 tracking-wider">DagangOS Ecosystem Apps</span>
+                <span className="text-[9px] bg-blue-600/30 text-blue-300 border border-blue-500/40 px-1.5 py-0.5 rounded font-mono">SSO Active</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <a
+                  href="/dapuros/app/dashboard"
+                  className="p-2.5 rounded-xl bg-orange-500/20 border border-orange-500/40 hover:bg-orange-500/30 transition-all block text-left"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Utensils size={14} className="text-orange-400" />
+                    <span className="text-xs font-extrabold text-orange-200">DapurOS</span>
+                  </div>
+                  <p className="text-[10px] text-slate-300 leading-tight">F&B & Restoran OS</p>
+                </a>
+
+                <a
+                  href="/geraina/app/dashboard"
+                  className="p-2.5 rounded-xl bg-blue-500/20 border border-blue-500/40 hover:bg-blue-500/30 transition-all block text-left"
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Leaf size={14} className="text-blue-400" />
+                    <span className="text-xs font-extrabold text-blue-200">Geraina POS</span>
+                  </div>
+                  <p className="text-[10px] text-slate-300 leading-tight">Retail & Toko OS</p>
+                </a>
+              </div>
+
+              <a
+                href="/"
+                className="block w-full text-center py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-[11px] font-bold transition-all border border-slate-700/60 mt-2"
+              >
+                🌐 Kembali ke Ecosystem Hub &rarr;
+              </a>
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 p-3 overflow-y-auto space-y-1 scrollbar-thin">
