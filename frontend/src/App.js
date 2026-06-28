@@ -67,16 +67,24 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Direct Auth Top-level & Full URL Mappings */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/geraina/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/geraina/register" element={<Register />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/geraina/pricing" element={<Pricing />} />
+
           {/* Parent Company Landing Page */}
           <Route path="/" element={<DagangOS />} />
 
           {/* Geraina POS Brand Routes */}
-          <Route path="/geraina">
+          <Route path="/geraina/*">
             <Route index element={<Landing />} />
             <Route path="pricing" element={<Pricing />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
-            <Route path="app" element={<Protected><AppLayout /></Protected>}>
+            <Route path="app/*" element={<Protected><AppLayout /></Protected>}>
               <Route index element={<Navigate to="dashboard" replace />} />
               
               {/* General Routes */}
