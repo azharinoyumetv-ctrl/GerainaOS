@@ -179,8 +179,18 @@ function App() {
             <Route path="dashboard/*" element={<AppLayout />} />
             <Route path="settings/*" element={<AppLayout />} />
             <Route path="payments/*" element={<AppLayout />} />
+            <Route path="reports/*" element={<AppLayout />} />
+            <Route path="staff/*" element={<AppLayout />} />
+            <Route path="integrations/*" element={<AppLayout />} />
             <Route path="inventory/*" element={<AppLayout />} />
             <Route path="products/*" element={<AppLayout />} />
+            <Route path="purchase/*" element={<AppLayout />} />
+            <Route path="suppliers/*" element={<AppLayout />} />
+            <Route path="customers/*" element={<AppLayout />} />
+            <Route path="debt/*" element={<AppLayout />} />
+            <Route path="branches/*" element={<AppLayout />} />
+            <Route path="billing/*" element={<AppLayout />} />
+            <Route path="about/*" element={<AppLayout />} />
             <Route path="pos/*" element={<AppLayout />} />
           </Route>
 
