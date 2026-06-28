@@ -23,7 +23,7 @@ const ROLE_PERMISSIONS = {
 };
 
 const MENU_STRUCTURE = [
-  { to: "/geraina/app/dashboard", icon: LayoutDashboard, label: "Dashboard", key: "dashboard" },
+  { to: "/geraina/app/dashboard", icon: LayoutDashboard, label: "Dasbor", key: "dashboard" },
   { to: "/geraina/app/pos", icon: ShoppingCart, label: "POS Kasir", key: "pos" },
   {
     label: "Produk",
@@ -57,10 +57,10 @@ const MENU_STRUCTURE = [
     sub: [
       { to: "/geraina/app/purchase/orders", label: "Order Pembelian (PO)" },
       { to: "/geraina/app/purchase/receiving", label: "Penerimaan Barang" },
-      { to: "/geraina/app/purchase/invoices", label: "Faktur Supplier" }
+      { to: "/geraina/app/purchase/invoices", label: "Faktur Pemasok" }
     ]
   },
-  { to: "/geraina/app/suppliers", icon: Truck, label: "Supplier", key: "suppliers" },
+  { to: "/geraina/app/suppliers", icon: Truck, label: "Pemasok", key: "suppliers" },
   {
     label: "Pelanggan",
     icon: Users,
@@ -138,14 +138,14 @@ const MENU_STRUCTURE = [
     sub: [
       { to: "/geraina/app/settings/general", label: "Umum" },
       { to: "/geraina/app/settings/store", label: "Toko" },
-      { to: "/geraina/app/settings/billing", label: "Langganan & Billing (Subscription)" },
+      { to: "/geraina/app/settings/billing", label: "Langganan & Tagihan" },
       { to: "/geraina/app/settings/receipt", label: "Struk" },
       { to: "/geraina/app/settings/printer", label: "Printer" },
       { to: "/geraina/app/settings/users", label: "Pengguna" },
       { to: "/geraina/app/settings/license", label: "Lisensi" }
     ]
   },
-  { to: "/geraina/app/settings/billing", icon: CreditCard, label: "Subscription & Billing", key: "billing" },
+  { to: "/geraina/app/settings/billing", icon: CreditCard, label: "Langganan & Tagihan", key: "billing" },
   { to: "/geraina/app/about", icon: Info, label: "Tentang", key: "about" }
 ];
 
