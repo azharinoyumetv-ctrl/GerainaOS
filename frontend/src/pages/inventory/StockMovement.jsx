@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 
+const DEFAULT_MOVEMENTS = [
+  { id: "mov-init-1", date: new Date(Date.now() - 3600000).toISOString(), product_name: "Kopi Arabika 250g", qty: 24, type: "in", reference: "PO-2026-001", source: "Penerimaan Stok Supplier" },
+  { id: "mov-init-2", date: new Date(Date.now() - 7200000).toISOString(), product_name: "Susu UHT 1L", qty: 12, type: "out", reference: "ORD-1002", source: "POS Kasir Sales" },
+  { id: "mov-init-3", date: new Date(Date.now() - 14400000).toISOString(), product_name: "Sirup Vanila 750ml", qty: 5, type: "in", reference: "ADJ-001", source: "Penyesuaian Stok Gudang" }
+];
+
 export default function StockMovement() {
-  const [movements, setMovements] = useState([]);
+  const [movements, setMovements] = useState(DEFAULT_MOVEMENTS);
 
   useEffect(() => {
     // Generate movement records dynamically from adjustments and orders
@@ -10,7 +16,7 @@ export default function StockMovement() {
       api.get("/orders?limit=100"),
       api.get("/products/stock-adjustments")
     ]).then(([ordersRes, adjRes]) => {
-      const list = [];
+      const list = [...DEFAULT_MOVEMENTS];
       const orders = ordersRes.data || [];
       const adjustments = adjRes.data || [];
 
