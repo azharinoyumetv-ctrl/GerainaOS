@@ -245,8 +245,12 @@ export default function AppLayout() {
               return (
                 <div key={item.key} className="space-y-0.5">
                   <button
-                    onClick={() => toggleMenu(item.key)}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors"
+                    onClick={() => {
+                      toggleMenu(item.key);
+                      nav(`/geraina/app/${item.key}`);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors text-left"
+                    data-testid={`menu-parent-${item.key}`}
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={18} />

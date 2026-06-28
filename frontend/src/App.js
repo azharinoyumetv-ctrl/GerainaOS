@@ -103,6 +103,7 @@ function App() {
               <Route path="products/stock-transfer" element={<RoleGuard><StockTransfer /></RoleGuard>} />
 
               {/* Inventory */}
+              <Route path="inventory" element={<RoleGuard><StockOverview /></RoleGuard>} />
               <Route path="inventory/overview" element={<RoleGuard><StockOverview /></RoleGuard>} />
               <Route path="inventory/movement" element={<RoleGuard><StockMovement /></RoleGuard>} />
               <Route path="inventory/valuation" element={<RoleGuard><InventoryValuation /></RoleGuard>} />
@@ -110,6 +111,7 @@ function App() {
               <Route path="inventory/dead-stock" element={<RoleGuard><DeadStock /></RoleGuard>} />
 
               {/* Purchase */}
+              <Route path="purchase" element={<RoleGuard><PurchaseOrder /></RoleGuard>} />
               <Route path="purchase/orders" element={<RoleGuard><PurchaseOrder /></RoleGuard>} />
               <Route path="purchase/receiving" element={<RoleGuard><GoodsReceiving /></RoleGuard>} />
               <Route path="purchase/invoices" element={<RoleGuard><SupplierInvoice /></RoleGuard>} />
@@ -123,16 +125,20 @@ function App() {
               <Route path="customers/loyalty" element={<RoleGuard><LoyaltyPoints /></RoleGuard>} />
 
               {/* Hutang Piutang */}
+              <Route path="debt" element={<RoleGuard><AccountsReceivable /></RoleGuard>} />
               <Route path="debt/receivable" element={<RoleGuard><AccountsReceivable /></RoleGuard>} />
               <Route path="debt/payable" element={<RoleGuard><AccountsPayable /></RoleGuard>} />
 
               {/* Payments */}
               <Route path="payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
+              <Route path="payments" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
 
               {/* Reports */}
               <Route path="reports/:type" element={<RoleGuard><Reports /></RoleGuard>} />
+              <Route path="reports" element={<RoleGuard><Reports /></RoleGuard>} />
 
               {/* Staff */}
+              <Route path="staff" element={<RoleGuard><StaffManagement /></RoleGuard>} />
               <Route path="staff/management" element={<RoleGuard><StaffManagement /></RoleGuard>} />
               <Route path="staff/roles" element={<RoleGuard><Roles /></RoleGuard>} />
               <Route path="staff/permissions" element={<RoleGuard><Permissions /></RoleGuard>} />
@@ -143,9 +149,11 @@ function App() {
 
               {/* Integrations */}
               <Route path="integrations/:type" element={<RoleGuard><Integrations /></RoleGuard>} />
+              <Route path="integrations" element={<RoleGuard><Integrations /></RoleGuard>} />
 
               {/* Settings */}
               <Route path="settings/:type" element={<RoleGuard><Settings /></RoleGuard>} />
+              <Route path="settings" element={<RoleGuard><Settings /></RoleGuard>} />
             </Route>
           </Route>
 
