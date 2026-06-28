@@ -11,8 +11,10 @@ const DEFAULT_SETTINGS = {
 };
 
 export default function Settings() {
-  const { type: rawType } = useParams();
-  const type = rawType || "general";
+  const params = useParams();
+  const pathPart = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : "";
+  const rawType = params.type || pathPart || "general";
+  const type = (rawType === "settings" || !rawType) ? "general" : rawType.toLowerCase();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   useEffect(() => {
@@ -283,22 +285,48 @@ export default function Settings() {
     }
   };
 
+  const subtabs = [
+    { id: "general", label: "Umum", path: "/geraina/app/settings/general" },
+    { id: "store", label: "Toko", path: "/geraina/app/settings/store" },
+    { id: "billing", label: "Langganan & Tagihan", path: "/geraina/app/settings/billing" },
+    { id: "receipt", label: "Struk", path: "/geraina/app/settings/receipt" },
+    { id: "printer", label: "Printer", path: "/geraina/app/settings/printer" },
+    { id: "users", label: "Pengguna", path: "/geraina/app/settings/users" },
+    { id: "license", label: "Lisensi", path: "/geraina/app/settings/license" }
+  ];
+
   return (
-    <div className="p-8 space-y-6" data-testid="settings-page">
+    <div className="p-8 space-y-6 text-left" data-testid="settings-page">
       <div>
         <span className="label-tiny">Pengaturan</span>
-        <h1 className="font-display text-3xl font-bold mt-1 capitalize">Pengaturan {type}</h1>
+        <h1 className="font-display text-3xl font-bold mt-1 capitalize">Pengaturan ({type})</h1>
+      </div>
+
+      {/* Subtab Navigation Bar */}
+      <div className="flex flex-wrap gap-2 border-b border-[hsl(var(--border))] pb-3">
+        {subtabs.map((tab) => {
+          const isActive = type === tab.id || (type === "subscription" && tab.id === "billing");
+          return (
+            <Link
+              key={tab.id}
+              to={tab.path}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isActive ? "bg-[hsl(var(--primary))] text-white shadow-md" : "bg-[hsl(var(--surface))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"}`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
       </div>
 
       <div className="max-w-3xl card-surface p-6">
         <form onSubmit={handleSave} className="space-y-6">
           <h2 className="font-display font-bold text-lg border-b border-[hsl(var(--border))] pb-3 capitalize">
-            Pengaturan Parameter {type}
+            Pengaturan Parameter ({type})
           </h2>
           
           {renderForm()}
 
-          {type !== "users" && type !== "license" && (
+          {type !== "users" && type !== "license" && type !== "billing" && type !== "subscription" && (
             <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-end">
               <button type="submit" className="btn-primary py-2 px-6 flex items-center gap-2 text-sm font-semibold">
                 <Save size={16} /> Simpan Pengaturan

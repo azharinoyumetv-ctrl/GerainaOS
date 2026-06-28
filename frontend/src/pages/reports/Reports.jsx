@@ -6,8 +6,14 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid, Legend, LineChart, Line
 } from "recharts";
 
+import { Link } from "react-router-dom";
+
 export default function Reports() {
-  const { type } = useParams();
+  const params = useParams();
+  const pathPart = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : "";
+  const rawType = params.type || pathPart || "sales";
+  const type = (rawType === "reports" || !rawType) ? "sales" : rawType.toLowerCase();
+
   const [stats, setStats] = useState(null);
   const [products, setProducts] = useState([]);
 
@@ -15,6 +21,15 @@ export default function Reports() {
     api.get("/orders/stats").then((r) => setStats(r.data)).catch(() => {});
     api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
   }, [type]);
+
+  const subtabs = [
+    { id: "sales", label: "Penjualan", path: "/geraina/app/reports/sales" },
+    { id: "product", label: "Produk", path: "/geraina/app/reports/product" },
+    { id: "inventory", label: "Stok / Inventaris", path: "/geraina/app/reports/inventory" },
+    { id: "profit", label: "Laba Rugi", path: "/geraina/app/reports/profit" },
+    { id: "cashflow", label: "Arus Kas", path: "/geraina/app/reports/cashflow" },
+    { id: "tax", label: "Pajak", path: "/geraina/app/reports/tax" }
+  ];
 
   const renderReport = () => {
     switch (type) {
@@ -260,11 +275,28 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-8 space-y-6" data-testid="reports-page">
+    <div className="p-8 space-y-6 text-left" data-testid="reports-page">
       <div>
         <span className="label-tiny">Laporan Bisnis</span>
-        <h1 className="font-display text-3xl font-bold mt-1 capitalize">Laporan {type}</h1>
+        <h1 className="font-display text-3xl font-bold mt-1 capitalize">Laporan ({type})</h1>
       </div>
+
+      {/* Subtab Navigation Bar */}
+      <div className="flex flex-wrap gap-2 border-b border-[hsl(var(--border))] pb-3">
+        {subtabs.map((tab) => {
+          const isActive = type === tab.id;
+          return (
+            <Link
+              key={tab.id}
+              to={tab.path}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isActive ? "bg-[hsl(var(--primary))] text-white shadow-md" : "bg-[hsl(var(--surface))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"}`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </div>
+
       {renderReport()}
     </div>
   );

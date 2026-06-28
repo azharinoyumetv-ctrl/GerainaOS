@@ -3,9 +3,14 @@ import { useParams } from "react-router-dom";
 import api from "@/api/client";
 import { Save, Link2, Zap } from "lucide-react";
 
+import { Link } from "react-router-dom";
+
 export default function Integrations() {
-  const { type: rawType } = useParams();
-  const type = rawType || "midtrans";
+  const params = useParams();
+  const pathPart = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : "";
+  const rawType = params.type || pathPart || "xendit";
+  const type = (rawType === "integrations" || !rawType) ? "xendit" : rawType.toLowerCase();
+
   const [integrations, setIntegrations] = useState({
     xendit: { is_active: true, secret_key: "xnd_development_mock_key", webhook_token: "mock_wh_token" },
     midtrans: { is_active: true, client_key: "SB-Mid-client-mock", server_key: "SB-Mid-server-mock" },
@@ -330,16 +335,42 @@ export default function Integrations() {
     }
   };
 
+  const subtabs = [
+    { id: "xendit", label: "Xendit", path: "/geraina/app/integrations/xendit" },
+    { id: "midtrans", label: "Midtrans", path: "/geraina/app/integrations/midtrans" },
+    { id: "stripe", label: "Stripe", path: "/geraina/app/integrations/stripe" },
+    { id: "qris", label: "QRIS", path: "/geraina/app/integrations/qris" },
+    { id: "whatsapp", label: "WhatsApp", path: "/geraina/app/integrations/whatsapp" },
+    { id: "telegram", label: "Telegram", path: "/geraina/app/integrations/telegram" },
+    { id: "email", label: "Email SMTP", path: "/geraina/app/integrations/email" }
+  ];
+
   return (
-    <div className="p-8 space-y-6" data-testid="integrations-page">
+    <div className="p-8 space-y-6 text-left" data-testid="integrations-page">
       <div className="flex items-center justify-between">
         <div>
           <span className="label-tiny">Integrasi</span>
-          <h1 className="font-display text-3xl font-bold mt-1 capitalize">Kanal {type}</h1>
+          <h1 className="font-display text-3xl font-bold mt-1 capitalize">Kanal Integrasi ({type})</h1>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/8 px-3 py-1 rounded border border-[hsl(var(--primary))]/20">
           <Link2 size={14} /> Terhubung Layanan Cloud
         </div>
+      </div>
+
+      {/* Subtab Navigation Bar */}
+      <div className="flex flex-wrap gap-2 border-b border-[hsl(var(--border))] pb-3">
+        {subtabs.map((tab) => {
+          const isActive = type === tab.id;
+          return (
+            <Link
+              key={tab.id}
+              to={tab.path}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isActive ? "bg-[hsl(var(--primary))] text-white shadow-md" : "bg-[hsl(var(--surface))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"}`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
       </div>
 
       <div className="max-w-3xl card-surface p-6">
