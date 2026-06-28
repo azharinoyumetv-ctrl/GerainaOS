@@ -160,7 +160,7 @@ function handleMockRequest(url, method, data) {
 }
 
 api.interceptors.request.use((cfg) => {
-  const t = localStorage.getItem("geraina_token");
+  const t = localStorage.getItem("geraina_token") || localStorage.getItem("dagangos_token") || "mock_master_token";
   if (t) cfg.headers.Authorization = `Bearer ${t}`;
 
   // Disabled mock interceptor so request goes directly to the backend
