@@ -42,8 +42,12 @@ const ROLE_PERMISSIONS = {
 };
 
 export default function RoleGuard({ children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
+
+  if (loading) {
+    return <div className="p-10 text-sm text-center text-[hsl(var(--muted))]" data-testid="auth-loading">Memuat sesi…</div>;
+  }
 
   if (!user) {
     return <Navigate to="/geraina/login" replace />;
