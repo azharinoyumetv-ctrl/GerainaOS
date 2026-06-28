@@ -10,7 +10,10 @@ export default function Integrations() {
     xendit: { is_active: true, secret_key: "xnd_development_mock_key", webhook_token: "mock_wh_token" },
     midtrans: { is_active: true, client_key: "SB-Mid-client-mock", server_key: "SB-Mid-server-mock" },
     stripe: { is_active: true, publishable_key: "pk_test_mock", secret_key: "sk_test_mock" },
-    qris: { is_active: true, nmid: "ID1029384756", merchant_name: "DagangOS Store" }
+    qris: { is_active: true, nmid: "ID1029384756", merchant_name: "Geraina POS Store" },
+    whatsapp: { is_active: true, provider: "Fonet/WABA Gateway", api_token: "wa_mock_api_token_9981" },
+    telegram: { is_active: true, bot_token: "bot_77812938:AAF_mock_token", chat_id: "-1001928374" },
+    email: { is_active: true, smtp_host: "smtp.mailtrap.io", smtp_port: 2525, smtp_user: "mock_smtp_user" }
   });
   const [simRefId, setSimRefId] = useState("");
   const [simStatus, setSimStatus] = useState("");
