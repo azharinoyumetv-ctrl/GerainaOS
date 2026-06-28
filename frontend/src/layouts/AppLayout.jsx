@@ -24,7 +24,7 @@ const ROLE_PERMISSIONS = {
 
 const MENU_STRUCTURE = [
   { to: "/geraina/app/dashboard", icon: LayoutDashboard, label: "Dasbor", key: "dashboard" },
-  { to: "/geraina/app/pos", icon: ShoppingCart, label: "POS Kasir", key: "pos" },
+  { to: "/geraina/app/pos", icon: ShoppingCart, label: "Kasir", key: "pos" },
   {
     label: "Produk",
     icon: Package,
