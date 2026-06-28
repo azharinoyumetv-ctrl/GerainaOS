@@ -130,6 +130,8 @@ function App() {
               <Route path="debt/payable" element={<RoleGuard><AccountsPayable /></RoleGuard>} />
 
               {/* Payments */}
+              <Route path="settings/payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
+              <Route path="settings/payments" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
               <Route path="payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
               <Route path="payments" element={<RoleGuard><PaymentConfig /></RoleGuard>} />
 
@@ -159,6 +161,8 @@ function App() {
             </Route>
 
             {/* Direct un-prefixed management redirects */}
+            <Route path="settings/payments/*" element={<Navigate to="/geraina/app/payments" replace />} />
+            <Route path="payments/*" element={<Navigate to="/geraina/app/payments" replace />} />
             <Route path="inventory/*" element={<Navigate to="/geraina/app/inventory" replace />} />
             <Route path="billing/*" element={<Navigate to="/geraina/app/settings/billing" replace />} />
             <Route path="settings/*" element={<Navigate to="/geraina/app/settings/general" replace />} />

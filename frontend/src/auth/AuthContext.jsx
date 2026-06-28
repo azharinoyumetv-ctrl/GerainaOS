@@ -30,49 +30,67 @@ export function AuthProvider({ children }) {
       return;
     }
     if (t === "mock_master_token") {
-      setUser({
+      const savedUserStr = localStorage.getItem("dagangos_user") || localStorage.getItem("geraina_user");
+      let usrObj = {
         id: "master-demo-user-001",
         email: "admin@dagangos.com",
         role: "Owner",
         store_id: "master-demo-store-001",
         store_name: "DagangOS Master Demo Store",
         plan: "enterprise"
-      });
+      };
+      if (savedUserStr) {
+        try { usrObj = JSON.parse(savedUserStr); } catch (e) {}
+      }
+      setUser(usrObj);
       setLoading(false);
       return;
     }
     api.get("/auth/me")
       .then((r) => setUser(enrichUser(r.data)))
       .catch(() => {
-        setUser({
-          id: "master-demo-user-001",
-          email: "admin@dagangos.com",
-          role: "Owner",
-          store_id: "master-demo-store-001",
-          store_name: "DagangOS Master Demo Store",
-          plan: "enterprise"
-        });
+        const savedUserStr = localStorage.getItem("dagangos_user") || localStorage.getItem("geraina_user");
+        if (savedUserStr) {
+          try { setUser(JSON.parse(savedUserStr)); } catch (e) { setUser(null); }
+        } else {
+          setUser(null);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (email, password) => {
+    // Clear any existing stale session tokens first
+    localStorage.removeItem("geraina_token");
+    localStorage.removeItem("dagangos_token");
+    localStorage.removeItem("dagangos_user");
+    localStorage.removeItem("geraina_user");
+    setUser(null);
+
     try {
       const r = await api.post("/auth/login", { email, password });
       localStorage.setItem("geraina_token", r.data.access_token);
       localStorage.setItem("dagangos_token", r.data.access_token);
       localStorage.setItem("dagangos_user", JSON.stringify(r.data.user));
+      localStorage.setItem("geraina_user", JSON.stringify(r.data.user));
       const rname = getRoleFromEmail(email);
       localStorage.setItem("geraina_selected_role", rname);
       const enriched = enrichUser(r.data.user);
       setUser(enriched);
       return enriched;
     } catch (err) {
-      if (email === "admin@dagangos.com" || email === "demo@dagangos.com" || password === "dagangos123" || password === "demo123456") {
+      // STRICT MOCK MATCHING: ONLY match master demo if email AND password match valid test credentials
+      const em = (email || "").toLowerCase().trim();
+      const pass = (password || "").trim();
+      
+      if (
+        (em === "admin@dagangos.com" && pass === "dagangos123") ||
+        (em === "demo@dagangos.com" && pass === "demo123456")
+      ) {
         const mockUser = {
           id: "master-demo-user-001",
-          email: email || "admin@dagangos.com",
-          role: "Owner",
+          email: em,
+          role: getRoleFromEmail(em),
           store_id: "master-demo-store-001",
           store_name: "DagangOS Master Demo Store",
           plan: "enterprise"
@@ -80,11 +98,14 @@ export function AuthProvider({ children }) {
         localStorage.setItem("geraina_token", "mock_master_token");
         localStorage.setItem("dagangos_token", "mock_master_token");
         localStorage.setItem("dagangos_user", JSON.stringify(mockUser));
-        localStorage.setItem("geraina_selected_role", "Owner");
+        localStorage.setItem("geraina_user", JSON.stringify(mockUser));
+        localStorage.setItem("geraina_selected_role", mockUser.role);
         setUser(mockUser);
         return mockUser;
       }
-      throw err;
+      
+      // If credentials do NOT match master demo or real backend authentication, throw explicit error
+      throw new Error("Email atau kata sandi tidak valid. Silakan periksa kembali kredensial Anda.");
     }
   };
 
