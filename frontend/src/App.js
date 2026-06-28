@@ -160,9 +160,11 @@ function App() {
               <Route path="settings" element={<RoleGuard><Settings /></RoleGuard>} />
             </Route>
 
-            {/* Direct un-prefixed management redirects */}
-            <Route path="settings/payments/*" element={<Navigate to="/geraina/app/payments" replace />} />
-            <Route path="payments/*" element={<Navigate to="/geraina/app/payments" replace />} />
+            {/* Direct un-prefixed management routes & deep links */}
+            <Route path="settings/payments/*" element={<AppLayout />} />
+            <Route path="settings/payments" element={<AppLayout />} />
+            <Route path="payments/*" element={<AppLayout />} />
+            <Route path="payments" element={<AppLayout />} />
             <Route path="inventory/*" element={<Navigate to="/geraina/app/inventory" replace />} />
             <Route path="billing/*" element={<Navigate to="/geraina/app/settings/billing" replace />} />
             <Route path="settings/*" element={<Navigate to="/geraina/app/settings/general" replace />} />

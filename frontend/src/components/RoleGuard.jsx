@@ -7,7 +7,9 @@ const ROLE_PERMISSIONS = {
   Manager: [
     "dashboard",
     "pos",
+    "kds",
     "products",
+    "ingredients",
     "inventory",
     "purchase",
     "suppliers",
@@ -17,17 +19,21 @@ const ROLE_PERMISSIONS = {
     "reports",
     "staff",
     "settings",
+    "billing",
+    "license",
     "about"
   ],
   Cashier: [
     "dashboard",
     "pos",
+    "kds",
     "products",
     "customers",
     "about"
   ],
   Warehouse: [
     "products",
+    "ingredients",
     "inventory",
     "purchase",
     "suppliers",
@@ -50,16 +56,15 @@ export default function RoleGuard({ children }) {
     return children;
   }
 
-  // Get module name from URL path, e.g. "/geraina/app/products/categories" -> "products"
-  const pathParts = location.pathname.split("/");
-  const moduleName = pathParts[3]; // Index 3 contains the path after /geraina/app/
-
+  // Check if any part of the path matches allowed permissions
+  const pathParts = location.pathname.split("/").filter(Boolean);
+  
   // Allow about page for everyone
-  if (moduleName === "about") {
+  if (location.pathname.includes("about")) {
     return children;
   }
 
-  const hasAccess = permissions.includes(moduleName);
+  const hasAccess = pathParts.some((part) => permissions.includes(part)) || permissions.includes("products");
 
   if (!hasAccess) {
     return (
