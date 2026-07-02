@@ -37,8 +37,9 @@ async def list_products(
     return await cursor.to_list(length=limit)
 
 
-@router.get("/categories")
-async def list_categories(user: dict = Depends(get_current_user)):
+@router.get("/category-names")
+async def list_category_names(user: dict = Depends(get_current_user)):
+    """Daftar nama kategori unik dari produk (untuk filter chip Kasir)."""
     db = get_db()
     cats = await db.products.distinct("category", {"store_id": user["store_id"]})
     return [c for c in cats if c]

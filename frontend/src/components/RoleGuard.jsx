@@ -4,6 +4,7 @@ import { ShieldAlert } from "lucide-react";
 
 const ROLE_PERMISSIONS = {
   Owner: ["*"],
+  admin: ["*"], // akun lama dengan peran "admin" setara Owner
   Manager: [
     "dashboard",
     "pos",

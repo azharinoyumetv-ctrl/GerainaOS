@@ -147,7 +147,12 @@ export default function POS() {
 
   useEffect(() => {
     api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
-    api.get("/products/categories").then((r) => setCategories(r.data)).catch(() => {});
+    api.get("/products/category-names").then((r) => {
+      const names = (Array.isArray(r.data) ? r.data : [])
+        .map((c) => (typeof c === "string" ? c : c?.name))
+        .filter(Boolean);
+      setCategories(names);
+    }).catch(() => {});
     api.get("/customers").then((r) => setCustomers(r.data)).catch(() => {});
   }, []);
 

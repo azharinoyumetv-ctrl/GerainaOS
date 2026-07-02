@@ -62,6 +62,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
 
 
 async def require_admin(user: dict = Depends(get_current_user)) -> dict:
-    if user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="Admin role required")
+    if user.get("role") not in ("admin", "Owner"):
+        raise HTTPException(status_code=403, detail="Peran Owner diperlukan untuk aksi ini")
     return user

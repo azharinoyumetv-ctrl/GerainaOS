@@ -26,37 +26,33 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const t = localStorage.getItem("geraina_token") || localStorage.getItem("dagangos_token") || localStorage.getItem("dapuros_token");
     const savedUserStr = localStorage.getItem("dagangos_user") || localStorage.getItem("geraina_user") || localStorage.getItem("dapuros_user");
-    let fallbackUser = {
-      id: "master-demo-user-001",
-      email: "admin@dagangos.com",
-      role: "Owner",
-      store_id: "master-demo-store-001",
-      store_name: "DagangOS Master Demo Store",
-      plan: "enterprise"
-    };
+    let savedUser = null;
     if (savedUserStr) {
-      try { fallbackUser = JSON.parse(savedUserStr); } catch (e) {}
+      try { savedUser = JSON.parse(savedUserStr); } catch (e) {}
     }
 
-    if (!t) {
-      // In ecosystem demo mode, ensure user is always logged in across suites
-      localStorage.setItem("dagangos_token", "mock_master_token");
-      localStorage.setItem("geraina_token", "mock_master_token");
-      localStorage.setItem("dapuros_token", "mock_master_token");
-      localStorage.setItem("dagangos_user", JSON.stringify(fallbackUser));
-      setUser(fallbackUser);
-      setLoading(false);
-      return;
-    }
-    if (t === "mock_master_token") {
-      setUser(fallbackUser);
+    if (!t || t === "mock_master_token") {
+      // Tanpa token valid: pengguna wajib login
+      localStorage.removeItem("geraina_token");
+      localStorage.removeItem("dagangos_token");
+      localStorage.removeItem("dapuros_token");
+      setUser(null);
       setLoading(false);
       return;
     }
     api.get("/auth/me")
       .then((r) => setUser(enrichUser(r.data)))
-      .catch(() => {
-        setUser(fallbackUser);
+      .catch((err) => {
+        // Token tidak valid / kedaluwarsa → wajib login ulang
+        if (err?.response?.status === 401) {
+          localStorage.removeItem("geraina_token");
+          localStorage.removeItem("dagangos_token");
+          localStorage.removeItem("dapuros_token");
+          setUser(null);
+        } else {
+          // Backend tidak terjangkau (offline) → pertahankan sesi tersimpan agar kasir tetap beroperasi
+          setUser(savedUser ? enrichUser(savedUser) : null);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -81,33 +77,10 @@ export function AuthProvider({ children }) {
       setUser(enriched);
       return enriched;
     } catch (err) {
-      // STRICT MOCK MATCHING: ONLY match master demo if email AND password match valid test credentials
-      const em = (email || "").toLowerCase().trim();
-      const pass = (password || "").trim();
-      
-      if (
-        (em === "admin@dagangos.com" && pass === "dagangos123") ||
-        (em === "demo@dagangos.com" && pass === "demo123456")
-      ) {
-        const mockUser = {
-          id: "master-demo-user-001",
-          email: em,
-          role: getRoleFromEmail(em),
-          store_id: "master-demo-store-001",
-          store_name: "DagangOS Master Demo Store",
-          plan: "enterprise"
-        };
-        localStorage.setItem("geraina_token", "mock_master_token");
-        localStorage.setItem("dagangos_token", "mock_master_token");
-        localStorage.setItem("dagangos_user", JSON.stringify(mockUser));
-        localStorage.setItem("geraina_user", JSON.stringify(mockUser));
-        localStorage.setItem("geraina_selected_role", mockUser.role);
-        setUser(mockUser);
-        return mockUser;
-      }
-      
-      // If credentials do NOT match master demo or real backend authentication, throw explicit error
-      throw new Error("Email atau kata sandi tidak valid. Silakan periksa kembali kredensial Anda.");
+      throw new Error(
+        err?.response?.data?.detail ||
+        "Email atau kata sandi tidak valid. Silakan periksa kembali kredensial Anda."
+      );
     }
   };
 
