@@ -14,9 +14,31 @@ function ProductForm({ product, onClose, onSaved }) {
     unit: product?.unit || "pcs",
     description: product?.description || "",
     active: product?.active !== false,
+    image_url: product?.image_url || null,
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+
+  const handleImage = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setErr("File harus berupa gambar (JPG/PNG)."); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 320;
+        let { width, height } = img;
+        if (width > height && width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
+        else if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        setForm((f) => ({ ...f, image_url: canvas.toDataURL("image/jpeg", 0.72) }));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const save = async (e) => {
     e.preventDefault();
@@ -78,6 +100,23 @@ function ProductForm({ product, onClose, onSaved }) {
             <label className="label-tiny">Unit</label>
             <input className="input-field mt-1.5" value={form.unit}
                    onChange={(e) => setForm({ ...form, unit: e.target.value })} data-testid="pf-unit" />
+          </div>
+          <div className="col-span-2">
+            <label className="label-tiny block mb-1.5">Foto Produk</label>
+            {form.image_url ? (
+              <div className="relative w-full">
+                <img src={form.image_url} alt="Pratinjau produk" className="w-full h-40 object-cover rounded-lg border border-slate-200" data-testid="pf-image-preview" />
+                <button type="button" onClick={() => setForm({ ...form, image_url: null })} title="Hapus foto"
+                  className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 rounded-lg p-1.5 shadow" data-testid="pf-image-remove"><Trash2 size={16} /></button>
+              </div>
+            ) : (
+              <label htmlFor="pf-image-input" className="flex flex-col items-center justify-center gap-1 w-full h-40 border-2 border-dashed border-slate-200 rounded-lg cursor-pointer hover:border-teal-400 hover:bg-teal-50/30 transition-colors text-center" data-testid="pf-image-drop">
+                <Upload size={22} className="text-slate-400" />
+                <span className="text-xs font-semibold text-slate-500">Unggah foto produk</span>
+                <span className="text-[10px] text-slate-400">JPG/PNG · otomatis dikecilkan</span>
+              </label>
+            )}
+            <input id="pf-image-input" type="file" accept="image/*" className="hidden" onChange={(e) => handleImage(e.target.files?.[0])} data-testid="pf-image-input" />
           </div>
         </div>
         {err && <p className="text-sm text-[hsl(var(--destructive))] mt-3">{err}</p>}
@@ -315,7 +354,16 @@ export default function Products() {
             )}
             {items.map((p) => (
               <tr key={p.id} className="hover:bg-[hsl(var(--background))]" data-testid={`product-row-${p.id}`}>
-                <td className="px-5 py-3 font-medium">{p.name}</td>
+                <td className="px-5 py-3 font-medium">
+                  <div className="flex items-center gap-2.5">
+                    {p.image_url ? (
+                      <img src={p.image_url} alt="" className="w-8 h-8 rounded-md object-cover border border-slate-200 shrink-0" />
+                    ) : (
+                      <span className="w-8 h-8 rounded-md bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center text-slate-300 text-[10px]">—</span>
+                    )}
+                    <span>{p.name}</span>
+                  </div>
+                </td>
                 <td className="px-5 py-3 text-[hsl(var(--muted))] text-xs">{p.sku || "—"}</td>
                 <td className="px-5 py-3"><span className="pill pill-muted">{p.category}</span></td>
                 <td className="px-5 py-3 text-right font-display font-bold num-display">{fmtIDR(p.price)}</td>
