@@ -108,9 +108,6 @@ TIERS = [
 ADDONS = [
     {"id": "extra_device", "name": "Extra device", "price_idr": 49000, "unit": "/bulan"},
     {"id": "extra_branch", "name": "Extra branch", "price_idr": 199000, "unit": "/bulan"},
-    {"id": "remote_setup", "name": "Remote setup", "price_idr": 499000, "unit": "one-time"},
-    {"id": "import_setup", "name": "Product import setup", "price_idr_min": 499000, "price_idr_max": 999000, "unit": "one-time"},
-    {"id": "onsite_setup", "name": "On-site setup", "price_idr_min": 1000000, "price_idr_max": 3000000, "unit": "+ transport, one-time"},
 ]
 
 

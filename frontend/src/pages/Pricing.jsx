@@ -1,15 +1,24 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
-import { Leaf, Check, ArrowRight, ChevronDown } from "lucide-react";
+import { Check, ArrowRight, ChevronDown, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 
+const JK = "'Plus Jakarta Sans', 'Figtree', sans-serif";
+const TEAL = "#0d9488";
+const TEAL_DARK = "#0b7d72";
+const INK = "#0f2622";
+const BODY = "#44534a";
+const MUTED = "#7a877e";
+const LINE = "#e6ece8";
+const TINT = "#e3f4f1";
+
 const FAQS = [
-  { q: "Apakah trial benar-benar gratis?", a: "Ya. 14 hari pemakaian fitur Pro, tanpa kartu kredit, dan Anda bisa cabut kapan saja." },
-  { q: "Bisa pakai untuk multi-cabang?", a: "Bisa. Paket Multi-Branch mendukung outlet unlimited dengan konsolidasi laporan antar cabang." },
+  { q: "Apakah trial benar-benar gratis?", a: "Ya. 14 hari pemakaian fitur Pro, tanpa kartu kredit, dan Anda bisa berhenti kapan saja." },
+  { q: "Bisa pakai untuk multi-cabang?", a: "Bisa. Paket Multi-Branch mendukung outlet tanpa batas dengan konsolidasi laporan antar cabang." },
   { q: "Metode pembayaran apa saja yang didukung?", a: "Tunai, QRIS dinamis, dan e-wallet OVO/DANA/ShopeePay/LinkAja via Xendit." },
-  { q: "Bisa import produk lama dari Excel?", a: "Bisa. Halaman Products menyediakan importer Excel/CSV dengan deteksi SKU duplikat." },
-  { q: "Apa beda Starter dan Pro?", a: "Pro membuka produk unlimited, Excel/CSV import, dan invoice A4 — cocok untuk toko yang sudah mulai scale." },
+  { q: "Bisa impor produk lama dari Excel?", a: "Bisa. Halaman Produk menyediakan importer Excel/CSV dengan deteksi SKU duplikat." },
+  { q: "Apa beda Starter dan Pro?", a: "Pro membuka produk tanpa batas, impor Excel/CSV, dan invoice A4 — cocok untuk toko yang mulai berkembang." },
 ];
 
 function fmtMonthlyEq(yearly) {
@@ -21,7 +30,7 @@ export default function Pricing() {
   const [tiers, setTiers] = useState([]);
   const [addons, setAddons] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
-  const [billing, setBilling] = useState("monthly"); // monthly | yearly
+  const [billing, setBilling] = useState("monthly");
   const { user, refresh, setPlan } = useAuth();
   const [upgradingId, setUpgradingId] = useState(null);
 
@@ -39,7 +48,6 @@ export default function Pricing() {
       await refresh();
       alert(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
     } catch (err) {
-      // Fallback: update plan client-side if API is unavailable (e.g. preview environment)
       setPlan(tierId);
       alert(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
     } finally {
@@ -47,19 +55,11 @@ export default function Pricing() {
     }
   };
 
-  const renderPrice = (t) => {
-    if (t.id === "trial") return <span className="num-display">Gratis</span>;
-    if (t.id === "multibranch") {
-      return (
-        <span className="num-display">
-          {isYearly ? "Custom" : `${fmtIDR(t.price_idr_monthly)}+`}
-        </span>
-      );
-    }
-    const v = isYearly ? t.price_idr_yearly : t.price_idr_monthly;
-    return <span className="num-display">{fmtIDR(v)}</span>;
+  const priceText = (t) => {
+    if (t.id === "trial") return "Gratis";
+    if (t.id === "multibranch") return isYearly ? "Custom" : `${fmtIDR(t.price_idr_monthly)}+`;
+    return fmtIDR(isYearly ? t.price_idr_yearly : t.price_idr_monthly);
   };
-
   const renderPeriod = (t) => {
     if (t.id === "trial") return "14 hari";
     if (t.id === "multibranch") return isYearly ? "" : "/bulan, mulai dari";
@@ -67,198 +67,115 @@ export default function Pricing() {
   };
 
   return (
-    <div data-testid="pricing-page">
-      <header className="border-b border-[hsl(var(--border))]">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/geraina" className="font-display text-xl font-extrabold flex items-center gap-2" data-testid="pricing-nav-logo">
-            <Leaf className="text-[hsl(var(--accent))]" size={22} /> Geraina <span className="text-[hsl(var(--muted))] text-sm font-medium">by DagangOS</span>
+    <div data-testid="pricing-page" style={{ fontFamily: JK, background: "#f7fbfa", color: BODY, minHeight: "100vh" }}>
+      <header className="sticky top-0 z-50 backdrop-blur border-b" style={{ background: "rgba(247,251,250,.85)", borderColor: LINE }}>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+          <Link to="/geraina" className="flex items-center gap-2.5" data-testid="pricing-nav-logo">
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center text-white" style={{ background: TEAL }}><ShoppingBag size={17} /></span>
+            <span className="font-bold text-lg" style={{ fontFamily: JK, color: INK }}>Geraina POS</span>
+            <span className="text-xs font-medium" style={{ color: MUTED }}>by DagangOS</span>
           </Link>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             {user ? (
-              <Link to="/geraina/app/dashboard" className="btn-primary" data-testid="pricing-nav-dashboard">
-                Ke Dashboard <ArrowRight size={14} />
-              </Link>
+              <Link to="/geraina/app/dashboard" className="px-4 py-2 rounded-xl text-white font-semibold text-sm" style={{ background: TEAL }} data-testid="pricing-nav-dashboard">Ke Dashboard →</Link>
             ) : (
               <>
-                <Link to="/geraina/login" className="btn-ghost" data-testid="pricing-nav-login">Masuk</Link>
-                <Link to="/geraina/register" className="btn-primary" data-testid="pricing-nav-register">Mulai Gratis</Link>
+                <Link to="/geraina/login" className="px-4 py-2 rounded-xl font-semibold text-sm hover:bg-slate-50" style={{ color: INK }} data-testid="pricing-nav-login">Masuk</Link>
+                <Link to="/geraina/register" className="px-4 py-2 rounded-xl text-white font-semibold text-sm" style={{ background: TEAL }} data-testid="pricing-nav-register">Mulai Gratis</Link>
               </>
             )}
           </div>
         </div>
       </header>
 
-      <section className="pt-20 pb-10 text-center" data-testid="pricing-hero">
-        <span className="label-tiny">Harga</span>
-        <h1 className="font-display text-5xl font-extrabold mt-3 max-w-3xl mx-auto px-6">
+      <section className="pt-16 sm:pt-20 pb-8 text-center px-5 sm:px-8" data-testid="pricing-hero">
+        <span className="text-xs font-bold tracking-widest uppercase" style={{ color: TEAL }}>Harga</span>
+        <h1 className="text-4xl sm:text-5xl font-extrabold mt-3 max-w-3xl mx-auto leading-tight" style={{ fontFamily: JK, color: INK }}>
           Satu harga jujur. Tanpa biaya transaksi tersembunyi.
         </h1>
-        <p className="text-[hsl(var(--muted))] mt-4 max-w-xl mx-auto px-6">
-          Pilih paket yang cocok dengan ukuran toko Anda. Bisa upgrade/downgrade kapan saja.
+        <p className="mt-4 max-w-xl mx-auto" style={{ color: BODY }}>
+          Pilih paket yang cocok dengan ukuran toko Anda. Bisa naik atau turun paket kapan saja.
         </p>
-
-        <div className="inline-flex items-center gap-1 mt-7 p-1 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface))]" data-testid="billing-toggle">
-          <button
-            onClick={() => setBilling("monthly")}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
-              billing === "monthly" ? "bg-[hsl(var(--primary))] text-white" : "text-[hsl(var(--foreground))]"
-            }`}
-            data-testid="billing-monthly"
-          >
-            Bulanan
-          </button>
-          <button
-            onClick={() => setBilling("yearly")}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors flex items-center gap-2 ${
-              billing === "yearly" ? "bg-[hsl(var(--primary))] text-white" : "text-[hsl(var(--foreground))]"
-            }`}
-            data-testid="billing-yearly"
-          >
-            Tahunan
-            <span className="pill" style={{ background: "hsl(9,65%,55%,0.2)", color: "hsl(9,65%,40%)" }}>Hemat ~17%</span>
+        <div className="inline-flex items-center gap-1 mt-8 p-1 rounded-full border" style={{ borderColor: LINE, background: "#fff" }} data-testid="billing-toggle">
+          <button onClick={() => setBilling("monthly")} className="px-5 py-2 rounded-full text-sm font-semibold transition-colors" style={billing === "monthly" ? { background: TEAL, color: "#fff" } : { color: INK }} data-testid="billing-monthly">Bulanan</button>
+          <button onClick={() => setBilling("yearly")} className="px-5 py-2 rounded-full text-sm font-semibold transition-colors flex items-center gap-2" style={billing === "yearly" ? { background: TEAL, color: "#fff" } : { color: INK }} data-testid="billing-yearly">
+            Tahunan <span className="text-[11px] px-1.5 py-0.5 rounded-full" style={{ background: billing === "yearly" ? "rgba(255,255,255,.2)" : TINT, color: billing === "yearly" ? "#fff" : TEAL_DARK }}>Hemat ~17%</span>
           </button>
         </div>
       </section>
 
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <section className="py-10 px-5 sm:px-8">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-5 gap-4">
           {tiers.map((t) => (
-            <div
-              key={t.id}
-              className={`card-surface p-6 flex flex-col ${
-                t.highlight
-                  ? "border-[hsl(var(--accent))] ring-1 ring-[hsl(var(--accent))]/40 relative bg-[hsl(36,17%,99%)]"
-                  : ""
-              }`}
-              data-testid={`pricing-card-${t.id}`}
-            >
-              {t.badge && (
-                <span className="pill absolute -top-3 left-6 bg-[hsl(var(--accent))] text-white" data-testid={`pricing-badge-${t.id}`}>
-                  {t.badge}
-                </span>
-              )}
-              <h3 className="font-display text-2xl font-bold">{t.name}</h3>
-              <p className="text-sm text-[hsl(var(--muted))] mt-1 min-h-[36px]">{t.tagline}</p>
+            <div key={t.id} className="rounded-2xl bg-white p-6 flex flex-col relative" style={{ border: t.highlight ? `2px solid ${TEAL}` : `1px solid ${LINE}` }} data-testid={`pricing-card-${t.id}`}>
+              {t.badge && <span className="absolute -top-3 left-6 text-[11px] font-bold px-2.5 py-1 rounded-full text-white" style={{ background: TEAL }} data-testid={`pricing-badge-${t.id}`}>{t.badge}</span>}
+              <h3 className="text-xl font-bold" style={{ fontFamily: JK, color: INK }}>{t.name}</h3>
+              <p className="text-sm mt-1 min-h-[36px]" style={{ color: MUTED }}>{t.tagline}</p>
               <div className="mt-5">
-                <p className="font-display text-3xl font-extrabold leading-tight">
-                  {renderPrice(t)}
-                </p>
-                <p className="text-xs text-[hsl(var(--muted))] mt-1">{renderPeriod(t)}</p>
+                <p className="text-3xl font-extrabold leading-tight" style={{ fontFamily: JK, color: INK }}>{priceText(t)}</p>
+                <p className="text-xs mt-1" style={{ color: MUTED }}>{renderPeriod(t)}</p>
                 {isYearly && t.price_idr_yearly > 0 && t.id !== "trial" && (
-                  <p className="text-[11px] text-[hsl(var(--muted))] mt-1" data-testid={`pricing-monthly-eq-${t.id}`}>
-                    setara {fmtMonthlyEq(t.price_idr_yearly)}/bulan
-                  </p>
+                  <p className="text-[11px] mt-1" style={{ color: MUTED }} data-testid={`pricing-monthly-eq-${t.id}`}>setara {fmtMonthlyEq(t.price_idr_yearly)}/bulan</p>
                 )}
               </div>
-              <ul className="space-y-2.5 mt-6 mb-7 text-sm" data-testid={`pricing-features-${t.id}`}>
+              <ul className="space-y-2.5 mt-6 mb-7 text-sm" style={{ color: BODY }} data-testid={`pricing-features-${t.id}`}>
                 {t.features.map((f) => (
-                  <li key={f} className="flex gap-2">
-                    <Check size={16} className={t.highlight ? "text-[hsl(var(--accent))]" : "text-[hsl(var(--primary))]"} />
-                    <span>{f}</span>
-                  </li>
+                  <li key={f} className="flex gap-2"><Check size={16} style={{ color: TEAL }} className="shrink-0 mt-0.5" /><span>{f}</span></li>
                 ))}
               </ul>
               {t.id === "multibranch" ? (
-                <a
-                  href="mailto:sales@dagangos.com"
-                  className="mt-auto btn-outline w-full text-center py-2"
-                  data-testid={`pricing-cta-${t.id}`}
-                >
-                  Hubungi Sales <ArrowRight size={14} />
-                </a>
+                <a href="mailto:sales@dagangos.com" className="mt-auto w-full text-center py-2.5 rounded-xl border font-semibold text-sm" style={{ borderColor: LINE, color: INK }} data-testid={`pricing-cta-${t.id}`}>Hubungi Sales →</a>
               ) : user ? (
                 user.plan === t.id ? (
-                  <button
-                    disabled
-                    className="mt-auto btn-ghost w-full bg-[hsl(var(--muted))]/10 cursor-not-allowed py-2"
-                    data-testid={`pricing-cta-${t.id}`}
-                  >
-                    Paket Aktif
-                  </button>
+                  <button disabled className="mt-auto w-full py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed" style={{ background: "#eef2f0", color: MUTED }} data-testid={`pricing-cta-${t.id}`}>Paket Aktif</button>
                 ) : (
-                  <button
-                    onClick={() => handleUpgrade(t.id)}
-                    disabled={upgradingId !== null}
-                    className={`mt-auto ${t.highlight ? "btn-accent" : "btn-primary"} w-full py-2`}
-                    data-testid={`pricing-cta-${t.id}`}
-                  >
-                    {upgradingId === t.id ? "Memproses…" : `Pilih ${t.name}`} <ArrowRight size={14} />
-                  </button>
+                  <button onClick={() => handleUpgrade(t.id)} disabled={upgradingId !== null} className="mt-auto w-full py-2.5 rounded-xl text-white font-semibold text-sm" style={{ background: TEAL }} data-testid={`pricing-cta-${t.id}`}>{upgradingId === t.id ? "Memproses…" : `Pilih ${t.name}`} →</button>
                 )
               ) : (
-                <Link
-                  to="/geraina/register"
-                  className={`mt-auto ${t.highlight ? "btn-accent" : "btn-outline"} w-full text-center py-2`}
-                  data-testid={`pricing-cta-${t.id}`}
-                >
-                  {t.cta} <ArrowRight size={14} />
-                </Link>
+                <Link to="/geraina/register" className="mt-auto w-full text-center py-2.5 rounded-xl font-semibold text-sm" style={t.highlight ? { background: TEAL, color: "#fff" } : { border: `1px solid ${LINE}`, color: INK }} data-testid={`pricing-cta-${t.id}`}>{t.cta} →</Link>
               )}
             </div>
           ))}
         </div>
       </section>
 
-      {/* ADD-ONS SECTION */}
-      <section className="py-16 bg-[hsl(36,17%,95%)] border-y border-[hsl(var(--border))]" data-testid="addons-section">
-        <div className="max-w-5xl mx-auto px-6">
+      <section className="py-16 border-y" style={{ background: "#eef5f3", borderColor: LINE }} data-testid="addons-section">
+        <div className="max-w-5xl mx-auto px-5 sm:px-8">
           <div className="text-center mb-10">
-            <span className="label-tiny">Add-ons</span>
-            <h2 className="font-display text-3xl font-bold mt-2">Tambah kapasitas saat dibutuhkan</h2>
-            <p className="text-[hsl(var(--muted))] mt-2 max-w-xl mx-auto text-sm">
-              Hanya bayar saat Anda butuh lebih. Bisa ditambahkan ke paket apa saja.
-            </p>
+            <span className="text-xs font-bold tracking-widest uppercase" style={{ color: TEAL }}>Add-ons</span>
+            <h2 className="text-3xl font-bold mt-2" style={{ fontFamily: JK, color: INK }}>Tambah kapasitas saat dibutuhkan</h2>
+            <p className="mt-2 max-w-xl mx-auto text-sm" style={{ color: BODY }}>Hanya bayar saat Anda butuh lebih. Bisa ditambahkan ke paket apa saja.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
             {addons.map((a) => (
-              <div key={a.id} className="card-surface p-5 flex items-start justify-between gap-3" data-testid={`addon-${a.id}`}>
-                <div>
-                  <p className="font-display font-bold text-base">{a.name}</p>
-                  <p className="text-xs text-[hsl(var(--muted))] mt-0.5">{a.unit}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-display font-extrabold num-display text-base whitespace-nowrap">
-                    {a.price_idr != null
-                      ? fmtIDR(a.price_idr)
-                      : `${fmtIDR(a.price_idr_min)} – ${fmtIDR(a.price_idr_max)}`}
-                  </p>
-                </div>
+              <div key={a.id} className="rounded-2xl bg-white p-5 flex items-start justify-between gap-3 border" style={{ borderColor: LINE }} data-testid={`addon-${a.id}`}>
+                <div><p className="font-bold text-base" style={{ fontFamily: JK, color: INK }}>{a.name}</p><p className="text-xs mt-0.5" style={{ color: MUTED }}>{a.unit}</p></div>
+                <p className="font-extrabold text-base whitespace-nowrap" style={{ fontFamily: JK, color: INK }}>{a.price_idr != null ? fmtIDR(a.price_idr) : `${fmtIDR(a.price_idr_min)} – ${fmtIDR(a.price_idr_max)}`}</p>
               </div>
             ))}
           </div>
-          <p className="text-xs text-[hsl(var(--muted))] text-center mt-6">
-            On-site setup tidak termasuk biaya transportasi. Konfirmasi detail dengan tim sales sebelum order.
-          </p>
+          <p className="text-xs text-center mt-6" style={{ color: MUTED }}>Add-on ditagih terpisah dari langganan dan bisa diaktifkan kapan saja.</p>
         </div>
       </section>
 
-      <section id="faq" className="py-20" data-testid="pricing-faq">
-        <div className="max-w-3xl mx-auto px-6">
-          <h2 className="font-display text-3xl font-bold mb-8 text-center">Pertanyaan yang sering ditanyakan</h2>
+      <section id="faq" className="py-20 px-5 sm:px-8" data-testid="pricing-faq">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold mb-8 text-center" style={{ fontFamily: JK, color: INK }}>Pertanyaan yang sering ditanyakan</h2>
           <div className="space-y-3">
             {FAQS.map((f, i) => (
-              <div key={f.q} className="card-surface" data-testid={`faq-${i}`}>
-                <button
-                  className="w-full text-left p-5 flex items-center justify-between font-medium"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  data-testid={`faq-toggle-${i}`}
-                >
-                  {f.q}
-                  <ChevronDown size={18} className={`transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
+              <div key={f.q} className="rounded-2xl bg-white border" style={{ borderColor: LINE }} data-testid={`faq-${i}`}>
+                <button className="w-full text-left p-5 flex items-center justify-between font-semibold" style={{ color: INK }} onClick={() => setOpenFaq(openFaq === i ? null : i)} data-testid={`faq-toggle-${i}`}>
+                  {f.q}<ChevronDown size={18} className={`transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
                 </button>
-                {openFaq === i && (
-                  <div className="px-5 pb-5 text-sm text-[hsl(var(--muted))]" data-testid={`faq-answer-${i}`}>{f.a}</div>
-                )}
+                {openFaq === i && <div className="px-5 pb-5 text-sm" style={{ color: BODY }} data-testid={`faq-answer-${i}`}>{f.a}</div>}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-[hsl(var(--border))] py-10">
-        <div className="max-w-7xl mx-auto px-6 text-sm text-[hsl(var(--muted))] text-center">
-          © 2026 Geraina POS by DagangOS
-        </div>
+      <footer className="border-t" style={{ borderColor: LINE }}>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 text-sm text-center" style={{ color: MUTED }}>© 2026 Geraina POS · Ekosistem DagangOS</div>
       </footer>
     </div>
   );
