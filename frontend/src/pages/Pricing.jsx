@@ -123,7 +123,7 @@ export default function Pricing() {
                   <li key={f} className="flex gap-2"><Check size={16} style={{ color: TEAL }} className="shrink-0 mt-0.5" /><span>{f}</span></li>
                 ))}
               </ul>
-              {t.id === "multibranch" ? (
+              {t.id !== "trial" ? (
                 <a href="mailto:sales@dagangos.com" className="mt-auto w-full text-center py-2.5 rounded-xl border font-semibold text-sm" style={{ borderColor: LINE, color: INK }} data-testid={`pricing-cta-${t.id}`}>Hubungi Sales →</a>
               ) : user ? (
                 user.plan === t.id ? (
