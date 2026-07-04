@@ -12,7 +12,16 @@ def _key() -> str:
     return os.environ.get("XENDIT_SECRET_KEY", "")
 
 
+class PaymentNotConfiguredError(Exception):
+    """No real payment provider key configured (production, BYO not set up)."""
+    pass
+
+
 def _is_mock_mode() -> bool:
+    # Mock payment responses are DEV-ONLY. In production, a merchant that hasn't
+    # configured their own (BYO) Xendit key must get a clear error — never a fake QR.
+    if os.environ.get("ALLOW_PAYMENT_MOCK", "false").lower() not in ("1", "true", "yes"):
+        return False
     k = _key()
     return (not k) or k.startswith("xnd_development_REPLACE") or k == "test"
 
@@ -47,6 +56,10 @@ async def create_qris(external_id: str, amount: int, currency: str = "IDR") -> D
             "type": "DYNAMIC",
             "_mock": True,
         }
+    if not _key():
+        raise PaymentNotConfiguredError(
+            "Xendit belum dikonfigurasi. Tambahkan API key Xendit toko Anda di Pengaturan → Integrasi untuk menerima QRIS."
+        )
     payload = {
         "reference_id": external_id,
         "type": "DYNAMIC",
@@ -85,6 +98,10 @@ async def create_ewallet_charge(
             "_mock": True,
         }
 
+    if not _key():
+        raise PaymentNotConfiguredError(
+            "Xendit belum dikonfigurasi. Tambahkan API key Xendit toko Anda di Pengaturan → Integrasi untuk menerima e-wallet."
+        )
     chan_props: Dict[str, Any] = {}
     if channel_code in ("ID_OVO",):
         chan_props["mobile_number"] = customer_phone or "+628123456789"

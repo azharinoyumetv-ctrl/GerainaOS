@@ -7,6 +7,7 @@ import Landing from "@/pages/Landing";
 import Pricing from "@/pages/Pricing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import Activate from "@/pages/Activate";
 import AppLayout from "@/layouts/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
@@ -166,6 +167,7 @@ export default function App() {
           <Route path="/geraina/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/geraina/register" element={<Register />} />
+          <Route path="/geraina/activate" element={<Protected><Activate /></Protected>} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/geraina/pricing" element={<Pricing />} />
 
@@ -178,7 +180,8 @@ export default function App() {
             <Route path="pricing" element={<Pricing />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
-            
+            <Route path="activate" element={<Protected><Activate /></Protected>} />
+
             <Route path="app/*" element={<AppLayout />}>{appRoutes}</Route>
 
             {/* Direct un-prefixed management routes & deep links */}

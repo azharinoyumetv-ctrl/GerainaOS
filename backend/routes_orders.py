@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from database import get_db, utcnow, next_order_no
 from models import OrderCreate, Order, OrderLineItem
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from xendit_client import create_qris, create_ewallet_charge
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -166,8 +166,9 @@ async def get_order(order_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.post("/{order_id}/mark-paid")
-async def mark_paid(order_id: str, user: dict = Depends(get_current_user)):
-    """Manual mark-paid (admin override for cash-not-tracked or simulating xendit settle)."""
+async def mark_paid(order_id: str, user: dict = Depends(require_admin)):
+    """Owner-only manual settle: confirm a pending non-cash order was actually received
+    (e.g. paid via the merchant's own external EDC/QRIS). Not a payment simulator."""
     db = get_db()
     res = await db.orders.find_one_and_update(
         {"id": order_id, "store_id": user["store_id"]},

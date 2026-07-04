@@ -116,8 +116,8 @@ function ReceiptDialog({ order, onClose }) {
         </div>
 
         {!isPaid && o.payment_method !== "cash" && (
-          <button onClick={simulatePaid} className="btn-ghost w-full mt-2 text-xs" data-testid="receipt-simulate-paid">
-            <RefreshCw size={13} /> Simulasi: tandai lunas
+          <button onClick={simulatePaid} className="btn-ghost w-full mt-2 text-xs" data-testid="receipt-mark-paid">
+            <RefreshCw size={13} /> Tandai sudah dibayar
           </button>
         )}
 

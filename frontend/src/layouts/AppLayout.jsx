@@ -205,29 +205,42 @@ export default function AppLayout() {
                 <span className="text-[9px] bg-blue-600/30 text-blue-300 border border-blue-500/40 px-1.5 py-0.5 rounded font-mono">SSO Active</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <a
-                  href="/dapuros/app/dashboard"
-                  className="p-2.5 rounded-xl bg-orange-500/20 border border-orange-500/40 hover:bg-orange-500/30 transition-all block text-left"
-                >
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Utensils size={14} className="text-orange-400" />
-                    <span className="text-xs font-extrabold text-orange-200">DapurOS</span>
+              {(() => {
+                const activated = new Set((user?.stores || []).map((s) => s.module));
+                const tiles = [
+                  { mod: "dapuros", label: "DapurOS", desc: "F&B & Restoran OS", Icon: Utensils, tone: "orange", home: "/dapuros/app/dashboard", activate: "/dapuros/activate" },
+                  { mod: "geraina", label: "Geraina POS", desc: "Retail & Toko OS", Icon: Leaf, tone: "blue", home: "/geraina/app/dashboard", activate: "/geraina/activate" },
+                ];
+                return (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {tiles.map(({ mod, label, desc, Icon, tone, home, activate }) => {
+                      const isOn = activated.has(mod);
+                      const box = tone === "orange"
+                        ? "bg-orange-500/20 border-orange-500/40 hover:bg-orange-500/30"
+                        : "bg-blue-500/20 border-blue-500/40 hover:bg-blue-500/30";
+                      const ic = tone === "orange" ? "text-orange-400" : "text-blue-400";
+                      const tx = tone === "orange" ? "text-orange-200" : "text-blue-200";
+                      return (
+                        <a
+                          key={mod}
+                          href={isOn ? home : activate}
+                          className={`p-2.5 rounded-xl border transition-all block text-left ${box}`}
+                          data-testid={`suite-tile-${mod}`}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Icon size={14} className={ic} />
+                            <span className={`text-xs font-extrabold ${tx}`}>{label}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-300 leading-tight">{desc}</p>
+                          <span className={`inline-block mt-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded ${isOn ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-slate-700 text-slate-200 border border-slate-600"}`}>
+                            {isOn ? "Aktif" : "+ Aktifkan"}
+                          </span>
+                        </a>
+                      );
+                    })}
                   </div>
-                  <p className="text-[10px] text-slate-300 leading-tight">F&B & Restoran OS</p>
-                </a>
-
-                <a
-                  href="/geraina/app/dashboard"
-                  className="p-2.5 rounded-xl bg-blue-500/20 border border-blue-500/40 hover:bg-blue-500/30 transition-all block text-left"
-                >
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Leaf size={14} className="text-blue-400" />
-                    <span className="text-xs font-extrabold text-blue-200">Geraina POS</span>
-                  </div>
-                  <p className="text-[10px] text-slate-300 leading-tight">Retail & Toko OS</p>
-                </a>
-              </div>
+                );
+              })()}
 
               <a
                 href="/"

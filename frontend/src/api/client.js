@@ -191,6 +191,15 @@ api.interceptors.request.use((cfg) => {
 api.interceptors.response.use(
   (r) => r,
   (err) => {
+    // Akun belum punya toko untuk modul ini -> arahkan ke halaman aktivasi modul.
+    if (
+      err?.response?.status === 409 &&
+      err?.response?.data?.detail === "no_store_for_module" &&
+      typeof window !== "undefined" &&
+      !window.location.pathname.includes("/activate")
+    ) {
+      window.location.href = "/geraina/activate";
+    }
     return Promise.reject(err);
   }
 );

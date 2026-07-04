@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/api/client";
-import { Save, Link2, Zap } from "lucide-react";
+import { Save, Link2 } from "lucide-react";
 
 import { Link } from "react-router-dom";
 
@@ -11,18 +11,16 @@ export default function Integrations() {
   const rawType = params.type || pathPart || "xendit";
   const type = (rawType === "integrations" || !rawType) ? "xendit" : rawType.toLowerCase();
 
+  // Empty by default — each store brings its own (BYO) payment/notification credentials.
   const [integrations, setIntegrations] = useState({
-    xendit: { is_active: true, secret_key: "xnd_development_mock_key", webhook_token: "mock_wh_token" },
-    midtrans: { is_active: true, client_key: "SB-Mid-client-mock", server_key: "SB-Mid-server-mock" },
-    stripe: { is_active: true, publishable_key: "pk_test_mock", secret_key: "sk_test_mock" },
-    qris: { is_active: true, nmid: "ID1029384756", merchant_name: "Geraina POS Store" },
-    whatsapp: { is_active: true, provider: "Fonet/WABA Gateway", api_token: "wa_mock_api_token_9981" },
-    telegram: { is_active: true, bot_token: "bot_77812938:AAF_mock_token", chat_id: "-1001928374" },
-    email: { is_active: true, smtp_host: "smtp.mailtrap.io", smtp_port: 2525, smtp_user: "mock_smtp_user" }
+    xendit: { is_active: false, secret_key: "", webhook_token: "" },
+    midtrans: { is_active: false, client_key: "", server_key: "" },
+    stripe: { is_active: false, publishable_key: "", secret_key: "" },
+    qris: { is_active: false, nmid: "", merchant_name: "" },
+    whatsapp: { is_active: false, provider: "", api_token: "" },
+    telegram: { is_active: false, bot_token: "", chat_id: "" },
+    email: { is_active: false, smtp_host: "", smtp_port: 587, smtp_user: "" }
   });
-  const [simRefId, setSimRefId] = useState("");
-  const [simStatus, setSimStatus] = useState("");
-  const [simLoading, setSimLoading] = useState(false);
 
   useEffect(() => {
     api.get("/integrations").then((r) => {
@@ -35,7 +33,7 @@ export default function Integrations() {
     api.post("/integrations", integrations).then(() => {
       alert(`Konfigurasi integrasi ${(type || 'midtrans').toUpperCase()} berhasil disimpan!`);
     }).catch(() => {
-      alert(`Konfigurasi integrasi ${(type || 'midtrans').toUpperCase()} berhasil disimpan! (Local Mode)`);
+      alert(`Gagal menyimpan konfigurasi ${(type || 'midtrans').toUpperCase()}.`);
     });
   };
 
@@ -60,6 +58,7 @@ export default function Integrations() {
               <input
                 type="password"
                 value={integrations.xendit.secret_key}
+                placeholder="xnd_production_..."
                 onChange={(e) => setIntegrations({ ...integrations, xendit: { ...integrations.xendit, secret_key: e.target.value } })}
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
               />
@@ -73,30 +72,7 @@ export default function Integrations() {
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
               />
             </div>
-
-            {/* Webhook Simulator */}
-            <div className="border-t border-[hsl(var(--border))] pt-4 mt-2" data-testid="webhook-simulator-xendit">
-              <h3 className="text-sm font-bold flex items-center gap-1.5 mb-3"><Zap size={14} className="text-amber-500" /> Simulasi Webhook Callback</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                <div className="flex flex-col space-y-1">
-                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Reference ID / Nomor Order</label>
-                  <input type="text" value={simRefId} onChange={(e) => setSimRefId(e.target.value)} placeholder="GR-20260620-0001" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs font-mono" data-testid="sim-ref-id" />
-                </div>
-                <div className="flex items-end">
-                  <button type="button" disabled={!simRefId || simLoading} onClick={async () => {
-                    setSimLoading(true); setSimStatus("");
-                    try {
-                      await api.post("/webhooks/xendit/simulate", { event: "qr.payment", reference_id: simRefId, status: "SUCCEEDED" });
-                      setSimStatus("\u2705 Webhook berhasil dikirim!");
-                    } catch { setSimStatus("\u274c Gagal mengirim webhook."); }
-                    finally { setSimLoading(false); }
-                  }} className="btn-outline py-1.5 px-4 text-xs w-full" data-testid="sim-trigger-btn">
-                    <Zap size={12} /> {simLoading ? "Mengirim…" : "Kirim Simulasi"}
-                  </button>
-                </div>
-              </div>
-              {simStatus && <p className="text-xs mt-2 font-semibold" data-testid="sim-status">{simStatus}</p>}
-            </div>
+            <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan API key Xendit milik toko Anda sendiri. Transaksi pelanggan masuk langsung ke akun Xendit Anda.</p>
           </div>
         );
 
@@ -132,30 +108,7 @@ export default function Integrations() {
                 />
               </div>
             </div>
-
-            {/* Midtrans Webhook Simulator */}
-            <div className="border-t border-[hsl(var(--border))] pt-4 mt-2" data-testid="webhook-simulator-midtrans">
-              <h3 className="text-sm font-bold flex items-center gap-1.5 mb-3"><Zap size={14} className="text-amber-500" /> Simulasi Webhook Callback</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                <div className="flex flex-col space-y-1">
-                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Order ID / Reference ID</label>
-                  <input type="text" value={simRefId} onChange={(e) => setSimRefId(e.target.value)} placeholder="GR-20260620-0001" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs font-mono" data-testid="sim-ref-id-midtrans" />
-                </div>
-                <div className="flex items-end">
-                  <button type="button" disabled={!simRefId || simLoading} onClick={async () => {
-                    setSimLoading(true); setSimStatus("");
-                    try {
-                      await api.post("/webhooks/midtrans/simulate", { order_id: simRefId, transaction_status: "settlement" });
-                      setSimStatus("\u2705 Webhook berhasil dikirim!");
-                    } catch { setSimStatus("\u274c Gagal mengirim webhook."); }
-                    finally { setSimLoading(false); }
-                  }} className="btn-outline py-1.5 px-4 text-xs w-full" data-testid="sim-trigger-btn-midtrans">
-                    <Zap size={12} /> {simLoading ? "Mengirim\u2026" : "Kirim Simulasi"}
-                  </button>
-                </div>
-              </div>
-              {simStatus && <p className="text-xs mt-2 font-semibold" data-testid="sim-status-midtrans">{simStatus}</p>}
-            </div>
+            <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan kredensial Midtrans milik toko Anda sendiri.</p>
           </div>
         );
 
@@ -191,30 +144,7 @@ export default function Integrations() {
                 />
               </div>
             </div>
-
-            {/* Stripe Webhook Simulator */}
-            <div className="border-t border-[hsl(var(--border))] pt-4 mt-2" data-testid="webhook-simulator-stripe">
-              <h3 className="text-sm font-bold flex items-center gap-1.5 mb-3"><Zap size={14} className="text-amber-500" /> Simulasi Webhook Callback</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                <div className="flex flex-col space-y-1">
-                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Payment Intent / Reference ID</label>
-                  <input type="text" value={simRefId} onChange={(e) => setSimRefId(e.target.value)} placeholder="pi_xxx or GR-20260620-0001" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs font-mono" data-testid="sim-ref-id-stripe" />
-                </div>
-                <div className="flex items-end">
-                  <button type="button" disabled={!simRefId || simLoading} onClick={async () => {
-                    setSimLoading(true); setSimStatus("");
-                    try {
-                      await api.post("/webhooks/stripe/simulate", { payment_intent: simRefId, status: "succeeded" });
-                      setSimStatus("\u2705 Webhook berhasil dikirim!");
-                    } catch { setSimStatus("\u274c Gagal mengirim webhook."); }
-                    finally { setSimLoading(false); }
-                  }} className="btn-outline py-1.5 px-4 text-xs w-full" data-testid="sim-trigger-btn-stripe">
-                    <Zap size={12} /> {simLoading ? "Mengirim\u2026" : "Kirim Simulasi"}
-                  </button>
-                </div>
-              </div>
-              {simStatus && <p className="text-xs mt-2 font-semibold" data-testid="sim-status-stripe">{simStatus}</p>}
-            </div>
+            <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan kredensial Stripe milik toko Anda sendiri.</p>
           </div>
         );
 
@@ -378,7 +308,7 @@ export default function Integrations() {
           <h2 className="font-display font-bold text-lg border-b border-[hsl(var(--border))] pb-3 capitalize">
             Integrasi Layanan {type}
           </h2>
-          
+
           {renderForm()}
 
           <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-end">

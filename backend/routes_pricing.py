@@ -3,7 +3,7 @@
 DO NOT modify prices without explicit client approval.
 """
 from fastapi import APIRouter, Depends, HTTPException
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from database import get_db
 
 router = APIRouter(prefix="/api/pricing", tags=["pricing"])
@@ -122,7 +122,7 @@ async def list_addons():
 
 
 @router.post("/upgrade")
-async def upgrade_plan(payload: dict, user: dict = Depends(get_current_user)):
+async def upgrade_plan(payload: dict, user: dict = Depends(require_admin)):
     tier_id = payload.get("tier_id")
     if not tier_id or tier_id not in [t["id"] for t in TIERS]:
         raise HTTPException(status_code=400, detail="Paket tidak valid")
