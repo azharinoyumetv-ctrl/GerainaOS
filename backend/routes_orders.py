@@ -156,6 +156,35 @@ async def stats(user: dict = Depends(get_current_user)):
     }
 
 
+@router.get("/product-sales")
+async def product_sales(user: dict = Depends(get_current_user), days: int = 30, limit: int = 10):
+    """Laporan produk terjual REAL: agregasi qty + revenue per produk dari order LUNAS."""
+    db = get_db()
+    from datetime import datetime, timezone, timedelta
+    after = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    cur = db.orders.aggregate([
+        {"$match": {"store_id": user["store_id"], "payment_status": "paid", "created_at": {"$gte": after}}},
+        {"$unwind": "$items"},
+        {"$group": {
+            "_id": {"pid": "$items.product_id", "name": "$items.name"},
+            "sold": {"$sum": "$items.quantity"},
+            "revenue": {"$sum": "$items.subtotal"},
+        }},
+        {"$sort": {"sold": -1}},
+        {"$limit": limit},
+    ])
+    rows = await cur.to_list(length=limit)
+    return [
+        {
+            "product_id": r["_id"].get("pid"),
+            "name": r["_id"].get("name") or "-",
+            "sold": r.get("sold", 0),
+            "revenue": r.get("revenue", 0),
+        }
+        for r in rows
+    ]
+
+
 @router.get("/{order_id}")
 async def get_order(order_id: str, user: dict = Depends(get_current_user)):
     db = get_db()

@@ -16,11 +16,18 @@ export default function Settings() {
   const rawType = params.type || pathPart || "general";
   const type = (rawType === "settings" || !rawType) ? "general" : rawType.toLowerCase();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [sub, setSub] = useState(null);
 
   useEffect(() => {
     api.get("/settings").then((r) => {
       if (r.data) setSettings(r.data);
     }).catch(() => {});
+  }, [type]);
+
+  useEffect(() => {
+    if (["billing", "subscription", "license"].includes(type)) {
+      api.get("/subscription").then((r) => setSub(r.data)).catch(() => setSub(null));
+    }
   }, [type]);
 
   const handleSave = (e) => {
@@ -194,91 +201,64 @@ export default function Settings() {
         );
 
       case "license":
-      case "billing":
-      case "subscription":
         return (
-          <div className="space-y-6" data-testid="subscription-billing-management-area">
-            <div className="p-4 rounded-xl bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-500/30 space-y-2 text-left">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-black uppercase text-blue-400 tracking-wider">Active Subscription Plan & Tier</span>
-                <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-extrabold" data-testid="subscription-status-badge">
-                  ● ACTIVE ENTERPRISE TIER
-                </span>
-              </div>
-              <h3 className="font-display text-2xl font-black text-white" data-testid="subscription-plan-title">
-                DagangOS Enterprise Multi-Outlet SaaS Plan
-              </h3>
-              <p className="text-xs text-slate-300">
-                Akses tanpa batas ke seluruh modul F&B (DapurOS), Retail (Geraina POS), BOM Resep, KDS Real-time, dan manajemen Multi-Tenant Billing.
+          <div className="space-y-5" data-testid="license-management-area">
+            <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface))]">
+              <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted))]">Status Lisensi</span>
+              <h3 className="font-display text-lg font-bold mt-1">Lisensi Perangkat & Aktivasi</h3>
+              <p className="text-xs text-[hsl(var(--muted))] mt-1">
+                Kelola perangkat kasir (device) yang terhubung ke toko Anda. Jumlah perangkat mengikuti paket langganan yang aktif.
               </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface))] space-y-1">
-                <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted))]">Outlet & Tenant Count</span>
-                <p className="text-xl font-bold font-display" data-testid="tenant-outlet-count">3 Active Outlets</p>
-                <p className="text-[11px] text-emerald-600">Sync Multi-Branch Active</p>
+                <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted))]">Paket Aktif</span>
+                <p className="text-lg font-bold font-display capitalize" data-testid="license-plan">{sub?.plan || "trial"}</p>
               </div>
               <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface))] space-y-1">
-                <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted))]">Next Renewal Billing Date</span>
-                <p className="text-xl font-bold font-display" data-testid="next-billing-date">28 July 2026</p>
-                <p className="text-[11px] text-[hsl(var(--muted))]">Auto-Debit Active (QRIS/CC)</p>
-              </div>
-              <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface))] space-y-1">
-                <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted))]">Billing Rate / Tier</span>
-                <p className="text-xl font-bold font-display" data-testid="billing-tier-rate">Rp 299.000 / bln</p>
-                <p className="text-[11px] text-blue-600">Enterprise SaaS Tier</p>
+                <span className="text-[10px] font-bold uppercase text-[hsl(var(--muted))]">Status</span>
+                <p className="text-lg font-bold font-display capitalize">{sub?.status || "trial"}</p>
               </div>
             </div>
+            <Link to="/geraina/app/license" className="btn-outline py-2 px-4 text-xs flex items-center gap-2 w-max">
+              Kelola Perangkat Kasir &rarr;
+            </Link>
+          </div>
+        );
 
-            <div className="space-y-3 text-left">
-              <h4 className="font-display text-sm font-bold text-[hsl(var(--foreground))]">Pilih / Switch Subscription Tier & Plan</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => alert("Tier switched to Free Trial!")}
-                  className="p-3.5 rounded-xl border border-[hsl(var(--border))] hover:border-blue-500/50 text-left transition-all"
-                  data-testid="tier-free-trial-btn"
-                >
-                  <span className="text-xs font-bold block text-slate-700">Free Trial Plan</span>
-                  <span className="text-[10px] text-slate-500">14 Hari Akses Fitur Dasar</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => alert("Tier switched to Pro SaaS Plan!")}
-                  className="p-3.5 rounded-xl border border-[hsl(var(--border))] hover:border-blue-500/50 text-left transition-all"
-                  data-testid="tier-pro-plan-btn"
-                >
-                  <span className="text-xs font-bold block text-blue-600">Pro SaaS Plan</span>
-                  <span className="text-[10px] text-slate-500">Rp 149.000 / bulan per toko</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => alert("Enterprise Multi-Outlet Tier is active!")}
-                  className="p-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-50/20 text-left transition-all"
-                  data-testid="tier-enterprise-plan-btn"
-                >
-                  <span className="text-xs font-bold block text-emerald-600">Enterprise Tier (Active)</span>
-                  <span className="text-[10px] text-slate-500">Unlimited Outlets & Multi-Tenant</span>
-                </button>
+      case "billing":
+      case "subscription": {
+        const PLAN_NAMES = { trial: "Free Trial", starter: "Starter", pro: "Pro", business: "Business", multibranch: "Multi-Branch" };
+        const planId = (sub?.plan || "trial").toLowerCase();
+        const planName = PLAN_NAMES[planId] || planId;
+        const isTrialPlan = planId === "trial";
+        return (
+          <div className="space-y-6" data-testid="subscription-billing-management-area">
+            <div className="p-4 rounded-xl bg-[hsl(var(--surface))] border border-[hsl(var(--border))] space-y-2 text-left">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black uppercase text-[hsl(var(--muted))] tracking-wider">Paket Langganan Aktif</span>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 text-[10px] font-extrabold" data-testid="subscription-status-badge">
+                  ● {isTrialPlan ? "TRIAL" : "AKTIF"}
+                </span>
               </div>
+              <h3 className="font-display text-2xl font-black" data-testid="subscription-plan-title">Paket {planName}</h3>
+              {isTrialPlan && sub?.trial_ends_at && (
+                <p className="text-xs text-[hsl(var(--muted))]">Masa trial berakhir: {new Date(sub.trial_ends_at).toLocaleDateString("id-ID")}</p>
+              )}
+            </div>
+
+            <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-xs leading-relaxed">
+              Upgrade ke paket berbayar dilakukan lewat halaman Harga. Aktivasi otomatis akan tersedia setelah gateway pembayaran (Xendit/Midtrans) siap — sementara ini silakan hubungi sales untuk aktivasi manual.
             </div>
 
             <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-between items-center">
               <Link to="/geraina/pricing" className="text-xs font-bold text-blue-600 hover:underline" data-testid="view-pricing-matrix-link">
-                Lihat Matrix Matriks Harga lengkap &rarr;
+                Lihat semua paket &amp; harga &rarr;
               </Link>
-              <button
-                type="button"
-                onClick={() => alert("Tagihan Tenant Billing berhasil diperbarui!")}
-                className="btn-primary py-2 px-5 text-xs font-bold"
-                data-testid="save-billing-settings-btn"
-              >
-                Simpan Perubahan Billing Settings
-              </button>
             </div>
           </div>
         );
+      }
 
       default:
         return <p className="text-sm text-[hsl(var(--muted))]">Pengaturan tidak ditemukan.</p>;

@@ -247,6 +247,15 @@ export default function POS() {
 
   const clearCart = () => { setCart([]); setCashReceived(""); setDiscount(0); setSelectedCustomerId(""); };
 
+  // Keypad numerik untuk input nominal tunai manual (layar sentuh)
+  const keypadPress = (k) => {
+    setCashReceived((prev) => {
+      const cur = String(prev || "");
+      if (k === "back") return cur.slice(0, -1);
+      return cur + k;
+    });
+  };
+
   const checkout = async () => {
     if (cart.length === 0) return;
     setSubmitting(true);
@@ -446,6 +455,26 @@ export default function POS() {
                   {change >= 0 ? `Kembalian: ${fmtIDR(change)}` : `Kurang: ${fmtIDR(-change)}`}
                 </p>
               )}
+              {/* Keypad numerik */}
+              <div className="grid grid-cols-3 gap-1.5 mt-2" data-testid="cash-keypad">
+                {["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0", "back"].map((k) => (
+                  <button key={k} type="button" onClick={() => keypadPress(k)}
+                          className="py-2.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface))] text-sm font-bold hover:bg-[hsl(var(--secondary))]"
+                          data-testid={`keypad-${k}`}>
+                    {k === "back" ? "⌫" : k}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+                <button type="button" onClick={() => setCashReceived(String(Math.ceil(total)))}
+                        className="py-2 rounded-md text-xs font-bold border border-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10" data-testid="keypad-exact">
+                  Uang Pas
+                </button>
+                <button type="button" onClick={() => setCashReceived("")}
+                        className="py-2 rounded-md text-xs font-bold border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))]" data-testid="keypad-clear">
+                  Hapus
+                </button>
+              </div>
             </div>
           )}
 

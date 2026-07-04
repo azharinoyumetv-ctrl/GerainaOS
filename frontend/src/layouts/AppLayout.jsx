@@ -145,7 +145,6 @@ const MENU_STRUCTURE = [
       { to: "/geraina/app/settings/license", label: "Lisensi" }
     ]
   },
-  { to: "/geraina/app/settings/billing", icon: CreditCard, label: "Langganan & Tagihan", key: "billing" },
   { to: "/geraina/app/about", icon: Info, label: "Tentang", key: "about" }
 ];
 

@@ -16,10 +16,12 @@ export default function Reports() {
 
   const [stats, setStats] = useState(null);
   const [products, setProducts] = useState([]);
+  const [productSales, setProductSales] = useState([]);
 
   useEffect(() => {
     api.get("/orders/stats").then((r) => setStats(r.data)).catch(() => {});
     api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
+    api.get("/orders/product-sales?days=30&limit=8").then((r) => setProductSales(r.data || [])).catch(() => setProductSales([]));
   }, [type]);
 
   const subtabs = [
@@ -82,11 +84,10 @@ export default function Reports() {
         );
 
       case "product":
-        const topProds = products.slice(0, 5).map(p => ({
-          name: p.name,
-          sold: Math.floor(Math.random() * 50) + 10,
-          revenue: (p.price || 0) * (Math.floor(Math.random() * 50) + 10)
-        }));
+        const topProds = productSales.map(p => ({ name: p.name, sold: p.sold, revenue: p.revenue }));
+        if (topProds.length === 0) {
+          return <div className="card-surface p-8 text-center text-sm text-[hsl(var(--muted))]">Belum ada produk terjual dalam 30 hari terakhir. Data akan muncul otomatis setelah ada transaksi lunas.</div>;
+        }
         return (
           <div className="grid md:grid-cols-2 gap-6">
             <div className="card-surface p-6 h-80">
