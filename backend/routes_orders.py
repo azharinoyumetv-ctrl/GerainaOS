@@ -103,6 +103,26 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
             doc["xendit_raw"] = {"error": str(e)}
 
     await db.orders.insert_one(doc)
+
+    # Auto-kirim struk ke WhatsApp pelanggan (best-effort; toggle "Kirim Struk Otomatis")
+    try:
+        if payload.customer_phone:
+            from whatsapp_client import get_wa_config, send_whatsapp
+            wa = await get_wa_config(db, user["store_id"])
+            if wa.get("is_active"):
+                settings = await db.settings.find_one({"store_id": user["store_id"]}, {"_id": 0})
+                store_name = ((settings or {}).get("general") or {}).get("store_name") or "Toko"
+                total_str = f"{int(round(calc['total'])):,}".replace(",", ".")
+                msg = (
+                    f"*Struk {order_no}* - {store_name}\n"
+                    f"Total: Rp {total_str}\n"
+                    f"Metode: {str(payload.payment_method).upper()}\n\n"
+                    f"Terima kasih atas kunjungan Anda!"
+                )
+                await send_whatsapp(wa, payload.customer_phone, msg)
+    except Exception:
+        pass
+
     doc.pop("_id", None)
     return doc
 

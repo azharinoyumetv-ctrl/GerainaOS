@@ -86,6 +86,30 @@ async def create_purchase_order(payload: PurchaseOrderCreate, user: dict = Depen
         "created_at": utcnow().isoformat()
     }
     await db.purchase_orders.insert_one(doc)
+
+    # Kirim PO ke WhatsApp supplier (best-effort; BYO gateway, tak membatalkan PO bila gagal)
+    try:
+        from whatsapp_client import get_wa_config, send_whatsapp
+        wa = await get_wa_config(db, user["store_id"])
+        if wa.get("is_active"):
+            sup = await db.suppliers.find_one({"id": payload.supplier_id, "store_id": user["store_id"]})
+            phone = (sup or {}).get("phone")
+            if phone:
+                settings = await db.settings.find_one({"store_id": user["store_id"]}, {"_id": 0})
+                store_name = ((settings or {}).get("general") or {}).get("store_name") or user.get("store_name") or "Toko"
+                total_str = f"{int(round(payload.total or 0)):,}".replace(",", ".")
+                msg = (
+                    f"*Purchase Order {payload.po_no}*\n"
+                    f"Dari: {store_name}\n"
+                    f"Kepada: {payload.supplier_name}\n"
+                    f"Total: Rp {total_str}\n"
+                    f"Status: {payload.status}\n\n"
+                    f"Mohon diproses. Terima kasih."
+                )
+                doc["whatsapp"] = await send_whatsapp(wa, phone, msg)
+    except Exception:
+        pass
+
     doc.pop("_id", None)
     return doc
 
