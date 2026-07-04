@@ -119,7 +119,7 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
                     f"Metode: {str(payload.payment_method).upper()}\n\n"
                     f"Terima kasih atas kunjungan Anda!"
                 )
-                await send_whatsapp(wa, payload.customer_phone, msg)
+                doc["whatsapp"] = await send_whatsapp(wa, payload.customer_phone, msg)
     except Exception:
         pass
 
