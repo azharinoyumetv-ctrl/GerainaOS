@@ -37,6 +37,30 @@ export default function Integrations() {
     });
   };
 
+  const [waTestNum, setWaTestNum] = useState("");
+  const [waTesting, setWaTesting] = useState(false);
+  const [waTestResult, setWaTestResult] = useState(null);
+
+  const sendWaTest = async () => {
+    setWaTesting(true);
+    setWaTestResult(null);
+    try {
+      const r = await api.post("/integrations/whatsapp/test", {
+        target: waTestNum,
+        provider: integrations.whatsapp?.provider,
+        api_token: integrations.whatsapp?.api_token,
+      });
+      const d = r.data || {};
+      setWaTestResult(d.sent
+        ? { ok: true, msg: `Berhasil! Pesan tes terkirim ke ${waTestNum}.` }
+        : { ok: false, msg: `Gagal: ${d.reason || "cek token/nomor"}` });
+    } catch (e2) {
+      setWaTestResult({ ok: false, msg: e2?.response?.data?.detail || "Gagal mengirim tes" });
+    } finally {
+      setWaTesting(false);
+    }
+  };
+
   if (!integrations) return <div className="p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data integrasi...</div>;
 
   const renderForm = () => {
@@ -177,6 +201,36 @@ export default function Integrations() {
                 onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, api_token: e.target.value } })}
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
               />
+            </div>
+
+            {/* Tes kirim WhatsApp langsung (tanpa harus buat order) */}
+            <div className="border-t border-[hsl(var(--border))] pt-3">
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Tes Kirim WhatsApp</label>
+              <div className="flex gap-2 mt-1">
+                <input
+                  type="text"
+                  value={waTestNum}
+                  onChange={(e) => setWaTestNum(e.target.value)}
+                  placeholder="08xxxxxxxxxx (nomor tujuan tes)"
+                  className="flex-1 border border-[hsl(var(--border))] rounded-md px-3 py-2 bg-white text-sm"
+                  data-testid="wa-test-number"
+                />
+                <button
+                  type="button"
+                  disabled={waTesting}
+                  onClick={sendWaTest}
+                  className="btn-outline px-4 py-2 text-xs font-bold disabled:opacity-60 whitespace-nowrap"
+                  data-testid="wa-test-btn"
+                >
+                  {waTesting ? "Mengirim…" : "Kirim Tes"}
+                </button>
+              </div>
+              {waTestResult && (
+                <p className={`text-xs mt-2 font-semibold ${waTestResult.ok ? "text-emerald-600" : "text-red-600"}`} data-testid="wa-test-result">
+                  {waTestResult.msg}
+                </p>
+              )}
+              <p className="text-[11px] text-[hsl(var(--muted))] mt-1">Isi Provider + API Token di atas, lalu kirim tes ke nomor Anda sendiri untuk memastikan koneksi.</p>
             </div>
           </div>
         );

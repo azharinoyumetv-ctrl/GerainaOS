@@ -49,6 +49,18 @@ async def send_whatsapp(cfg: dict, target: str, message: str) -> dict:
                     headers={"Authorization": token},
                     data={"target": tgt, "message": message},
                 )
-        return {"sent": r.status_code < 400, "status": r.status_code, "resp": r.text[:200]}
+        http_ok = r.status_code < 400
+        body = None
+        try:
+            body = r.json()
+        except Exception:
+            body = None
+        # Fonnte/Wablas balas HTTP 200 walau token salah — sukses sebenarnya ada di field "status".
+        provider_ok = bool(body.get("status")) if isinstance(body, dict) and "status" in body else http_ok
+        sent = http_ok and provider_ok
+        reason = None
+        if not sent:
+            reason = (isinstance(body, dict) and (body.get("reason") or body.get("message"))) or f"http {r.status_code}"
+        return {"sent": sent, "status": r.status_code, "reason": reason, "resp": r.text[:200]}
     except Exception as e:
         return {"sent": False, "reason": str(e)}

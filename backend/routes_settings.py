@@ -91,13 +91,14 @@ async def get_integrations(user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.integrations.find_one({"store_id": user["store_id"]}, {"_id": 0})
     if not res:
+        # Default KOSONG (BYO) — merchant isi kredensial sendiri. Tanpa data demo palsu.
         return {
-            "xendit": { "is_active": True, "secret_key": "xnd_live_...", "webhook_token": "ger-token-xyz-123" },
-            "midtrans": { "is_active": False, "client_key": "VT-client-...", "server_key": "VT-server-..." },
-            "stripe": { "is_active": False, "publishable_key": "pk_live_...", "secret_key": "sk_live_..." },
-            "whatsapp": { "is_active": True, "provider": "Fonnte / Qontak", "api_token": "wa-token-abc", "auto_send_receipt": True },
-            "telegram": { "is_active": False, "bot_token": "bot123456:...", "chat_id": "@gerainapos_alerts" },
-            "email": { "is_active": True, "smtp_host": "smtp.mailgun.org", "smtp_port": 587, "smtp_user": "postmaster@geraina.com" }
+            "xendit": { "is_active": False, "secret_key": "", "webhook_token": "" },
+            "midtrans": { "is_active": False, "client_key": "", "server_key": "" },
+            "stripe": { "is_active": False, "publishable_key": "", "secret_key": "" },
+            "whatsapp": { "is_active": False, "provider": "", "api_token": "", "auto_send_receipt": False },
+            "telegram": { "is_active": False, "bot_token": "", "chat_id": "" },
+            "email": { "is_active": False, "smtp_host": "", "smtp_port": 587, "smtp_user": "" }
         }
     return res
 
@@ -113,6 +114,19 @@ async def save_integrations(payload: Dict[str, Any], user: dict = Depends(get_cu
         projection={"_id": 0}
     )
     return res
+
+@router.post("/api/integrations/whatsapp/test")
+async def test_whatsapp(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
+    """Kirim pesan tes WhatsApp memakai kredensial yang sedang diisi (tak perlu simpan dulu)."""
+    from whatsapp_client import send_whatsapp
+    target = str(payload.get("target") or "").strip()
+    if not target:
+        raise HTTPException(status_code=400, detail="Nomor tujuan wajib diisi")
+    token = str(payload.get("api_token") or "").strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="API token WhatsApp belum diisi")
+    cfg = {"is_active": True, "provider": payload.get("provider") or "fonnte", "api_token": token}
+    return await send_whatsapp(cfg, target, "Tes koneksi WhatsApp DagangOS berhasil.")
 
 # ---------- Branches ----------
 @router.get("/api/branches", response_model=List[Branch])
