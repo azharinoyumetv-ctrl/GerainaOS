@@ -80,6 +80,22 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def _ensure_indexes():
+    """Index idempotent — resolusi toko per-request (stores by owner+module) tetap cepat."""
+    db = get_db()
+    for coll, keys in (
+        ("stores", [("owner_user_id", 1), ("module", 1)]),
+        ("users", [("email", 1)]),
+        ("orders", [("store_id", 1), ("created_at", -1)]),
+        ("products", [("store_id", 1)]),
+    ):
+        try:
+            await db[coll].create_index(keys)
+        except Exception as e:
+            logger.warning(f"ensure index {coll} failed: {e}")
+
+
 @app.on_event("shutdown")
 async def _shutdown():
     close_db()

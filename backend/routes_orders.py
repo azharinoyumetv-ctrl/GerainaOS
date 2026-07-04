@@ -208,3 +208,39 @@ async def mark_paid(order_id: str, user: dict = Depends(require_admin)):
     if not res:
         raise HTTPException(status_code=404, detail="Order tidak ditemukan")
     return res
+
+
+@router.post("/{order_id}/void")
+async def void_order(order_id: str, user: dict = Depends(require_admin)):
+    """Batalkan order (owner-only): set payment_status 'voided' dan KEMBALIKAN stok/bahan
+    yang sudah dipotong saat order dibuat. Idempotent."""
+    db = get_db()
+    order = await db.orders.find_one({"id": order_id, "store_id": user["store_id"]})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order tidak ditemukan")
+    if order.get("payment_status") == "voided":
+        return {"ok": True, "already_voided": True}
+
+    for it in order.get("items", []):
+        pid = it.get("product_id")
+        qty = it.get("quantity", 0)
+        prod = await db.products.find_one({"id": pid, "store_id": user["store_id"]})
+        if prod and prod.get("recipe"):
+            for rec in prod["recipe"]:
+                ing_id = rec.get("ingredient_id")
+                rec_qty = rec.get("quantity") or rec.get("qty") or 0
+                await db.ingredients.update_one(
+                    {"id": ing_id, "store_id": user["store_id"]},
+                    {"$inc": {"stock": float(rec_qty) * qty}},
+                )
+        elif prod:
+            await db.products.update_one(
+                {"id": pid, "store_id": user["store_id"]},
+                {"$inc": {"stock": qty}},
+            )
+
+    await db.orders.update_one(
+        {"id": order_id, "store_id": user["store_id"]},
+        {"$set": {"payment_status": "voided", "updated_at": utcnow().isoformat()}},
+    )
+    return {"ok": True}

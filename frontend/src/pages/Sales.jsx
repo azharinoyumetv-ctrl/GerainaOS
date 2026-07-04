@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api, { fmtIDR, downloadPdf } from "@/api/client";
-import { Printer, FileDown, Search, RefreshCw } from "lucide-react";
+import { Printer, FileDown, Search, RefreshCw, Ban } from "lucide-react";
 
 export default function Sales() {
   const [items, setItems] = useState([]);
@@ -18,6 +18,16 @@ export default function Sales() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [filter]);
+
+  const voidOrder = async (o) => {
+    if (!window.confirm(`Batalkan order ${o.order_no}? Stok akan dikembalikan. Aksi ini tidak bisa dibatalkan.`)) return;
+    try {
+      await api.post(`/orders/${o.id}/void`);
+      await load();
+    } catch (e) {
+      alert(e?.response?.data?.detail || "Gagal membatalkan order (khusus Owner).");
+    }
+  };
 
   const filtered = items.filter((o) =>
     !q || o.order_no.toLowerCase().includes(q.toLowerCase())
@@ -88,6 +98,12 @@ export default function Sales() {
                           className="btn-ghost p-1.5" title="Invoice A4" data-testid={`sales-invoice-${o.id}`}>
                     <FileDown size={15} />
                   </button>
+                  {o.payment_status !== "voided" && (
+                    <button onClick={() => voidOrder(o)}
+                            className="btn-ghost p-1.5 text-red-600 hover:bg-red-50" title="Batalkan / Void (kembalikan stok)" data-testid={`sales-void-${o.id}`}>
+                      <Ban size={15} />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

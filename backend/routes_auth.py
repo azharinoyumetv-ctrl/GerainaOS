@@ -1,5 +1,7 @@
 """Auth routes: register (akun + toko pertama) + login + me + kelola toko.
 
+SYNC: KEEP IN SYNC dengan DapurOS/backend/routes_auth.py (backend terpisah, DB+JWT sama).
+
 Model multi-store: satu akun (owner) bisa memiliki banyak toko, satu toko per modul
 (dapuros/geraina). Toko aktif ditentukan oleh header X-DagangOS-Module dan diresolusi di
 `auth.get_current_user`. Backend ini dapat berjalan terpisah namun BERBAGI DB + JWT secret
