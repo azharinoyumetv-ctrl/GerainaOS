@@ -19,8 +19,16 @@ const DEFAULT_PAYMENT_CONFIG = {
     banks: { BCA: true, BNI: true, BRI: true, Mandiri: true, Permata: true, CIMB: true, Maybank: false, Danamon: false, Neo: false, BSI: true }
   },
   credit_card: { is_active: true, provider: "Stripe", enable_3ds: true, installment_banks: ["Mandiri", "BCA", "CIMB"] },
-  bank_transfer: { is_active: true, accounts: [{ bank: "Bank Central Asia", account_no: "8820987111", account_name: "DagangOS Geraina POS" }] }
+  bank_transfer: { is_active: true, accounts: [{ bank: "Bank Central Asia", account_no: "8820987111", account_name: "DagangOS Geraina POS" }] },
+  edc: { is_active: false, provider: "" }
 };
+
+const EDC_BANKS = [
+  { id: "bca", label: "BCA" },
+  { id: "mandiri", label: "Mandiri" },
+  { id: "bri", label: "BRI" },
+  { id: "bni", label: "BNI" },
+];
 
 export default function PaymentConfig() {
   const params = useParams();
@@ -321,6 +329,40 @@ export default function PaymentConfig() {
           </div>
         );
 
+      case "edc":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-[hsl(var(--border))]/50 pb-2">
+              <label className="text-sm font-semibold">Aktifkan EDC (Kartu Debit/Kredit)</label>
+              <input
+                type="checkbox"
+                checked={config.edc?.is_active || false}
+                onChange={(e) => setConfig({ ...config, edc: { ...config.edc, is_active: e.target.checked } })}
+                className="rounded border-[hsl(var(--border))]"
+              />
+            </div>
+            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-xs leading-relaxed">
+              Integrasi EDC memerlukan SDK resmi dan proses sertifikasi dari bank terkait sebelum bisa memproses transaksi kartu sungguhan. Semua provider di bawah masih berstatus <strong>Belum Tersedia</strong> sampai sertifikasi selesai — memilih salah satu hanya menyimpan preferensi Anda, belum mengaktifkan transaksi nyata.
+            </div>
+            <div className="flex flex-col space-y-1 pb-2">
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Bank EDC</label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-1">
+                {EDC_BANKS.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setConfig({ ...config, edc: { ...config.edc, provider: b.id } })}
+                    className={`p-3 rounded-lg border text-left ${config.edc?.provider === b.id ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5" : "border-[hsl(var(--border))]"}`}
+                  >
+                    <p className="text-sm font-semibold">{b.label}</p>
+                    <p className="text-[10px] text-amber-600 font-semibold mt-1">Belum Tersedia</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return <p className="text-sm text-[hsl(var(--muted))]">Konfigurasi tidak ditemukan.</p>;
     }
@@ -340,7 +382,8 @@ export default function PaymentConfig() {
         alert(`Konfigurasi pembayaran ${type.toUpperCase()} berhasil disimpan!`);
       })
       .catch((err) => {
-        alert(`Konfigurasi pembayaran ${type.toUpperCase()} berhasil disimpan! (Local Mode)`);
+        const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
+        alert(`Gagal menyimpan konfigurasi pembayaran ${type.toUpperCase()}: ${msg}`);
       })
       .finally(() => {
         setSaving(false);
@@ -353,7 +396,8 @@ export default function PaymentConfig() {
     { id: "ewallet", label: "E-Wallet", path: "/geraina/app/payments/ewallet" },
     { id: "va", label: "Virtual Account", path: "/geraina/app/payments/va" },
     { id: "credit_card", label: "Kartu Kredit", path: "/geraina/app/payments/credit-card" },
-    { id: "bank_transfer", label: "Transfer Bank", path: "/geraina/app/payments/bank-transfer" }
+    { id: "bank_transfer", label: "Transfer Bank", path: "/geraina/app/payments/bank-transfer" },
+    { id: "edc", label: "EDC", path: "/geraina/app/payments/edc" }
   ];
 
   return (

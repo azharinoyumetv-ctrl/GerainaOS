@@ -18,7 +18,7 @@ async def get_settings(user: dict = Depends(get_current_user)):
         return {
             "general": { "store_name": user.get("store_name", "Toko Senja"), "currency": "IDR", "timezone": "WIB (UTC+7)", "language": "id" },
             "receipt": { "header_text": "Terima Kasih Telah Berkunjung!", "footer_text": "Powered by DagangOS - Struk Resmi", "show_logo": True, "show_cashier": True },
-            "printer": { "default_printer": "Bluetooth 80mm", "paper_size": "80mm", "auto_print": True }
+            "printer": { "mode": "local", "default_printer": "Bluetooth 80mm", "paper_size": "80mm", "auto_print": True, "printer_ip": "", "printer_port": 9100, "bridge_port": 9899 }
         }
     return res
 
@@ -62,7 +62,8 @@ async def get_payments_config(user: dict = Depends(get_current_user)):
                 }
             },
             "credit_card": { "is_active": True, "provider": "Stripe", "enable_3ds": True, "installment_banks": ["Mandiri", "BCA", "CIMB"] },
-            "bank_transfer": { "is_active": True, "accounts": [{ "bank": "Bank Central Asia", "account_no": "8820987111", "account_name": "DagangOS Geraina POS" }] }
+            "bank_transfer": { "is_active": True, "accounts": [{ "bank": "Bank Central Asia", "account_no": "8820987111", "account_name": "DagangOS Geraina POS" }] },
+            "edc": { "is_active": False, "provider": "" }
         }
     return res
 
@@ -96,7 +97,7 @@ async def get_integrations(user: dict = Depends(get_current_user)):
             "xendit": { "is_active": False, "secret_key": "", "webhook_token": "" },
             "midtrans": { "is_active": False, "client_key": "", "server_key": "" },
             "stripe": { "is_active": False, "publishable_key": "", "secret_key": "" },
-            "whatsapp": { "is_active": False, "provider": "", "api_token": "", "auto_send_receipt": False },
+            "whatsapp": { "is_active": False, "phone_number_id": "", "access_token": "", "webhook_verify_token": "", "template_receipt": "dagangos_order_receipt", "template_receipt_lang": "id", "template_po": "dagangos_po_notify", "template_po_lang": "id", "auto_send_receipt": False },
             "telegram": { "is_active": False, "bot_token": "", "chat_id": "" },
             "email": { "is_active": False, "smtp_host": "", "smtp_port": 587, "smtp_user": "" }
         }
@@ -117,16 +118,22 @@ async def save_integrations(payload: Dict[str, Any], user: dict = Depends(get_cu
 
 @router.post("/api/integrations/whatsapp/test")
 async def test_whatsapp(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
-    """Kirim pesan tes WhatsApp memakai kredensial yang sedang diisi (tak perlu simpan dulu)."""
-    from whatsapp_client import send_whatsapp
+    """Kirim pesan tes WhatsApp memakai kredensial yang sedang diisi (tak perlu simpan dulu).
+
+    Pakai template 'hello_world' -- template utility bawaan yang otomatis tersedia & disetujui
+    di setiap WABA baru tanpa perlu approval Meta dulu, jadi tombol tes ini langsung bisa
+    memverifikasi kredensial & koneksi hari ini juga, sebelum template struk/PO kustom
+    (dagangos_order_receipt / dagangos_po_notify) selesai disetujui Meta."""
+    from whatsapp_client import send_meta_message
     target = str(payload.get("target") or "").strip()
     if not target:
         raise HTTPException(status_code=400, detail="Nomor tujuan wajib diisi")
-    token = str(payload.get("api_token") or "").strip()
-    if not token:
-        raise HTTPException(status_code=400, detail="API token WhatsApp belum diisi")
-    cfg = {"is_active": True, "provider": payload.get("provider") or "fonnte", "api_token": token}
-    return await send_whatsapp(cfg, target, "Tes koneksi WhatsApp DagangOS berhasil.")
+    phone_number_id = str(payload.get("phone_number_id") or "").strip()
+    access_token = str(payload.get("access_token") or "").strip()
+    if not phone_number_id or not access_token:
+        raise HTTPException(status_code=400, detail="Phone Number ID dan Access Token WhatsApp belum diisi")
+    cfg = {"is_active": True, "phone_number_id": phone_number_id, "access_token": access_token}
+    return await send_meta_message(cfg, target, template_name="hello_world", params=[], lang="en_US")
 
 # ---------- Branches ----------
 @router.get("/api/branches", response_model=List[Branch])

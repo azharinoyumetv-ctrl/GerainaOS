@@ -104,22 +104,28 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
 
     await db.orders.insert_one(doc)
 
-    # Auto-kirim struk ke WhatsApp pelanggan (best-effort; toggle "Kirim Struk Otomatis")
+    # Auto-kirim struk ke WhatsApp pelanggan (best-effort; toggle "Kirim Struk Otomatis").
+    # Diinisiasi toko -> wajib template. Pakai template KUSTOM dagangos_order_receipt (Bahasa
+    # Indonesia, tanpa tombol CTA, 4 parameter teks biasa) -- lihat TEMPLATE_RECEIPT_* di
+    # whatsapp_client.py. Belum disetujui Meta pada saat kode ini ditulis; ajukan lewat Meta
+    # Business Manager sebelum ini benar-benar bisa mengirim.
     try:
         if payload.customer_phone:
-            from whatsapp_client import get_wa_config, send_whatsapp
+            from whatsapp_client import (
+                get_wa_config, send_meta_message,
+                TEMPLATE_RECEIPT_NAME_DEFAULT, TEMPLATE_RECEIPT_LANG_DEFAULT,
+            )
             wa = await get_wa_config(db, user["store_id"])
             if wa.get("is_active"):
                 settings = await db.settings.find_one({"store_id": user["store_id"]}, {"_id": 0})
-                store_name = ((settings or {}).get("general") or {}).get("store_name") or "Toko"
+                store_name = ((settings or {}).get("general") or {}).get("store_name") or user.get("store_name") or "Toko"
                 total_str = f"{int(round(calc['total'])):,}".replace(",", ".")
-                msg = (
-                    f"*Struk {order_no}* - {store_name}\n"
-                    f"Total: Rp {total_str}\n"
-                    f"Metode: {str(payload.payment_method).upper()}\n\n"
-                    f"Terima kasih atas kunjungan Anda!"
-                )
-                doc["whatsapp"] = await send_whatsapp(wa, payload.customer_phone, msg)
+                method_labels = {"cash": "Tunai", "qris": "QRIS", "ewallet": "E-Wallet", "card": "Kartu"}
+                payment_method_label = method_labels.get(payload.payment_method, payload.payment_method or "-")
+                template_name = wa.get("template_receipt") or TEMPLATE_RECEIPT_NAME_DEFAULT
+                template_lang = wa.get("template_receipt_lang") or TEMPLATE_RECEIPT_LANG_DEFAULT
+                params = [order_no, store_name, total_str, payment_method_label]
+                doc["whatsapp"] = await send_meta_message(wa, payload.customer_phone, template_name, params, lang=template_lang)
     except Exception:
         pass
 

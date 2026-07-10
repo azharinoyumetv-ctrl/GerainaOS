@@ -31,7 +31,7 @@ export default function Pricing() {
   const [addons, setAddons] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
   const [billing, setBilling] = useState("monthly");
-  const { user, refresh, setPlan } = useAuth();
+  const { user, refresh } = useAuth();
   const [upgradingId, setUpgradingId] = useState(null);
 
   useEffect(() => {
@@ -44,12 +44,16 @@ export default function Pricing() {
   const handleUpgrade = async (tierId) => {
     setUpgradingId(tierId);
     try {
-      await api.post("/pricing/upgrade", { tier_id: tierId });
+      const res = await api.post("/pricing/upgrade", { tier_id: tierId });
       await refresh();
-      alert(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
+      if (res?.data?.status === "pending_manual_activation") {
+        alert(res.data.message || "Permintaan upgrade tercatat, menunggu aktivasi manual.");
+      } else {
+        alert(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
+      }
     } catch (err) {
-      setPlan(tierId);
-      alert(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
+      const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
+      alert(`Gagal mengubah paket ke ${tierId.toUpperCase()}: ${msg}`);
     } finally {
       setUpgradingId(null);
     }

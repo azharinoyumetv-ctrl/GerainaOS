@@ -24,6 +24,9 @@ from routes_purchase import router as purchase_router
 from routes_customers import router as customers_router
 from routes_staff import router as staff_router
 from routes_settings import router as settings_router
+from routes_reports import router as reports_router
+from routes_printer import router as printer_router
+from routes_edc import router as edc_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger("geraina")
@@ -65,6 +68,9 @@ app.include_router(purchase_router)
 app.include_router(customers_router)
 app.include_router(staff_router)
 app.include_router(settings_router)
+app.include_router(reports_router)
+app.include_router(printer_router)
+app.include_router(edc_router)
 
 cors_origins = os.environ.get("CORS_ORIGINS", "").split(",")
 cors_origins = [o.strip() for o in cors_origins if o.strip()]
@@ -89,6 +95,10 @@ async def _ensure_indexes():
         ("users", [("email", 1)]),
         ("orders", [("store_id", 1), ("created_at", -1)]),
         ("products", [("store_id", 1)]),
+        ("integrations", [("whatsapp.webhook_verify_token", 1)]),
+        ("integrations", [("whatsapp.phone_number_id", 1)]),
+        ("upgrade_requests", [("store_id", 1), ("status", 1)]),
+        ("expenses", [("store_id", 1), ("expense_date", -1)]),
     ):
         try:
             await db[coll].create_index(keys)

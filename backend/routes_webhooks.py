@@ -4,15 +4,19 @@ Endpoint: POST /api/webhooks/xendit
 Auth: header x-callback-token must match XENDIT_WEBHOOK_TOKEN.
 Maps reference_id back to order, updates payment_status.
 """
+import hashlib
+import hmac
 import os
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
+from fastapi.responses import PlainTextResponse
 
 from database import get_db
 
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
 WEBHOOK_TOKEN = os.environ.get("XENDIT_WEBHOOK_TOKEN", "")
+WHATSAPP_APP_SECRET = os.environ.get("WHATSAPP_APP_SECRET", "")
 
 
 def _map_status(payload: dict) -> str:
@@ -105,3 +109,93 @@ async def simulate_stripe_webhook(payload: dict, req: Request):
         mapped["status"] = "SUCCEEDED"
     await _process(mapped)
     return {"ok": True}
+
+
+# ---------- WhatsApp (Meta Cloud API) ----------
+# Single shared URL for every tenant: https://api.dagangos.com/api/webhooks/whatsapp
+# Each store has its own Meta App/WABA (BYO) and points ITS webhook config at this one URL.
+# Tenant routing: GET verification matches by `whatsapp.webhook_verify_token` (the value Meta
+# calls back with is whatever the store owner typed into their own Meta App's webhook config).
+# POST inbound messages route by `whatsapp.phone_number_id` found in the payload itself.
+
+def _verify_meta_signature(raw_body: bytes, signature_header: str) -> bool:
+    """Without WHATSAPP_APP_SECRET configured, this endpoint cannot be verified -- fail closed
+    rather than accept unsigned payloads. A public webhook that trusts anything posted to it is
+    an open relay, not an optional hardening step."""
+    if not WHATSAPP_APP_SECRET:
+        return False
+    if not signature_header or not signature_header.startswith("sha256="):
+        return False
+    expected = hmac.new(WHATSAPP_APP_SECRET.encode(), raw_body, hashlib.sha256).hexdigest()
+    provided = signature_header.split("=", 1)[1]
+    return hmac.compare_digest(expected, provided)
+
+
+@router.get("/whatsapp")
+async def whatsapp_verify(req: Request):
+    """Meta calls this once per tenant, when that tenant's store owner registers this shared
+    URL as their Meta App's webhook callback."""
+    mode = req.query_params.get("hub.mode")
+    token = req.query_params.get("hub.verify_token")
+    challenge = req.query_params.get("hub.challenge")
+    phone_number_id = req.query_params.get("hub.phone_number_id")
+
+    if mode != "subscribe" or not token:
+        raise HTTPException(status_code=403, detail="Invalid verification request")
+
+    db = get_db()
+    tenant = await db.integrations.find_one({"whatsapp.webhook_verify_token": token})
+    if not tenant:
+        raise HTTPException(status_code=403, detail="Verify token tidak dikenali")
+
+    if phone_number_id:
+        # Cache it so POST routing doesn't depend on the store owner having also pasted the
+        # phone_number_id into Integrasi manually -- Meta hands it to us here for free.
+        await db.integrations.update_one(
+            {"_id": tenant["_id"]},
+            {"$set": {"whatsapp.phone_number_id": phone_number_id}},
+        )
+
+    return PlainTextResponse(challenge or "")
+
+
+async def _process_whatsapp_inbound(payload: dict):
+    db = get_db()
+    try:
+        entry = (payload.get("entry") or [{}])[0]
+        change = (entry.get("changes") or [{}])[0]
+        value = change.get("value") or {}
+        phone_number_id = (value.get("metadata") or {}).get("phone_number_id")
+        if not phone_number_id:
+            return
+        tenant = await db.integrations.find_one({"whatsapp.phone_number_id": phone_number_id})
+        if not tenant or not (tenant.get("whatsapp") or {}).get("is_active"):
+            return
+        await db.whatsapp_inbound.insert_one({
+            "store_id": tenant.get("store_id"),
+            "phone_number_id": phone_number_id,
+            "payload": value,
+            "received_at": datetime.now(timezone.utc).isoformat(),
+        })
+    except Exception:
+        pass
+
+
+@router.post("/whatsapp")
+async def whatsapp_inbound(req: Request, background: BackgroundTasks):
+    """Always return 200 to Meta -- inbound processing must never fail the webhook, or Meta
+    will back off and eventually stop calling it."""
+    raw = await req.body()
+    sig = req.headers.get("x-hub-signature-256", "")
+    if not _verify_meta_signature(raw, sig):
+        # Still 200 (avoid Meta's retry storm on an unfixable signature mismatch) but the
+        # unverified payload is discarded, not processed.
+        return {"received": True}
+
+    try:
+        payload = await req.json()
+    except Exception:
+        return {"received": True}
+
+    background.add_task(_process_whatsapp_inbound, payload)
+    return {"received": True}

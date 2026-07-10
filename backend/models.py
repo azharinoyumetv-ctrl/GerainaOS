@@ -340,3 +340,16 @@ class Branch(BranchBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     store_id: str
     created_at: str = Field(default_factory=utcnow_iso)
+
+# ---------- Expenses (for P&L / cashflow reporting) ----------
+class ExpenseCreate(BaseModel):
+    category: str  # e.g. "Sewa", "Gaji", "Listrik", "Bahan Baku", "Lainnya"
+    description: Optional[str] = None
+    amount: float = Field(gt=0)
+    expense_date: str  # ISO date the expense was incurred (not necessarily today)
+
+class Expense(ExpenseCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=utcnow_iso)

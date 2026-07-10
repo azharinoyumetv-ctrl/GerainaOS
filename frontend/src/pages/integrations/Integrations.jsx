@@ -17,7 +17,7 @@ export default function Integrations() {
     midtrans: { is_active: false, client_key: "", server_key: "" },
     stripe: { is_active: false, publishable_key: "", secret_key: "" },
     qris: { is_active: false, nmid: "", merchant_name: "" },
-    whatsapp: { is_active: false, provider: "", api_token: "" },
+    whatsapp: { is_active: false, phone_number_id: "", access_token: "", webhook_verify_token: "", template_receipt: "dagangos_order_receipt", template_receipt_lang: "id", template_po: "dagangos_po_notify", template_po_lang: "id" },
     telegram: { is_active: false, bot_token: "", chat_id: "" },
     email: { is_active: false, smtp_host: "", smtp_port: 587, smtp_user: "" }
   });
@@ -47,8 +47,8 @@ export default function Integrations() {
     try {
       const r = await api.post("/integrations/whatsapp/test", {
         target: waTestNum,
-        provider: integrations.whatsapp?.provider,
-        api_token: integrations.whatsapp?.api_token,
+        phone_number_id: integrations.whatsapp?.phone_number_id,
+        access_token: integrations.whatsapp?.access_token,
       });
       const d = r.data || {};
       setWaTestResult(d.sent
@@ -184,24 +184,63 @@ export default function Integrations() {
                 className="rounded border-[hsl(var(--border))]"
               />
             </div>
+            <p className="text-[11px] text-[hsl(var(--muted))]">
+              Resmi via Meta Cloud API — bukan gateway pihak ketiga. Ambil nilai di bawah dari Meta Business Manager &gt; WhatsApp Manager &gt; API Setup, untuk WhatsApp Business Account (WABA) milik toko Anda sendiri.
+            </p>
             <div className="flex flex-col space-y-1">
-              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">WhatsApp Provider Gateway</label>
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Phone Number ID</label>
               <input
                 type="text"
-                value={integrations.whatsapp.provider}
-                onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, provider: e.target.value } })}
-                className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm"
-              />
-            </div>
-            <div className="flex flex-col space-y-1">
-              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">API Token</label>
-              <input
-                type="password"
-                value={integrations.whatsapp.api_token}
-                onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, api_token: e.target.value } })}
+                value={integrations.whatsapp.phone_number_id}
+                onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, phone_number_id: e.target.value } })}
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
               />
             </div>
+            <div className="flex flex-col space-y-1">
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Access Token (system user, permanen)</label>
+              <input
+                type="password"
+                value={integrations.whatsapp.access_token}
+                onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, access_token: e.target.value } })}
+                className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
+              />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Webhook Verify Token</label>
+              <input
+                type="text"
+                value={integrations.whatsapp.webhook_verify_token}
+                onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, webhook_verify_token: e.target.value } })}
+                placeholder="String bebas pilihan Anda sendiri"
+                className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
+              />
+              <p className="text-[11px] text-[hsl(var(--muted))]">
+                Daftarkan callback URL <code className="font-mono">https://api.dagangos.com/api/webhooks/whatsapp</code> di App Meta Anda dengan verify token yang sama persis dengan yang diisi di sini.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Nama Template Struk</label>
+                <input
+                  type="text"
+                  value={integrations.whatsapp.template_receipt}
+                  onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, template_receipt: e.target.value } })}
+                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Nama Template PO</label>
+                <input
+                  type="text"
+                  value={integrations.whatsapp.template_po}
+                  onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, template_po: e.target.value } })}
+                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-[hsl(var(--muted))]">
+              Template struk (dagangos_order_receipt) dan template PO (dagangos_po_notify) keduanya kustom, Bahasa Indonesia, tanpa tombol — masih menunggu diajukan &amp; disetujui di Meta Business Manager. Tombol tes di bawah memakai template bawaan Meta (hello_world) jadi tetap bisa dipakai kapan saja, walau template struk/PO belum disetujui.
+            </p>
 
             {/* Tes kirim WhatsApp langsung (tanpa harus buat order) */}
             <div className="border-t border-[hsl(var(--border))] pt-3">
@@ -230,7 +269,7 @@ export default function Integrations() {
                   {waTestResult.msg}
                 </p>
               )}
-              <p className="text-[11px] text-[hsl(var(--muted))] mt-1">Isi Provider + API Token di atas, lalu kirim tes ke nomor Anda sendiri untuk memastikan koneksi.</p>
+              <p className="text-[11px] text-[hsl(var(--muted))] mt-1">Isi Phone Number ID + Access Token di atas, lalu kirim tes ke nomor Anda sendiri untuk memastikan koneksi.</p>
             </div>
           </div>
         );

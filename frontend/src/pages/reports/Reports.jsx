@@ -17,12 +17,66 @@ export default function Reports() {
   const [stats, setStats] = useState(null);
   const [products, setProducts] = useState([]);
   const [productSales, setProductSales] = useState([]);
+  const [profitReport, setProfitReport] = useState(null);
+  const [cashflowReport, setCashflowReport] = useState(null);
+  const [turnover, setTurnover] = useState(null);
+  const [expenses, setExpenses] = useState([]);
+  const [expenseForm, setExpenseForm] = useState({ category: "Lainnya", description: "", amount: "", expense_date: new Date().toISOString().slice(0, 10) });
+  const [savingExpense, setSavingExpense] = useState(false);
 
   useEffect(() => {
     api.get("/orders/stats").then((r) => setStats(r.data)).catch(() => {});
     api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
     api.get("/orders/product-sales?days=30&limit=8").then((r) => setProductSales(r.data || [])).catch(() => setProductSales([]));
   }, [type]);
+
+  useEffect(() => {
+    if (type === "profit") {
+      api.get("/reports/profit?months=6").then((r) => setProfitReport(r.data)).catch(() => setProfitReport(null));
+    }
+    if (type === "cashflow") {
+      reloadCashflowData();
+    }
+    if (type === "inventory") {
+      api.get("/reports/inventory/turnover?days=30").then((r) => setTurnover(r.data)).catch(() => setTurnover(null));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
+
+  const reloadCashflowData = () => {
+    api.get("/reports/cashflow?weeks=4").then((r) => setCashflowReport(r.data)).catch(() => setCashflowReport(null));
+    api.get("/expenses").then((r) => setExpenses(r.data || [])).catch(() => setExpenses([]));
+  };
+
+  const handleAddExpense = (e) => {
+    e.preventDefault();
+    const amount = parseFloat(expenseForm.amount);
+    if (!expenseForm.category || !amount || amount <= 0 || !expenseForm.expense_date) {
+      alert("Lengkapi kategori, jumlah, dan tanggal pengeluaran.");
+      return;
+    }
+    setSavingExpense(true);
+    api.post("/expenses", {
+      category: expenseForm.category,
+      description: expenseForm.description || null,
+      amount,
+      expense_date: expenseForm.expense_date,
+    }).then(() => {
+      setExpenseForm({ category: "Lainnya", description: "", amount: "", expense_date: new Date().toISOString().slice(0, 10) });
+      reloadCashflowData();
+    }).catch((err) => {
+      const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
+      alert(`Gagal mencatat pengeluaran: ${msg}`);
+    }).finally(() => setSavingExpense(false));
+  };
+
+  const handleDeleteExpense = (id) => {
+    if (!window.confirm("Hapus catatan pengeluaran ini?")) return;
+    api.delete(`/expenses/${id}`).then(() => reloadCashflowData()).catch((err) => {
+      const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
+      alert(`Gagal menghapus: ${msg}`);
+    });
+  };
 
   const subtabs = [
     { id: "sales", label: "Penjualan", path: "/geraina/app/reports/sales" },
@@ -137,8 +191,13 @@ export default function Reports() {
                 <h4 className="font-display font-extrabold text-2xl mt-1 text-[hsl(var(--primary))]">{stats?.product_count || 0} SKU</h4>
               </div>
               <div className="card-surface p-6">
-                <span className="text-xs text-[hsl(var(--muted))]">Rasio Turn-Over Stok</span>
-                <h4 className="font-display font-extrabold text-2xl mt-1 text-emerald-600">4.2x / bulan</h4>
+                <span className="text-xs text-[hsl(var(--muted))]">Rasio Turn-Over Stok (Estimasi/Bulan)</span>
+                <h4 className="font-display font-extrabold text-2xl mt-1 text-emerald-600">
+                  {turnover?.turnover_ratio_monthly_est != null ? `${turnover.turnover_ratio_monthly_est.toFixed(1)}x / bulan` : "-"}
+                </h4>
+                {turnover && turnover.turnover_ratio_monthly_est == null && (
+                  <p className="text-[10px] text-[hsl(var(--muted))] mt-1">Belum bisa dihitung — isi harga modal (cost) &amp; stok produk terlebih dahulu.</p>
+                )}
               </div>
               <div className="card-surface p-6">
                 <span className="text-xs text-[hsl(var(--muted))]">Barang Habis / OOS</span>
@@ -183,57 +242,175 @@ export default function Reports() {
           </div>
         );
 
-      case "profit":
-        const profitData = [
-          { month: "Jan", revenue: 8500000, cost: 5100000, profit: 3400000 },
-          { month: "Feb", revenue: 9200000, cost: 5500000, profit: 3700000 },
-          { month: "Mar", revenue: 10500000, cost: 6200000, profit: 4300000 },
-          { month: "Apr", revenue: 12000000, cost: 7100000, profit: 4900000 },
-          { month: "Mei", revenue: 14500000, cost: 8500000, profit: 6000000 },
-          { month: "Jun", revenue: 16800000, cost: 9800000, profit: 7000000 },
-        ];
+      case "profit": {
+        const series = profitReport?.series || [];
+        const totals = profitReport?.totals;
+        const hasAnyRevenue = series.some((s) => s.revenue > 0);
         return (
           <div className="space-y-6">
             <div className="card-surface p-6 h-80">
-              <h3 className="font-display font-bold text-sm mb-4">Laporan Laba Rugi Bersih (Net Profit)</h3>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={profitData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="month" fontSize={11} />
-                  <YAxis fontSize={11} tickFormatter={(v) => `${(v/1000000).toFixed(0)}jt`} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="revenue" name="Omset" stroke="hsl(151,39%,17%)" strokeWidth={2} />
-                  <Line type="monotone" dataKey="profit" name="Laba Bersih" stroke="hsl(9,65%,55%)" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              <h3 className="font-display font-bold text-sm mb-4">Laporan Laba Rugi Bersih (Net Profit) — 6 Bulan Terakhir</h3>
+              {!profitReport ? (
+                <p className="text-sm text-[hsl(var(--muted))]">Memuat laporan laba rugi...</p>
+              ) : !hasAnyRevenue ? (
+                <p className="text-sm text-[hsl(var(--muted))]">Belum ada transaksi lunas pada periode ini. Grafik akan terisi otomatis setelah ada penjualan.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={series}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" fontSize={11} />
+                    <YAxis fontSize={11} tickFormatter={(v) => `${(v / 1000000).toFixed(0)}jt`} />
+                    <Tooltip formatter={(v) => fmtIDR(v)} />
+                    <Legend />
+                    <Line type="monotone" dataKey="revenue" name="Omset" stroke="hsl(151,39%,17%)" strokeWidth={2} />
+                    <Line type="monotone" dataKey="profit" name="Laba Bersih" stroke="hsl(9,65%,55%)" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            {totals && (
+              <div className="card-surface p-6">
+                <h3 className="font-display font-bold text-sm mb-4">Ringkasan 6 Bulan Terakhir</h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                  <div className="p-4 bg-[hsl(var(--background))] rounded-lg">
+                    <p className="text-xs text-[hsl(var(--muted))]">Omset</p>
+                    <p className="font-display font-bold text-base mt-1">{fmtIDR(totals.revenue)}</p>
+                  </div>
+                  <div className="p-4 bg-[hsl(var(--background))] rounded-lg">
+                    <p className="text-xs text-[hsl(var(--muted))]">HPP (COGS)</p>
+                    <p className="font-display font-bold text-base mt-1">{fmtIDR(totals.cogs)}</p>
+                  </div>
+                  <div className="p-4 bg-[hsl(var(--background))] rounded-lg">
+                    <p className="text-xs text-[hsl(var(--muted))]">Laba Kotor</p>
+                    <p className="font-display font-bold text-base mt-1">{fmtIDR(totals.gross_profit)}</p>
+                  </div>
+                  <div className="p-4 bg-[hsl(var(--background))] rounded-lg">
+                    <p className="text-xs text-[hsl(var(--muted))]">Beban Operasional</p>
+                    <p className="font-display font-bold text-base mt-1">{fmtIDR(totals.operating_expenses)}</p>
+                  </div>
+                  <div className="p-4 bg-[hsl(var(--background))] rounded-lg">
+                    <p className="text-xs text-[hsl(var(--muted))]">Laba Bersih</p>
+                    <p className="font-display font-bold text-base mt-1">{fmtIDR(totals.net_profit)}</p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-[hsl(var(--muted))] mt-3">
+                  HPP dihitung dari harga modal (cost) produk saat ini dikali kuantitas terjual, bukan snapshot harga modal saat transaksi terjadi. Beban operasional berasal dari pengeluaran yang dicatat di tab Arus Kas.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      case "cashflow": {
+        const series = cashflowReport?.series || [];
+        return (
+          <div className="space-y-6">
+            <div className="card-surface p-6 h-80">
+              <h3 className="font-display font-bold text-sm mb-4">Arus Kas Masuk vs Keluar — 4 Minggu Terakhir</h3>
+              {!cashflowReport ? (
+                <p className="text-sm text-[hsl(var(--muted))]">Memuat data arus kas...</p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={series}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" fontSize={11} />
+                    <YAxis fontSize={11} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}jt`} />
+                    <Tooltip formatter={(v) => fmtIDR(v)} />
+                    <Legend />
+                    <Bar dataKey="inflow" name="Uang Masuk" fill="hsl(145,46%,33%)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="outflow" name="Uang Keluar" fill="hsl(353,98%,41%)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="card-surface p-6">
+              <h3 className="font-display font-bold text-sm mb-4">Catat Pengeluaran</h3>
+              <p className="text-xs text-[hsl(var(--muted))] mb-4">
+                "Uang Masuk" di grafik dihitung otomatis dari transaksi lunas. "Uang Keluar" dihitung dari pengeluaran yang Anda catat di sini (sewa, gaji, listrik, bahan baku, dll).
+              </p>
+              <form onSubmit={handleAddExpense} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end mb-4">
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Kategori</label>
+                  <select
+                    value={expenseForm.category}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                    className="border border-[hsl(var(--border))] rounded-md px-3 py-2 bg-white text-xs"
+                  >
+                    <option>Sewa</option>
+                    <option>Gaji</option>
+                    <option>Listrik</option>
+                    <option>Bahan Baku</option>
+                    <option>Lainnya</option>
+                  </select>
+                </div>
+                <div className="flex flex-col space-y-1 md:col-span-2">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Keterangan</label>
+                  <input
+                    type="text"
+                    value={expenseForm.description}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
+                    className="border border-[hsl(var(--border))] rounded-md px-3 py-2 bg-white text-xs"
+                    placeholder="Opsional"
+                  />
+                </div>
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Jumlah (Rp)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={expenseForm.amount}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+                    className="border border-[hsl(var(--border))] rounded-md px-3 py-2 bg-white text-xs font-mono"
+                  />
+                </div>
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Tanggal</label>
+                  <input
+                    type="date"
+                    value={expenseForm.expense_date}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, expense_date: e.target.value })}
+                    className="border border-[hsl(var(--border))] rounded-md px-3 py-2 bg-white text-xs"
+                  />
+                </div>
+                <button type="submit" disabled={savingExpense} className="btn-primary py-2 px-4 text-xs font-semibold md:col-span-5 md:w-max disabled:opacity-50">
+                  {savingExpense ? "Menyimpan..." : "+ Catat Pengeluaran"}
+                </button>
+              </form>
+
+              {expenses.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-[hsl(var(--border))]">
+                        <th className="py-2 font-semibold text-[hsl(var(--muted))]">Tanggal</th>
+                        <th className="py-2 font-semibold text-[hsl(var(--muted))]">Kategori</th>
+                        <th className="py-2 font-semibold text-[hsl(var(--muted))]">Keterangan</th>
+                        <th className="py-2 text-right font-semibold text-[hsl(var(--muted))]">Jumlah</th>
+                        <th className="py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[hsl(var(--border))]">
+                      {expenses.slice(0, 10).map((ex) => (
+                        <tr key={ex.id} className="hover:bg-[hsl(var(--background))]/50">
+                          <td className="py-2.5">{ex.expense_date}</td>
+                          <td className="py-2.5">{ex.category}</td>
+                          <td className="py-2.5 text-[hsl(var(--muted))]">{ex.description || "-"}</td>
+                          <td className="py-2.5 text-right font-mono font-bold">{fmtIDR(ex.amount)}</td>
+                          <td className="py-2.5 text-right">
+                            <button onClick={() => handleDeleteExpense(ex.id)} className="text-[10px] text-red-500 hover:underline">Hapus</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         );
-
-      case "cashflow":
-        const cfData = [
-          { name: "Minggu 1", inflow: 3500000, outflow: 2100000 },
-          { name: "Minggu 2", inflow: 4200000, outflow: 3400000 },
-          { name: "Minggu 3", inflow: 3800000, outflow: 1900000 },
-          { name: "Minggu 4", inflow: 5300000, outflow: 2800000 },
-        ];
-        return (
-          <div className="card-surface p-6 h-80">
-            <h3 className="font-display font-bold text-sm mb-4">Arus Kas Masuk vs Keluar</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cfData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" fontSize={11} />
-                <YAxis fontSize={11} tickFormatter={(v) => `${(v/1000000).toFixed(1)}jt`} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="inflow" name="Uang Masuk" fill="hsl(145,46%,33%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="outflow" name="Uang Keluar" fill="hsl(353,98%,41%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        );
+      }
 
       case "tax":
         const taxBase = stats?.month_sales || 15000000;

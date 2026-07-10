@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import api, { fmtIDR, downloadPdf } from "@/api/client";
 import {
   Search, Plus, Minus, Trash2, X, Printer, Download, CheckCircle2,
-  Banknote, QrCode, Smartphone, RefreshCw, Barcode,
+  Banknote, QrCode, Smartphone, RefreshCw, Barcode, CreditCard,
 } from "lucide-react";
 
 const EWALLET_CHANNELS = [
@@ -15,6 +15,7 @@ const EWALLET_CHANNELS = [
 
 function ReceiptDialog({ order, onClose }) {
   const [poll, setPoll] = useState(order);
+  const [edcProcessing, setEdcProcessing] = useState(false);
   useEffect(() => {
     if (poll?.payment_status === "paid" || poll?.payment_method === "cash") return;
     const t = setInterval(async () => {
@@ -38,6 +39,19 @@ function ReceiptDialog({ order, onClose }) {
     await api.post(`/orders/${o.id}/mark-paid`);
     const r = await api.get(`/orders/${o.id}`);
     setPoll(r.data);
+  };
+
+  const processEdc = async () => {
+    setEdcProcessing(true);
+    try {
+      const r = await api.post(`/edc/orders/${o.id}/charge`);
+      setPoll(r.data);
+    } catch (err) {
+      const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
+      alert(`Transaksi EDC gagal: ${msg}\n\nAnda masih bisa memproses kartu langsung di mesin EDC lalu tekan "Tandai sudah dibayar" di bawah setelah disetujui.`);
+    } finally {
+      setEdcProcessing(false);
+    }
   };
 
   return (
@@ -76,6 +90,20 @@ function ReceiptDialog({ order, onClose }) {
             <a href={o.xendit_checkout_url} target="_blank" rel="noreferrer" className="btn-accent" data-testid="ewallet-open-link">
               Buka {o.ewallet_channel}
             </a>
+          </div>
+        )}
+
+        {o.payment_method === "edc" && !isPaid && (
+          <div className="text-center mb-4" data-testid="edc-display">
+            <p className="text-xs text-[hsl(var(--muted))] mb-2">Gesek/tap kartu di mesin EDC, lalu tekan tombol di bawah untuk mencatat pembayaran.</p>
+            <button onClick={processEdc} disabled={edcProcessing} className="btn-accent disabled:opacity-50" data-testid="edc-process-btn">
+              <CreditCard size={15} /> {edcProcessing ? "Memproses…" : "Proses EDC"}
+            </button>
+          </div>
+        )}
+        {o.payment_method === "edc" && isPaid && o.edc_transaction_id && (
+          <div className="text-center mb-4 text-xs text-[hsl(var(--muted))]" data-testid="edc-details">
+            <p>Trx: {o.edc_transaction_id} {o.edc_approval_code ? `· Approval: ${o.edc_approval_code}` : ""}</p>
           </div>
         )}
 
@@ -432,7 +460,7 @@ export default function POS() {
 
           <div>
             <label className="label-tiny mb-2 block">Metode Pembayaran</label>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
               <button onClick={() => setPaymentMethod("cash")}
                       className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "cash" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
                       data-testid="pm-cash"><Banknote size={14} className="mx-auto mb-1" />Tunai</button>
@@ -442,6 +470,9 @@ export default function POS() {
               <button onClick={() => setPaymentMethod("ewallet")}
                       className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "ewallet" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
                       data-testid="pm-ewallet"><Smartphone size={14} className="mx-auto mb-1" />E-Wallet</button>
+              <button onClick={() => setPaymentMethod("edc")}
+                      className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "edc" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
+                      data-testid="pm-edc"><CreditCard size={14} className="mx-auto mb-1" />Kartu (EDC)</button>
             </div>
           </div>
 
