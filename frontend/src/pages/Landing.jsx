@@ -151,7 +151,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm" style={{ color: MUTED }}>
           <div className="flex items-center gap-2.5">
             <span className="w-7 h-7 rounded-lg flex items-center justify-center text-white" style={{ background: TEAL }}><ShoppingBag size={15} /></span>
-            <span>© 2026 Geraina POS · Ekosistem DagangOS</span>
+            <span>© 2026 Geraina POS · DagangOS Digital Indonesia</span>
           </div>
           <div className="flex gap-6">
             <Link to="/geraina/pricing" className="hover:opacity-70">Harga</Link>

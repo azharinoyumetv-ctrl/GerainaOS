@@ -177,7 +177,7 @@ export default function DagangOS() {
             </a>
           </div>
           <div>
-            © 2026 DagangOS. All rights reserved.
+            © 2026 DagangOS Digital Indonesia. All rights reserved.
           </div>
         </div>
       </footer>

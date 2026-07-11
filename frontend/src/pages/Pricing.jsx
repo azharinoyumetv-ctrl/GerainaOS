@@ -179,7 +179,7 @@ export default function Pricing() {
       </section>
 
       <footer className="border-t" style={{ borderColor: LINE }}>
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 text-sm text-center" style={{ color: MUTED }}>© 2026 Geraina POS · Ekosistem DagangOS</div>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 text-sm text-center" style={{ color: MUTED }}>© 2026 Geraina POS · DagangOS Digital Indonesia</div>
       </footer>
     </div>
   );

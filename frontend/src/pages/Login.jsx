@@ -80,7 +80,7 @@ export default function Login() {
           </ul>
         </div>
 
-        <p className="relative text-white/40 text-xs">© 2026 Geraina POS · Ekosistem DagangOS</p>
+        <p className="relative text-white/40 text-xs">© 2026 Geraina POS · DagangOS Digital Indonesia</p>
       </div>
 
       {/* Form */}
