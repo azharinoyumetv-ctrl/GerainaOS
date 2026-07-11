@@ -37,6 +37,8 @@ export default function Dashboard() {
   // Dashboard states
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
+  const [productSales, setProductSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [receivables, setReceivables] = useState([]);
   const [payables, setPayables] = useState([]);
@@ -47,6 +49,8 @@ export default function Dashboard() {
     // Parallel fetching for dashboard widgets
     api.get("/orders/stats").then((r) => setStats(r.data)).catch(() => {});
     api.get("/orders?limit=5").then((r) => setRecent(r.data)).catch(() => {});
+    api.get("/orders?limit=100").then((r) => setAllOrders(r.data)).catch(() => {});
+    api.get("/orders/product-sales").then((r) => setProductSales(r.data)).catch(() => {});
     api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
     api.get("/debt/receivables").then((r) => setReceivables(r.data)).catch(() => {});
     api.get("/debt/payables").then((r) => setPayables(r.data)).catch(() => {});
@@ -77,12 +81,17 @@ export default function Dashboard() {
     { name: "Minggu", Sales: (stats?.week_sales || 150000) * 0.28 },
   ];
 
-  const pmtData = [
-    { name: "Cash", value: 45 },
-    { name: "QRIS", value: 30 },
-    { name: "E-Wallet", value: 15 },
-    { name: "Bank VA", value: 10 },
-  ];
+  const pmtCounts = allOrders.reduce((acc, o) => {
+    const method = (o.payment_method || "Unknown").toUpperCase();
+    acc[method] = (acc[method] || 0) + 1;
+    return acc;
+  }, {});
+  const totalPmt = allOrders.length || 1;
+  const pmtData = Object.entries(pmtCounts).map(([name, count]) => ({
+    name,
+    value: Math.round((count / totalPmt) * 100)
+  }));
+  if (pmtData.length === 0) pmtData.push({ name: "No Data", value: 100 });
 
   const cashflowData = [
     { name: "Minggu 1", Inflow: 3500000, Outflow: 2100000 },
@@ -149,7 +158,7 @@ export default function Dashboard() {
           colorClass="bg-emerald-50 text-emerald-700"
         />
         <StatCard
-          label="Keuntungan Hari Ini"
+          label="Keuntungan Hari Ini (Est.)"
           value={fmtIDR((stats?.today_sales || 0) * 0.4)} // Estimated 40% margin
           icon={Percent}
           hint="Est. Margin Kotor 40%"
@@ -173,7 +182,7 @@ export default function Dashboard() {
           colorClass="bg-purple-50 text-purple-700"
         />
         <StatCard
-          label="Posisi Kas"
+          label="Posisi Kas (Est.)"
           value={fmtIDR((stats?.today_sales || 0) * 0.6 + 500000)} // Cash in hand mock
           icon={DollarSign}
           hint="Kas dalam laci kasir"
@@ -186,8 +195,9 @@ export default function Dashboard() {
       <div className="grid grid-cols-12 gap-6">
         
         {/* 1. Sales Trend Chart */}
-        <div className="col-span-12 lg:col-span-8 card-surface p-6 h-80 flex flex-col justify-between">
+        <div className="col-span-12 lg:col-span-8 card-surface p-6 h-80 flex flex-col justify-between relative">
           <h3 className="font-display font-bold text-sm">Tren Grafik Penjualan Mingguan</h3>
+          <span className="absolute top-6 right-6 text-[10px] bg-[hsl(var(--muted))]/10 text-[hsl(var(--muted))] px-2 py-1 rounded">No daily breakdown yet</span>
           <div className="flex-1 mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={salesTrendData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
@@ -233,16 +243,16 @@ export default function Dashboard() {
               <thead>
                 <tr className="border-b border-[hsl(var(--border))]">
                   <th className="py-2 font-semibold text-[hsl(var(--muted))]">Nama Produk</th>
-                  <th className="py-2 text-center font-semibold text-[hsl(var(--muted))]">Stok Fisik</th>
-                  <th className="py-2 text-right font-semibold text-[hsl(var(--muted))]">Harga Jual</th>
+                  <th className="py-2 text-center font-semibold text-[hsl(var(--muted))]">Qty Terjual</th>
+                  <th className="py-2 text-right font-semibold text-[hsl(var(--muted))]">Pendapatan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
-                {products.slice(0, 5).map((p) => (
-                  <tr key={p.id} className="hover:bg-[hsl(var(--background))]/50">
+                {productSales.slice(0, 5).map((p) => (
+                  <tr key={p.product_id} className="hover:bg-[hsl(var(--background))]/50">
                     <td className="py-2.5 font-medium">{p.name}</td>
-                    <td className="py-2.5 text-center font-mono font-semibold">{p.stock}</td>
-                    <td className="py-2.5 text-right font-mono font-bold text-[hsl(var(--primary))]">{fmtIDR(p.price)}</td>
+                    <td className="py-2.5 text-center font-mono font-semibold">{p.sold}</td>
+                    <td className="py-2.5 text-right font-mono font-bold text-[hsl(var(--primary))]">{fmtIDR(p.revenue)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -380,21 +390,11 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* 11. Branch Comparison Chart */}
+        {/* Branch Chart Hidden pending backend
         <div className="col-span-12 lg:col-span-4 card-surface p-6 h-60 flex flex-col justify-between">
-          <h3 className="font-display font-bold text-sm">Perbandingan Penjualan Cabang</h3>
-          <div className="flex-1 mt-3">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={branchData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" fontSize={8} />
-                <YAxis fontSize={8} tickFormatter={(v) => `${(v/1000000).toFixed(1)}j`} />
-                <Tooltip />
-                <Bar dataKey="Sales" name="Sales Cabang" fill="hsl(9,65%,55%)" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          ...
         </div>
+        */}
 
       </div>
     </div>
