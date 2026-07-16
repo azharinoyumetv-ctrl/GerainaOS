@@ -25,15 +25,32 @@ async def charge_order_via_edc(order_id: str, user: dict = Depends(get_current_u
     if order.get("payment_status") == "paid":
         raise HTTPException(status_code=400, detail="Order ini sudah lunas")
 
+    prior_status = order.get("payment_status")
+
+    # Atomically claim the order before charging: without this, two concurrent requests
+    # (double-click, a client retry after a slow/timed-out response) can both pass the
+    # "not yet paid" check above and both charge the card. The filter below can only match
+    # for one of them -- MongoDB serializes the update, so the second caller gets None back
+    # and is rejected instead of charging twice.
+    claimed = await db.orders.find_one_and_update(
+        {"id": order_id, "store_id": user["store_id"], "payment_status": {"$nin": ["paid", "charging"]}},
+        {"$set": {"payment_status": "charging", "updated_at": utcnow().isoformat()}},
+    )
+    if not claimed:
+        raise HTTPException(status_code=409, detail="Transaksi EDC untuk order ini sedang diproses atau sudah lunas")
+
     payments_config = await db.payments_config.find_one({"store_id": user["store_id"]}, {"_id": 0})
     edc_cfg = (payments_config or {}).get("edc") or {}
     if not edc_cfg.get("is_active") or not edc_cfg.get("provider"):
+        await db.orders.update_one({"id": order_id, "store_id": user["store_id"]}, {"$set": {"payment_status": prior_status}})
         raise HTTPException(status_code=502, detail="EDC belum dikonfigurasi. Atur provider bank di Pengaturan > Pembayaran > EDC.")
 
     provider = get_edc_provider(edc_cfg.get("provider"))
     result = await provider.charge(amount=int(round(order.get("total") or 0)), order_ref=order.get("order_no") or order_id)
 
     if not result.success:
+        # Release the claim so the order can be retried instead of getting stuck in "charging".
+        await db.orders.update_one({"id": order_id, "store_id": user["store_id"]}, {"$set": {"payment_status": prior_status}})
         raise HTTPException(status_code=502, detail=result.error or "Transaksi EDC gagal.")
 
     await db.orders.update_one(

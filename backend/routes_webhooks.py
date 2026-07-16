@@ -16,7 +16,8 @@ from database import get_db
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
 WEBHOOK_TOKEN = os.environ.get("XENDIT_WEBHOOK_TOKEN", "")
-WHATSAPP_APP_SECRET = os.environ.get("WHATSAPP_APP_SECRET", "")
+# Note: WhatsApp inbound signature verification is per-tenant (whatsapp.app_secret in each
+# store's integrations doc), NOT a single global secret -- see _verify_meta_signature below.
 
 
 def _map_status(payload: dict) -> str:
@@ -114,19 +115,35 @@ async def simulate_stripe_webhook(payload: dict, req: Request):
 # ---------- WhatsApp (Meta Cloud API) ----------
 # Single shared URL for every tenant: https://api.dagangos.com/api/webhooks/whatsapp
 # Each store has its own Meta App/WABA (BYO) and points ITS webhook config at this one URL.
-# Tenant routing: GET verification matches by `whatsapp.webhook_verify_token` (the value Meta
-# calls back with is whatever the store owner typed into their own Meta App's webhook config).
-# POST inbound messages route by `whatsapp.phone_number_id` found in the payload itself.
+# Each tenant's Meta App also signs its own webhook payloads with ITS OWN App Secret -- there is
+# no single shared secret that can verify every tenant's traffic, so verification must look up
+# the correct tenant's `whatsapp.app_secret` before checking the signature. Tenant routing:
+# GET verification matches by `whatsapp.webhook_verify_token` (the value Meta calls back with is
+# whatever the store owner typed into their own Meta App's webhook config). POST inbound messages
+# route by `whatsapp.phone_number_id` found in the payload itself -- so for POST, the payload's
+# phone_number_id is read (but NOT trusted/processed) purely to pick which tenant's app_secret to
+# verify the raw body's HMAC against. Nothing derived from the payload is acted on until that
+# verification passes.
 
-def _verify_meta_signature(raw_body: bytes, signature_header: str) -> bool:
-    """Without WHATSAPP_APP_SECRET configured, this endpoint cannot be verified -- fail closed
-    rather than accept unsigned payloads. A public webhook that trusts anything posted to it is
-    an open relay, not an optional hardening step."""
-    if not WHATSAPP_APP_SECRET:
+def _extract_phone_number_id(payload: dict) -> str | None:
+    try:
+        entry = (payload.get("entry") or [{}])[0]
+        change = (entry.get("changes") or [{}])[0]
+        value = change.get("value") or {}
+        return (value.get("metadata") or {}).get("phone_number_id")
+    except Exception:
+        return None
+
+
+def _verify_meta_signature(raw_body: bytes, signature_header: str, app_secret: str) -> bool:
+    """Without a tenant-specific app_secret configured, this payload cannot be verified -- fail
+    closed rather than accept unsigned payloads. A public webhook that trusts anything posted to
+    it is an open relay, not an optional hardening step."""
+    if not app_secret:
         return False
     if not signature_header or not signature_header.startswith("sha256="):
         return False
-    expected = hmac.new(WHATSAPP_APP_SECRET.encode(), raw_body, hashlib.sha256).hexdigest()
+    expected = hmac.new(app_secret.encode(), raw_body, hashlib.sha256).hexdigest()
     provided = signature_header.split("=", 1)[1]
     return hmac.compare_digest(expected, provided)
 
@@ -187,14 +204,27 @@ async def whatsapp_inbound(req: Request, background: BackgroundTasks):
     will back off and eventually stop calling it."""
     raw = await req.body()
     sig = req.headers.get("x-hub-signature-256", "")
-    if not _verify_meta_signature(raw, sig):
-        # Still 200 (avoid Meta's retry storm on an unfixable signature mismatch) but the
-        # unverified payload is discarded, not processed.
-        return {"received": True}
 
     try:
         payload = await req.json()
     except Exception:
+        return {"received": True}
+
+    # phone_number_id is used ONLY to pick which tenant's app_secret to verify against -- the
+    # payload itself is not trusted or processed until _verify_meta_signature passes below.
+    phone_number_id = _extract_phone_number_id(payload)
+    if not phone_number_id:
+        return {"received": True}
+
+    db = get_db()
+    tenant = await db.integrations.find_one({"whatsapp.phone_number_id": phone_number_id})
+    if not tenant:
+        return {"received": True}
+
+    app_secret = (tenant.get("whatsapp") or {}).get("app_secret") or ""
+    if not _verify_meta_signature(raw, sig, app_secret):
+        # Still 200 (avoid Meta's retry storm on an unfixable signature mismatch) but the
+        # unverified payload is discarded, not processed.
         return {"received": True}
 
     background.add_task(_process_whatsapp_inbound, payload)

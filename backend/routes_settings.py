@@ -4,7 +4,7 @@ from typing import List, Any, Dict
 from fastapi import APIRouter, Depends, HTTPException
 from database import get_db, utcnow
 from models import Branch, BranchBase
-from auth import get_current_user
+from auth import get_current_user, require_admin
 
 router = APIRouter(tags=["settings"])
 
@@ -97,7 +97,7 @@ async def get_integrations(user: dict = Depends(get_current_user)):
             "xendit": { "is_active": False, "secret_key": "", "webhook_token": "" },
             "midtrans": { "is_active": False, "client_key": "", "server_key": "" },
             "stripe": { "is_active": False, "publishable_key": "", "secret_key": "" },
-            "whatsapp": { "is_active": False, "phone_number_id": "", "access_token": "", "webhook_verify_token": "", "template_receipt": "dagangos_order_receipt", "template_receipt_lang": "id", "template_po": "dagangos_po_notify", "template_po_lang": "id", "auto_send_receipt": False },
+            "whatsapp": { "is_active": False, "phone_number_id": "", "access_token": "", "app_secret": "", "webhook_verify_token": "", "template_receipt": "dagangos_order_receipt", "template_receipt_lang": "id", "template_po": "dagangos_po_notify", "template_po_lang": "id", "auto_send_receipt": False },
             "telegram": { "is_active": False, "bot_token": "", "chat_id": "" },
             "email": { "is_active": False, "smtp_host": "", "smtp_port": 587, "smtp_user": "" }
         }
@@ -106,6 +106,20 @@ async def get_integrations(user: dict = Depends(get_current_user)):
 @router.post("/api/integrations")
 async def save_integrations(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
     db = get_db()
+
+    # WhatsApp inbound routing/signature verification key on webhook_verify_token and
+    # phone_number_id being unique per tenant -- a collision lets one store's Meta verification
+    # overwrite another store's saved phone_number_id. Reject collisions up front.
+    wa = payload.get("whatsapp") or {}
+    verify_token = str(wa.get("webhook_verify_token") or "").strip()
+    if verify_token:
+        clash = await db.integrations.find_one({
+            "whatsapp.webhook_verify_token": verify_token,
+            "store_id": {"$ne": user["store_id"]},
+        })
+        if clash:
+            raise HTTPException(status_code=400, detail="Webhook Verify Token WhatsApp ini sudah dipakai toko lain — pilih string yang unik")
+
     update_data = {k: v for k, v in payload.items() if k not in ("_id", "store_id")}
     res = await db.integrations.find_one_and_update(
         {"store_id": user["store_id"]},
@@ -117,7 +131,7 @@ async def save_integrations(payload: Dict[str, Any], user: dict = Depends(get_cu
     return res
 
 @router.post("/api/integrations/whatsapp/test")
-async def test_whatsapp(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
+async def test_whatsapp(payload: Dict[str, Any], user: dict = Depends(require_admin)):
     """Kirim pesan tes WhatsApp memakai kredensial yang sedang diisi (tak perlu simpan dulu).
 
     Pakai template 'hello_world' -- template utility bawaan yang otomatis tersedia & disetujui
