@@ -89,6 +89,25 @@ test("Geraina — CRUD menyeluruh (UI + API)", async ({ page, request }) => {
   test.setTimeout(360_000);
   page.on("dialog", (d) => d.accept());
 
+  // Diagnostic instrumentation: the blank-page failures on Kategori/Satuan/Pelanggan
+  // reproduce deterministically regardless of timeout (ruled out latency), but the
+  // screenshot/snapshot alone doesn't say WHY the React root stays empty. Surface the
+  // browser's own console/page errors and any failed network requests directly in the
+  // test output so the actual root cause (JS exception, failed chunk/asset, etc.) is
+  // visible without needing devtools access to the machine running this.
+  page.on("console", (msg) => {
+    if (msg.type() === "error") console.log(`[BROWSER CONSOLE ERROR] ${msg.text()}`);
+  });
+  page.on("pageerror", (err) => {
+    console.log(`[BROWSER PAGE ERROR] ${err.message}\n${err.stack || ""}`);
+  });
+  page.on("requestfailed", (req) => {
+    console.log(`[BROWSER REQUEST FAILED] ${req.method()} ${req.url()} -- ${req.failure()?.errorText}`);
+  });
+  page.on("response", (res) => {
+    if (res.status() >= 400) console.log(`[BROWSER RESPONSE ${res.status()}] ${res.request().method()} ${res.url()}`);
+  });
+
   await test.step("Register akun", async () => {
     await page.goto("/geraina/register");
     await page.fill('[data-testid="register-store-input"]', STORE);
