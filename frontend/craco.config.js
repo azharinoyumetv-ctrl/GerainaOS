@@ -55,6 +55,28 @@ let webpackConfig = {
       if (config.enableHealthCheck && healthPluginInstance) {
         webpackConfig.plugins.push(healthPluginInstance);
       }
+
+      // CRA's production build minifies index.html via html-minifier-terser,
+      // which also runs Terser over the content of any inline <script> tag
+      // (minifyJS: true). The inline PostHog init snippet in public/index.html
+      // makes that step throw "Parse Error" inside html-minifier-terser's own
+      // parser, failing the whole `craco build` (and therefore the whole
+      // deploy pipeline -- every deploy since this snippet was added has
+      // failed at this step, silently leaving production on a stale build).
+      // The snippet itself is valid, executable JS; only html-minifier's
+      // inline-script minification chokes on it. Disabling minifyJS for the
+      // HTML pass (HTML/CSS are still minified normally) sidesteps the bug
+      // without touching analytics behavior.
+      const htmlWebpackPlugin = webpackConfig.plugins.find(
+        (p) => p.constructor && p.constructor.name === "HtmlWebpackPlugin"
+      );
+      if (htmlWebpackPlugin) {
+        const opts = htmlWebpackPlugin.userOptions || htmlWebpackPlugin.options;
+        if (opts && opts.minify && typeof opts.minify === "object") {
+          opts.minify.minifyJS = false;
+        }
+      }
+
       return webpackConfig;
     },
   },
