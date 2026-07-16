@@ -312,25 +312,25 @@ export default function POS() {
   };
 
   return (
-    <div className="grid grid-cols-12 h-screen relative" data-testid="pos-page">
+    <div className="grid grid-cols-12 h-full relative" data-testid="pos-page">
       {/* Left: products */}
-      <div className="col-span-12 lg:col-span-8 p-6 overflow-y-auto">
+      <div className="col-span-12 lg:col-span-8 p-4 sm:p-6 overflow-y-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
           <div>
             <span className="label-tiny">Kasir</span>
             <h1 className="font-display text-2xl font-bold mt-1">Point of Sale</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
             {/* Search Input */}
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted))]" />
-              <input className="input-field pl-9" placeholder="Cari produk…"
+              <input className="input-field pl-9 w-full" placeholder="Cari produk…"
                      value={q} onChange={(e) => setQ(e.target.value)} data-testid="pos-search" />
             </div>
             {/* Manual Barcode Input (Allows simulating scanning manually) */}
-            <form onSubmit={handleManualBarcodeScan} className="relative w-64 flex items-center">
+            <form onSubmit={handleManualBarcodeScan} className="relative w-full sm:w-64 flex items-center">
               <Barcode size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted))]" />
-              <input className="input-field pl-9 pr-14" placeholder="Scan SKU / Barcode…"
+              <input className="input-field pl-9 pr-14 w-full" placeholder="Scan SKU / Barcode…"
                      value={barcodeInput} onChange={(e) => setBarcodeInput(e.target.value)} data-testid="pos-barcode-input" />
               <button type="submit" className="absolute right-1 px-2 py-1 bg-[hsl(var(--primary))] text-white rounded text-xs font-semibold hover:bg-[hsl(var(--primary))]/80 transition-colors">
                 Scan
@@ -426,9 +426,9 @@ export default function POS() {
               <div className="flex items-center justify-between">
                 <p className="text-xs text-[hsl(var(--muted))]">{fmtIDR(it.price)} ea</p>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setQty(idx, it.quantity - 1)} className="w-7 h-7 rounded-md border border-[hsl(var(--border))] grid place-items-center" data-testid={`cart-dec-${idx}`}><Minus size={12} /></button>
+                  <button onClick={() => setQty(idx, it.quantity - 1)} className="w-8 h-8 sm:w-7 sm:h-7 rounded-md border border-[hsl(var(--border))] grid place-items-center" data-testid={`cart-dec-${idx}`}><Minus size={12} /></button>
                   <span className="num-display font-semibold text-sm w-6 text-center" data-testid={`cart-qty-${idx}`}>{it.quantity}</span>
-                  <button onClick={() => setQty(idx, it.quantity + 1)} className="w-7 h-7 rounded-md border border-[hsl(var(--border))] grid place-items-center" data-testid={`cart-inc-${idx}`}><Plus size={12} /></button>
+                  <button onClick={() => setQty(idx, it.quantity + 1)} className="w-8 h-8 sm:w-7 sm:h-7 rounded-md border border-[hsl(var(--border))] grid place-items-center" data-testid={`cart-inc-${idx}`}><Plus size={12} /></button>
                 </div>
               </div>
             </div>
@@ -537,7 +537,7 @@ export default function POS() {
 
       {/* Floating Scanned Barcode Overlay */}
       {scannedProduct && (
-        <div className="fixed bottom-6 left-72 z-[100] animate-bounce bg-white border-2 border-[hsl(var(--success))] p-4 rounded-xl shadow-2xl flex items-center gap-4 max-w-sm" data-testid="scanned-overlay">
+        <div className="fixed bottom-4 left-4 right-4 sm:right-auto sm:max-w-sm lg:left-72 z-[100] animate-bounce bg-white border-2 border-[hsl(var(--success))] p-4 rounded-xl shadow-2xl flex items-center gap-4" data-testid="scanned-overlay">
           {scannedProduct.image_url ? (
             <img src={scannedProduct.image_url} alt={scannedProduct.name} className="w-16 h-16 object-cover rounded-md border border-[hsl(var(--border))]" />
           ) : (
