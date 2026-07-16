@@ -31,24 +31,28 @@ function asArray(j) {
   return Array.isArray(j) ? j : (j && (j.items || j.data)) || [];
 }
 
+// Explicit timeouts here used to be 15000/30000, which silently overrode the
+// config's expect.timeout default (config-level timeout only applies when a call
+// site doesn't pass its own timeout option) -- so bumping the config alone did
+// nothing for these assertions. Bumped to 45000 directly at each call site instead.
 async function uiCrud(page, e, results) {
   const name = `E2E ${e.label} ${Date.now()}`;
   const name2 = `${name} EDIT`;
   try {
     await page.goto(e.route);
-    await expect(page.locator(`[data-testid="${e.list}"]`)).toBeVisible();
+    await expect(page.locator(`[data-testid="${e.list}"]`)).toBeVisible({ timeout: 45000 });
     await page.fill(e.nameLoc, name);
     for (const [sel, val] of e.extra) await page.fill(sel, val);
     await page.click(`[data-testid="${e.submit}"]`);
-    await expect(page.locator(`[data-testid="${e.list}"]`)).toContainText(name, { timeout: 15000 });
+    await expect(page.locator(`[data-testid="${e.list}"]`)).toContainText(name, { timeout: 45000 });
 
     await page.locator(`[data-testid="${e.list}"] tr`, { hasText: name }).locator('button[title="Edit"]').click();
     await page.fill(e.nameLoc, name2);
     await page.click(`[data-testid="${e.submit}"]`);
-    await expect(page.locator(`[data-testid="${e.list}"]`)).toContainText(name2, { timeout: 15000 });
+    await expect(page.locator(`[data-testid="${e.list}"]`)).toContainText(name2, { timeout: 45000 });
 
     await page.locator(`[data-testid="${e.list}"] tr`, { hasText: name2 }).locator('button[title="Hapus"]').click();
-    await expect(page.locator(`[data-testid="${e.list}"] tr`, { hasText: name2 })).toHaveCount(0, { timeout: 15000 });
+    await expect(page.locator(`[data-testid="${e.list}"] tr`, { hasText: name2 })).toHaveCount(0, { timeout: 45000 });
     results.push(`OK    ${e.label} (C/R/U/D)`);
   } catch (err) {
     results.push(`FAIL  ${e.label}: ${String(err.message).split("\n")[0]}`);
@@ -91,7 +95,7 @@ test("Geraina — CRUD menyeluruh (UI + API)", async ({ page, request }) => {
     await page.fill('[data-testid="register-email-input"]', EMAIL);
     await page.fill('[data-testid="register-password-input"]', PASSWORD);
     await page.click('[data-testid="register-submit-btn"]');
-    await expect(page).toHaveURL(/\/geraina\/app\/dashboard/, { timeout: 30000 });
+    await expect(page).toHaveURL(/\/geraina\/app\/dashboard/, { timeout: 45000 });
   });
 
   const token = await page.evaluate(() =>

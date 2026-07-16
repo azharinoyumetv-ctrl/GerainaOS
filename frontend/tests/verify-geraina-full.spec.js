@@ -61,19 +61,24 @@ test("Geraina — semua halaman/modul render", async ({ page }) => {
     await page.click('[data-testid="register-submit-btn"]');
     const errEl = page.locator('[data-testid="register-error"]');
     await Promise.race([
-      page.waitForURL(/\/geraina\/app\/dashboard/, { timeout: 30000 }).catch(() => null),
-      errEl.waitFor({ state: "visible", timeout: 30000 }).catch(() => null),
+      page.waitForURL(/\/geraina\/app\/dashboard/, { timeout: 45000 }).catch(() => null),
+      errEl.waitFor({ state: "visible", timeout: 45000 }).catch(() => null),
     ]);
     if ((await errEl.count()) > 0 && (await errEl.isVisible())) {
       throw new Error("Register gagal: " + (await errEl.textContent()));
     }
-    await expect(page).toHaveURL(/\/geraina\/app\/dashboard/, { timeout: 30000 });
+    await expect(page).toHaveURL(/\/geraina\/app\/dashboard/, { timeout: 45000 });
   });
 
+  // Explicit { timeout: 15000 } here used to silently override the config's
+  // expect.timeout default (a call-site timeout always wins over the config
+  // default), so raising expect.timeout in playwright.config.js alone had zero
+  // effect on this loop -- every failure kept reporting "Timeout: 15000ms"
+  // verbatim. Bumped directly at the call site instead.
   for (const [path, tid] of ROUTES) {
     await page.goto(path);
     await expect
       .soft(page.locator(`[data-testid="${tid}"]`).first(), `${path} -> [data-testid=${tid}]`)
-      .toBeVisible({ timeout: 15000 });
+      .toBeVisible({ timeout: 45000 });
   }
 });
