@@ -1,11 +1,11 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/auth/AuthContext";
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse, ClipboardList,
   Truck, Users, Landmark, CreditCard, BarChart3, UserCheck,
   GitBranch, Cpu, Settings, Info, ChevronDown, ChevronRight,
-  LogOut, Sparkles, Crown, Shield, Leaf, Utensils
+  LogOut, Sparkles, Crown, Shield, Leaf, Utensils, Menu, X
 } from "lucide-react";
 
 const ROLE_PERMISSIONS = {
@@ -157,18 +157,32 @@ function trialDaysLeft(iso) {
 export default function AppLayout() {
   const { user, logout, changeRole } = useAuth();
   const nav = useNavigate();
+  const location = useLocation();
   const days = trialDaysLeft(user?.trial_ends_at);
   const isTrial = (user?.plan || "trial") === "trial";
-  
+
   const role = user?.role || "Owner";
   const permissions = ROLE_PERMISSIONS[role] || [];
-  
+
   const [openMenus, setOpenMenus] = useState({});
   const [showEcosystemSwitcher, setShowEcosystemSwitcher] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  // Close the off-canvas sidebar automatically whenever the route changes
+  // (phone/tablet only -- on lg+ the sidebar is always visible and this is a no-op).
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  // Prevent background scroll while the mobile drawer is open.
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   const filteredMenu = MENU_STRUCTURE.filter((item) => {
     if (permissions.includes("*")) return true;
@@ -176,24 +190,64 @@ export default function AppLayout() {
   });
 
   return (
-    <div className="min-h-screen flex bg-[hsl(var(--background))]" data-testid="app-layout">
-      <aside className="w-64 border-r border-[hsl(var(--border))] bg-[hsl(var(--surface))] flex flex-col h-screen overflow-hidden" data-testid="app-sidebar">
+    <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-[hsl(var(--background))]" data-testid="app-layout">
+      {/* Mobile/tablet top bar -- hidden on desktop (lg+), where the sidebar is always visible */}
+      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface))]" data-testid="app-mobile-topbar">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-2 -ml-2 rounded-md text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors"
+          aria-label="Buka menu"
+          data-testid="mobile-menu-open-btn"
+        >
+          <Menu size={22} />
+        </button>
+        <Link to="/geraina/app/dashboard" className="font-display text-base font-extrabold flex items-center gap-2">
+          <Leaf className="text-[hsl(var(--accent))]" size={18} /> Geraina POS
+        </Link>
+        <div className="w-9" aria-hidden="true" />
+      </header>
+
+      {/* Backdrop for the off-canvas mobile/tablet sidebar */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          data-testid="mobile-sidebar-backdrop"
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] border-r border-[hsl(var(--border))] bg-[hsl(var(--surface))] flex flex-col h-screen overflow-hidden transition-transform duration-200 ease-out
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:static lg:translate-x-0 lg:w-64 lg:max-w-none lg:z-auto`}
+        data-testid="app-sidebar"
+      >
         <div className="p-4 border-b border-[hsl(var(--border))] relative bg-[hsl(var(--surface))]">
           <div className="flex items-center justify-between">
             <Link to="/geraina/app/dashboard" className="font-display text-lg font-extrabold flex items-center gap-2" data-testid="app-logo">
               <Leaf className="text-[hsl(var(--accent))]" size={20} /> Geraina POS
             </Link>
-            
-            <button
-              onClick={() => setShowEcosystemSwitcher(!showEcosystemSwitcher)}
-              className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] text-[hsl(var(--foreground))] transition-all flex items-center gap-1 text-xs font-bold"
-              title="Switch Ecosystem App (Odoo Style)"
-              data-testid="odoo-ecosystem-switcher-btn"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[10px]">Suite</span>
-              <ChevronDown size={12} />
-            </button>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setShowEcosystemSwitcher(!showEcosystemSwitcher)}
+                className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] text-[hsl(var(--foreground))] transition-all flex items-center gap-1 text-xs font-bold"
+                title="Switch Ecosystem App (Odoo Style)"
+                data-testid="odoo-ecosystem-switcher-btn"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[10px]">Suite</span>
+                <ChevronDown size={12} />
+              </button>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="lg:hidden p-1.5 rounded-lg text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors"
+                aria-label="Tutup menu"
+                data-testid="mobile-menu-close-btn"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
           <p className="text-[11px] text-[hsl(var(--muted))] mt-1 truncate">{user?.store_name || "DagangOS Enterprise"}</p>
 
@@ -366,7 +420,7 @@ export default function AppLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto h-screen bg-[hsl(var(--background))]">
+      <main className="flex-1 min-w-0 overflow-y-auto bg-[hsl(var(--background))]">
         <Outlet />
       </main>
     </div>
