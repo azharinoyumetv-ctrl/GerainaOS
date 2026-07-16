@@ -62,23 +62,22 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
         "updated_at": utcnow().isoformat(),
     }
 
-    # Reduce stock atomically
-    for it in payload.items:
-        await db.products.update_one(
-            {"id": it.product_id, "store_id": user["store_id"]},
-            {"$inc": {"stock": -it.quantity}},
-        )
-
-    # Xendit integrations
+    # Xendit integrations -- resolved BEFORE stock is touched. A misconfigured/failed
+    # gateway must fail the request cleanly (no order, no stock change) instead of
+    # silently creating a "pending forever" order with no QR/checkout link and already
+    # -decremented stock: the previous version swallowed this exception into xendit_raw
+    # only, which the frontend never surfaces (POS.jsx only renders the QR/link block
+    # when xendit_qr_string / xendit_checkout_url is present) -- customer and cashier saw
+    # nothing, silently.
     if payload.payment_method == "qris":
         try:
             res = await create_qris(external_id=order_no, amount=int(round(calc["total"])))
-            doc["xendit_id"] = res.get("id")
-            doc["xendit_reference_id"] = order_no
-            doc["xendit_qr_string"] = res.get("qr_string")
-            doc["xendit_raw"] = res
         except Exception as e:
-            doc["xendit_raw"] = {"error": str(e)}
+            raise HTTPException(status_code=502, detail=f"QRIS belum dikonfigurasi atau gagal membuat kode QR ({e}). Atur Xendit di Pengaturan > Integrasi.")
+        doc["xendit_id"] = res.get("id")
+        doc["xendit_reference_id"] = order_no
+        doc["xendit_qr_string"] = res.get("qr_string")
+        doc["xendit_raw"] = res
     elif payload.payment_method == "ewallet":
         if not payload.ewallet_channel:
             raise HTTPException(status_code=400, detail="ewallet_channel wajib untuk e-wallet")
@@ -90,17 +89,26 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
                 customer_phone=payload.customer_phone,
                 customer_email=payload.customer_email,
             )
-            doc["xendit_id"] = res.get("id")
-            doc["xendit_reference_id"] = order_no
-            actions = res.get("actions") or {}
-            doc["xendit_checkout_url"] = (
-                actions.get("desktop_web_checkout_url")
-                or actions.get("mobile_web_checkout_url")
-                or actions.get("mobile_deeplink_checkout_url")
-            )
-            doc["xendit_raw"] = res
         except Exception as e:
-            doc["xendit_raw"] = {"error": str(e)}
+            raise HTTPException(status_code=502, detail=f"E-Wallet belum dikonfigurasi atau gagal memulai pembayaran ({e}). Atur Xendit di Pengaturan > Integrasi.")
+        doc["xendit_id"] = res.get("id")
+        doc["xendit_reference_id"] = order_no
+        actions = res.get("actions") or {}
+        doc["xendit_checkout_url"] = (
+            actions.get("desktop_web_checkout_url")
+            or actions.get("mobile_web_checkout_url")
+            or actions.get("mobile_deeplink_checkout_url")
+        )
+        doc["xendit_raw"] = res
+
+    # Reduce stock atomically -- only after the payment gateway step above succeeded
+    # (or wasn't needed), so a failed qris/ewallet init never leaves stock decremented
+    # for an order that was never actually created.
+    for it in payload.items:
+        await db.products.update_one(
+            {"id": it.product_id, "store_id": user["store_id"]},
+            {"$inc": {"stock": -it.quantity}},
+        )
 
     await db.orders.insert_one(doc)
 
