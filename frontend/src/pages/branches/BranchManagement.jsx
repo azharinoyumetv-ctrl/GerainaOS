@@ -57,7 +57,7 @@ export default function BranchManagement() {
   };
 
   return (
-    <div className="p-8 space-y-6" data-testid="branches-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="branches-page">
       <div>
         <span className="label-tiny">Outlet Cabang</span>
         <h1 className="font-display text-3xl font-bold mt-1">Manajemen Multi-Cabang</h1>

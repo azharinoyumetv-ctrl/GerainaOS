@@ -60,7 +60,7 @@ export default function SupplierList() {
   };
 
   return (
-    <div className="p-8 space-y-6" data-testid="suppliers-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="suppliers-page">
       <div>
         <span className="label-tiny">Pemasok</span>
         <h1 className="font-display text-3xl font-bold mt-1">Supplier Database</h1>

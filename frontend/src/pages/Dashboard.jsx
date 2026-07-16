@@ -97,15 +97,15 @@ export default function Dashboard() {
   }));
 
   return (
-    <div className="p-8 space-y-6" data-testid="dashboard-page">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="dashboard-page">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <span className="label-tiny">POS Komersial</span>
-          <h1 className="font-display text-3xl font-bold mt-1" data-testid="dashboard-greeting">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold mt-1" data-testid="dashboard-greeting">
             Dashboard: {user?.store_name || "DagangOS Store"}.
           </h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 px-3 py-1 rounded border border-emerald-100 flex items-center gap-1">
             <ShieldCheck size={14} /> Peran: {user?.role || "Owner"}
           </span>
@@ -139,7 +139,7 @@ export default function Dashboard() {
       )}
 
       {/* 5 KPI Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
           label="Pendapatan Hari Ini"
           value={fmtIDR(stats?.today_sales || 0)}
@@ -183,7 +183,7 @@ export default function Dashboard() {
       </div>
 
       {/* Widgets Grid Dashboard Control Room */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-12 gap-4 sm:gap-6">
         
         {/* 1. Sales Trend Chart */}
         <div className="col-span-12 lg:col-span-8 card-surface p-6 h-80 flex flex-col justify-between">

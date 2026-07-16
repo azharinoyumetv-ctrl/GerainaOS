@@ -9,7 +9,7 @@ export default function StockOverview() {
   }, []);
 
   return (
-    <div className="p-8 space-y-6" data-testid="stock-overview-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="stock-overview-page">
       <div>
         <span className="label-tiny">Inventaris</span>
         <h1 className="font-display text-3xl font-bold mt-1">Ringkasan Stok</h1>

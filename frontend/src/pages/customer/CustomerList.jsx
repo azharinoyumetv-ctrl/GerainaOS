@@ -77,7 +77,7 @@ export default function CustomerList() {
   };
 
   return (
-    <div className="p-8 space-y-6" data-testid="customers-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="customers-page">
       <div>
         <span className="label-tiny">Pelanggan</span>
         <h1 className="font-display text-3xl font-bold mt-1">Daftar Pelanggan</h1>

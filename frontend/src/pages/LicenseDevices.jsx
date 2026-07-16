@@ -21,7 +21,7 @@ export default function LicenseDevices() {
   };
 
   return (
-    <div className="p-8 space-y-6" data-testid="license-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="license-page">
       <div className="flex flex-col gap-1">
         <span className="label-tiny">Manajemen SaaS</span>
         <h1 className="font-display text-3xl font-bold mt-1 text-[hsl(220,70%,15%)]" data-testid="license-title">

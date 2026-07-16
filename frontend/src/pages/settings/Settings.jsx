@@ -85,7 +85,7 @@ export default function Settings() {
     }
   };
 
-  if (!settings) return <div className="p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data pengaturan...</div>;
+  if (!settings) return <div className="p-4 sm:p-6 lg:p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data pengaturan...</div>;
 
   const renderForm = () => {
     switch (type) {
@@ -371,7 +371,7 @@ export default function Settings() {
   ];
 
   return (
-    <div className="p-8 space-y-6 text-left" data-testid="settings-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 text-left" data-testid="settings-page">
       <div>
         <span className="label-tiny">Pengaturan</span>
         <h1 className="font-display text-3xl font-bold mt-1 capitalize">Pengaturan ({type})</h1>

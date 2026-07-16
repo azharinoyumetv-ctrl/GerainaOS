@@ -5,7 +5,7 @@ export default function About() {
   const { user } = useAuth();
 
   return (
-    <div className="p-8 space-y-6" data-testid="about-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="about-page">
       <div className="flex flex-col gap-1">
         <span className="label-tiny">Tentang Aplikasi</span>
         <h1 className="font-display text-3xl font-bold mt-1" data-testid="about-title">

@@ -47,7 +47,7 @@ export default function StockTransfer() {
   };
 
   return (
-    <div className="p-8 space-y-6" data-testid="stock-transfer-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="stock-transfer-page">
       <div>
         <span className="label-tiny">Produk</span>
         <h1 className="font-display text-3xl font-bold mt-1">Stock Transfer</h1>

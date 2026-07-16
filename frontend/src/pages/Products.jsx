@@ -290,7 +290,7 @@ export default function Products() {
   };
 
   return (
-    <div className="p-8 space-y-5" data-testid="products-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-5" data-testid="products-page">
       <div className="flex items-end justify-between">
         <div>
           <span className="label-tiny">Manajemen</span>
@@ -333,7 +333,7 @@ export default function Products() {
         </div>
       </div>
 
-      <div className="card-surface overflow-hidden">
+      <div className="card-surface overflow-x-auto">
         <table className="w-full text-sm" data-testid="products-table">
           <thead className="bg-[hsl(var(--background))] border-b border-[hsl(var(--border))]">
             <tr className="text-left">

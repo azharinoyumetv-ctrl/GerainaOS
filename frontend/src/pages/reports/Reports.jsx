@@ -453,7 +453,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-8 space-y-6 text-left" data-testid="reports-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 text-left" data-testid="reports-page">
       <div>
         <span className="label-tiny">Laporan Bisnis</span>
         <h1 className="font-display text-3xl font-bold mt-1 capitalize">Laporan ({type})</h1>

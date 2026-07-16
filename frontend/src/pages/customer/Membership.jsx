@@ -37,7 +37,7 @@ export default function Membership() {
   };
 
   return (
-    <div className="p-8 space-y-6" data-testid="membership-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="membership-page">
       <div>
         <span className="label-tiny">Pelanggan</span>
         <h1 className="font-display text-3xl font-bold mt-1">Tingkatan Keanggotaan</h1>

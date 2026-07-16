@@ -12,7 +12,7 @@ export default function InventoryValuation() {
   const totalRetailValue = products.reduce((acc, p) => acc + ((p.stock || 0) * (p.price || 0)), 0);
 
   return (
-    <div className="p-8 space-y-6" data-testid="inventory-valuation-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="inventory-valuation-page">
       <div>
         <span className="label-tiny">Inventaris</span>
         <h1 className="font-display text-3xl font-bold mt-1">Penilaian Inventaris</h1>

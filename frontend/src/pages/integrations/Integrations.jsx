@@ -61,7 +61,7 @@ export default function Integrations() {
     }
   };
 
-  if (!integrations) return <div className="p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data integrasi...</div>;
+  if (!integrations) return <div className="p-4 sm:p-6 lg:p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data integrasi...</div>;
 
   const renderForm = () => {
     switch (type) {
@@ -381,7 +381,7 @@ export default function Integrations() {
   ];
 
   return (
-    <div className="p-8 space-y-6 text-left" data-testid="integrations-page">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 text-left" data-testid="integrations-page">
       <div className="flex items-center justify-between">
         <div>
           <span className="label-tiny">Integrasi</span>
