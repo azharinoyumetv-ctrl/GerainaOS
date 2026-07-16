@@ -278,8 +278,16 @@ export default function Products() {
     } finally { setLoading(false); }
   };
 
+  // Filter dropdown must reflect the same category values the product table shows
+  // (the free-text `category` field on each product), not the separate user-managed
+  // Kategori collection -- that collection is often empty even when products exist,
+  // which left the dropdown stuck on "Semua Kategori" only.
+  const loadCategories = () => {
+    api.get("/products/category-names").then((r) => setCategories(r.data || [])).catch(() => {});
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); api.get("/products/categories").then((r) => setCategories(r.data)).catch(() => {}); }, []);
+  useEffect(() => { load(); loadCategories(); }, []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t); }, [q, filterCat]);
 
@@ -378,8 +386,8 @@ export default function Products() {
         </table>
       </div>
 
-      {showForm && <ProductForm product={editing} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
-      {showImport && <ImportDialog onClose={() => setShowImport(false)} onDone={load} />}
+      {showForm && <ProductForm product={editing} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); loadCategories(); }} />}
+      {showImport && <ImportDialog onClose={() => setShowImport(false)} onDone={() => { load(); loadCategories(); }} />}
     </div>
   );
 }

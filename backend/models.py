@@ -297,6 +297,12 @@ class DebtReceivable(DebtReceivableCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     store_id: str
 
+class DebtReceivableUpdate(BaseModel):
+    """Partial update -- used to record a payment/settlement against an existing
+    receivable without re-submitting the full record."""
+    paid_amount: Optional[float] = None
+    status: Optional[str] = None
+
 class DebtPayableCreate(BaseModel):
     supplier_name: str
     invoice_no: str
@@ -308,6 +314,10 @@ class DebtPayableCreate(BaseModel):
 class DebtPayable(DebtPayableCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     store_id: str
+
+class DebtPayableUpdate(BaseModel):
+    paid_amount: Optional[float] = None
+    status: Optional[str] = None
 
 class StaffBase(BaseModel):
     name: str

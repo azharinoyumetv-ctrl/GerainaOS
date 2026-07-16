@@ -8,6 +8,8 @@ export default function AccountsPayable() {
   const [invoiceNo, setInvoiceNo] = useState("");
   const [amount, setAmount] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const fetchPayables = () => {
     api.get("/debt/payables").then((r) => setPayables(r.data)).catch(() => {});
@@ -19,7 +21,13 @@ export default function AccountsPayable() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!supplierName.trim() || !invoiceNo.trim() || !amount) return;
+    // No Faktur/Invoice is required by the backend (DebtPayableCreate.invoice_no). Previously
+    // this just returned silently with zero feedback if left blank.
+    if (!supplierName.trim()) { setFormError("Nama Supplier wajib diisi."); return; }
+    if (!invoiceNo.trim()) { setFormError("No Faktur / Invoice wajib diisi."); return; }
+    if (!amount || parseInt(amount) <= 0) { setFormError("Jumlah Hutang wajib diisi dan lebih besar dari 0."); return; }
+    setFormError("");
+    setSaving(true);
 
     api.post("/debt/payables", {
       supplier_name: supplierName,
@@ -35,7 +43,9 @@ export default function AccountsPayable() {
       setDueDate("");
       fetchPayables();
       alert("Catatan Hutang Baru berhasil ditambahkan!");
-    });
+    }).catch((err) => {
+      setFormError(err?.response?.data?.detail || "Gagal menyimpan catatan hutang.");
+    }).finally(() => setSaving(false));
   };
 
   const handleSettle = (id, currentPaid, totalAmount) => {
@@ -45,9 +55,11 @@ export default function AccountsPayable() {
     const newPaid = currentPaid + parseInt(pay);
     const status = newPaid >= totalAmount ? "Paid" : "Partial";
 
-    api.post("/debt/payables", { id, paid_amount: newPaid, status }).then(() => {
+    api.put(`/debt/payables/${id}`, { paid_amount: newPaid, status }).then(() => {
       fetchPayables();
       alert("Pembayaran hutang berhasil dicatat!");
+    }).catch((err) => {
+      alert(err?.response?.data?.detail || "Gagal mencatat pembayaran hutang.");
     });
   };
 
@@ -106,8 +118,12 @@ export default function AccountsPayable() {
             </div>
           </div>
 
-          <button type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2">
-            <Plus size={16} /> Catat Hutang
+          {formError && (
+            <p className="text-xs text-[hsl(var(--destructive))] font-medium" data-testid="payable-form-error">{formError}</p>
+          )}
+
+          <button type="submit" disabled={saving} className="btn-primary w-full py-2 flex items-center justify-center gap-2 disabled:opacity-60" data-testid="payable-submit-btn">
+            <Plus size={16} /> {saving ? "Menyimpan…" : "Catat Hutang"}
           </button>
         </form>
 

@@ -43,7 +43,11 @@ async def charge_order_via_edc(order_id: str, user: dict = Depends(get_current_u
     edc_cfg = (payments_config or {}).get("edc") or {}
     if not edc_cfg.get("is_active") or not edc_cfg.get("provider"):
         await db.orders.update_one({"id": order_id, "store_id": user["store_id"]}, {"$set": {"payment_status": prior_status}})
-        raise HTTPException(status_code=502, detail="EDC belum dikonfigurasi. Atur provider bank di Pengaturan > Pembayaran > EDC.")
+        # 400, not 502: this is an ordinary "not configured" business outcome, not a gateway
+        # failure. Cloudflare intercepts and replaces 502/504/52x responses from the origin
+        # with its own generic error page, which silently swallowed this exact message in
+        # production (TestSprite caught it as "invalid or incomplete response to Cloudflare").
+        raise HTTPException(status_code=400, detail="EDC belum dikonfigurasi. Atur provider bank di Pengaturan > Pembayaran > EDC.")
 
     provider = get_edc_provider(edc_cfg.get("provider"))
     result = await provider.charge(amount=int(round(order.get("total") or 0)), order_ref=order.get("order_no") or order_id)
@@ -51,7 +55,7 @@ async def charge_order_via_edc(order_id: str, user: dict = Depends(get_current_u
     if not result.success:
         # Release the claim so the order can be retried instead of getting stuck in "charging".
         await db.orders.update_one({"id": order_id, "store_id": user["store_id"]}, {"$set": {"payment_status": prior_status}})
-        raise HTTPException(status_code=502, detail=result.error or "Transaksi EDC gagal.")
+        raise HTTPException(status_code=400, detail=result.error or "Transaksi EDC gagal.")
 
     await db.orders.update_one(
         {"id": order_id, "store_id": user["store_id"]},

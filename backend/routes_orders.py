@@ -73,7 +73,12 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
         try:
             res = await create_qris(external_id=order_no, amount=int(round(calc["total"])))
         except Exception as e:
-            raise HTTPException(status_code=502, detail=f"QRIS belum dikonfigurasi atau gagal membuat kode QR ({e}). Atur Xendit di Pengaturan > Integrasi.")
+            # 400, not 502: this is a "not configured / gateway declined" business outcome,
+            # not an actual gateway failure. Cloudflare intercepts 502/504/52x responses from
+            # the origin and replaces them with its own generic error page, which silently
+            # swallows this message in production (same class of bug as the EDC endpoint --
+            # see routes_edc.py).
+            raise HTTPException(status_code=400, detail=f"QRIS belum dikonfigurasi atau gagal membuat kode QR ({e}). Atur Xendit di Pengaturan > Integrasi.")
         doc["xendit_id"] = res.get("id")
         doc["xendit_reference_id"] = order_no
         doc["xendit_qr_string"] = res.get("qr_string")
@@ -90,7 +95,7 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
                 customer_email=payload.customer_email,
             )
         except Exception as e:
-            raise HTTPException(status_code=502, detail=f"E-Wallet belum dikonfigurasi atau gagal memulai pembayaran ({e}). Atur Xendit di Pengaturan > Integrasi.")
+            raise HTTPException(status_code=400, detail=f"E-Wallet belum dikonfigurasi atau gagal memulai pembayaran ({e}). Atur Xendit di Pengaturan > Integrasi.")
         doc["xendit_id"] = res.get("id")
         doc["xendit_reference_id"] = order_no
         actions = res.get("actions") or {}
