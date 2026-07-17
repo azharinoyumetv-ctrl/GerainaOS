@@ -101,7 +101,7 @@ class OrderLineItem(BaseModel):
 class OrderCreate(BaseModel):
     items: List[OrderLineItem]
     payment_method: str  # cash | qris | ewallet
-    ewallet_channel: Optional[str] = None  # ID_OVO | ID_DANA | ID_SHOPEEPAY | ID_LINKAJA
+    ewallet_channel: Optional[str] = None  # OVO | DANA | SHOPEEPAY | LINKAJA (Xendit v3, no ID_ prefix)
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
     customer_email: Optional[str] = None

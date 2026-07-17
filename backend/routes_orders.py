@@ -89,7 +89,12 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
             # swallows this message in production (same class of bug as the EDC endpoint --
             # see routes_edc.py).
             raise HTTPException(status_code=400, detail=f"QRIS belum dikonfigurasi atau gagal membuat kode QR ({e}). Atur Xendit di Pengaturan > Integrasi.")
-        doc["xendit_id"] = res.get("id")
+        # v3 Payment Request API: id is payment_request_id, not id -- and QR string lives
+        # in an actions[] entry (already flattened onto res["qr_string"] by
+        # create_qris). Defensive .get()s throughout: the gateway has already committed
+        # by this point, so a response-shape surprise must never lose the order (same
+        # lesson as the DOKU incident earlier this session).
+        doc["xendit_id"] = res.get("payment_request_id") or res.get("id")
         doc["xendit_reference_id"] = order_no
         doc["xendit_qr_string"] = res.get("qr_string")
         doc["xendit_raw"] = res
@@ -108,14 +113,11 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
             )
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"E-Wallet belum dikonfigurasi atau gagal memulai pembayaran ({e}). Atur Xendit di Pengaturan > Integrasi.")
-        doc["xendit_id"] = res.get("id")
+        # Same v3 shape as QRIS above -- checkout_url already flattened by
+        # create_ewallet_charge from the actions[] entry.
+        doc["xendit_id"] = res.get("payment_request_id") or res.get("id")
         doc["xendit_reference_id"] = order_no
-        actions = res.get("actions") or {}
-        doc["xendit_checkout_url"] = (
-            actions.get("desktop_web_checkout_url")
-            or actions.get("mobile_web_checkout_url")
-            or actions.get("mobile_deeplink_checkout_url")
-        )
+        doc["xendit_checkout_url"] = res.get("checkout_url")
         doc["xendit_raw"] = res
     elif payload.payment_method == "doku":
         doku_cfg = (integ or {}).get("doku") or {}

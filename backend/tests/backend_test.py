@@ -214,7 +214,7 @@ class TestOrders:
         r = authed.post(f"{API}/orders", json={
             "items": [item],
             "payment_method": "ewallet",
-            "ewallet_channel": "ID_DANA",
+            "ewallet_channel": "DANA",
             "customer_phone": "+628123456789",
             "customer_email": "test@example.com",
         })

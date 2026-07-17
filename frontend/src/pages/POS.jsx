@@ -6,11 +6,13 @@ import {
   Banknote, QrCode, Smartphone, RefreshCw, Barcode, CreditCard, Landmark,
 } from "lucide-react";
 
+// Plain channel codes (no ID_ prefix) -- Xendit's v3 Payment Request API,
+// confirmed against docs.xendit.co/docs/{ovo,dana,shopeepay-e-wallets-id,linkaja}.
 const EWALLET_CHANNELS = [
-  { code: "ID_OVO", label: "OVO" },
-  { code: "ID_DANA", label: "DANA" },
-  { code: "ID_SHOPEEPAY", label: "ShopeePay" },
-  { code: "ID_LINKAJA", label: "LinkAja" },
+  { code: "OVO", label: "OVO" },
+  { code: "DANA", label: "DANA" },
+  { code: "SHOPEEPAY", label: "ShopeePay" },
+  { code: "LINKAJA", label: "LinkAja" },
 ];
 
 function ReceiptDialog({ order, onClose }) {
