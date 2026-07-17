@@ -10,6 +10,8 @@ export default function StaffManagement() {
   const [role, setRole] = useState("Cashier");
   const [status, setStatus] = useState("Aktif");
   const [editingId, setEditingId] = useState(null);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const fetchStaff = () => {
     api.get("/staff").then((r) => setStaffList(r.data)).catch(() => {});
@@ -21,7 +23,16 @@ export default function StaffManagement() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) return;
+    if (!name.trim()) {
+      setFormError("Nama Lengkap wajib diisi.");
+      return;
+    }
+    if (!email.trim()) {
+      setFormError("Email Login wajib diisi.");
+      return;
+    }
+    setFormError("");
+    setSaving(true);
 
     const payload = { name, email, phone, role, status };
 
@@ -30,12 +41,16 @@ export default function StaffManagement() {
         setEditingId(null);
         clearForm();
         fetchStaff();
-      });
+      }).catch((err) => {
+        setFormError(err?.response?.data?.detail || "Gagal menyimpan perubahan karyawan.");
+      }).finally(() => setSaving(false));
     } else {
       api.post("/staff", payload).then(() => {
         clearForm();
         fetchStaff();
-      });
+      }).catch((err) => {
+        setFormError(err?.response?.data?.detail || "Gagal menambahkan karyawan.");
+      }).finally(() => setSaving(false));
     }
   };
 
@@ -45,6 +60,7 @@ export default function StaffManagement() {
     setPhone("");
     setRole("Cashier");
     setStatus("Aktif");
+    setFormError("");
   };
 
   const handleEdit = (s) => {
@@ -54,6 +70,7 @@ export default function StaffManagement() {
     setPhone(s.phone || "");
     setRole(s.role || "Cashier");
     setStatus(s.status || "Aktif");
+    setFormError("");
   };
 
   const handleDelete = (id) => {
@@ -133,8 +150,17 @@ export default function StaffManagement() {
             </div>
           </div>
 
-          <button type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2">
-            {editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Karyawan</>}
+          {formError && (
+            <p className="text-xs font-medium text-red-600" data-testid="staff-form-error">{formError}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={saving}
+            data-testid="staff-submit-btn"
+            className="btn-primary w-full py-2 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {saving ? "Menyimpan..." : editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Karyawan</>}
           </button>
           {editingId && (
             <button
