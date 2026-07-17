@@ -8,6 +8,7 @@ from database import get_db, utcnow, next_order_no
 from models import OrderCreate, Order, OrderLineItem
 from auth import get_current_user, require_admin
 from xendit_client import create_qris, create_ewallet_charge
+from doku_client import create_doku_checkout, DokuNotConfiguredError
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
@@ -105,6 +106,33 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
             or actions.get("mobile_deeplink_checkout_url")
         )
         doc["xendit_raw"] = res
+    elif payload.payment_method == "doku":
+        # DOKU is BYO per-store (unlike Xendit's single global env-var key above) --
+        # credentials come from this store's own integrations.doku config, entered
+        # via Pengaturan > Integrasi, never from a shared/global key.
+        integ = await db.integrations.find_one({"store_id": user["store_id"]}, {"_id": 0})
+        doku_cfg = (integ or {}).get("doku") or {}
+        return_base = os.environ.get("DOKU_RETURN_URL", "https://dagangos.com/pos")
+        try:
+            res = await create_doku_checkout(
+                cfg=doku_cfg,
+                order_id=order_no,
+                amount=int(round(calc["total"])),
+                callback_url=f"{return_base}?order={order_no}",
+                callback_url_result=f"{return_base}?order={order_no}",
+                customer_name=payload.customer_name,
+                customer_email=payload.customer_email,
+                customer_phone=payload.customer_phone,
+            )
+        except DokuNotConfiguredError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"DOKU gagal membuat pembayaran ({e}). Atur DOKU di Pengaturan > Integrasi.")
+        doku_payment = ((res.get("response") or {}).get("payment")) or (res.get("payment") or {})
+        doc["doku_id"] = (res.get("order") or {}).get("invoice_number") or order_no
+        doc["doku_token_id"] = doku_payment.get("token_id")
+        doc["doku_checkout_url"] = doku_payment.get("url")
+        doc["doku_raw"] = res
 
     # Reduce stock atomically -- only after the payment gateway step above succeeded
     # (or wasn't needed), so a failed qris/ewallet init never leaves stock decremented

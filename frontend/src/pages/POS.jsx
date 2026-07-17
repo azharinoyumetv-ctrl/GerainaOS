@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import api, { fmtIDR, downloadPdf } from "@/api/client";
 import {
   Search, Plus, Minus, Trash2, X, Printer, Download, CheckCircle2,
-  Banknote, QrCode, Smartphone, RefreshCw, Barcode, CreditCard,
+  Banknote, QrCode, Smartphone, RefreshCw, Barcode, CreditCard, Landmark,
 } from "lucide-react";
 
 const EWALLET_CHANNELS = [
@@ -89,6 +89,15 @@ function ReceiptDialog({ order, onClose }) {
             <p className="text-sm mb-2">Lanjutkan pembayaran di:</p>
             <a href={o.xendit_checkout_url} target="_blank" rel="noreferrer" className="btn-accent" data-testid="ewallet-open-link">
               Buka {o.ewallet_channel}
+            </a>
+          </div>
+        )}
+
+        {o.payment_method === "doku" && o.doku_checkout_url && !isPaid && (
+          <div className="text-center mb-4" data-testid="doku-display">
+            <p className="text-sm mb-2">Lanjutkan pembayaran DOKU (VA/E-Wallet/Minimarket) di:</p>
+            <a href={o.doku_checkout_url} target="_blank" rel="noreferrer" className="btn-accent" data-testid="doku-open-link">
+              Buka Halaman Pembayaran DOKU
             </a>
           </div>
         )}
@@ -460,7 +469,7 @@ export default function POS() {
 
           <div>
             <label className="label-tiny mb-2 block">Metode Pembayaran</label>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5">
               <button onClick={() => setPaymentMethod("cash")}
                       className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "cash" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
                       data-testid="pm-cash"><Banknote size={14} className="mx-auto mb-1" />Tunai</button>
@@ -473,6 +482,9 @@ export default function POS() {
               <button onClick={() => setPaymentMethod("edc")}
                       className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "edc" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
                       data-testid="pm-edc"><CreditCard size={14} className="mx-auto mb-1" />Kartu (EDC)</button>
+              <button onClick={() => setPaymentMethod("doku")}
+                      className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "doku" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
+                      data-testid="pm-doku"><Landmark size={14} className="mx-auto mb-1" />DOKU (VA)</button>
             </div>
           </div>
 

@@ -19,7 +19,8 @@ export default function Integrations() {
     qris: { is_active: false, nmid: "", merchant_name: "" },
     whatsapp: { is_active: false, phone_number_id: "", access_token: "", app_secret: "", webhook_verify_token: "", template_receipt: "dagangos_order_receipt", template_receipt_lang: "id", template_po: "dagangos_po_notify", template_po_lang: "id" },
     telegram: { is_active: false, bot_token: "", chat_id: "" },
-    email: { is_active: false, smtp_host: "", smtp_port: 587, smtp_user: "" }
+    email: { is_active: false, smtp_host: "", smtp_port: 587, smtp_user: "" },
+    doku: { is_active: false, client_id: "", shared_key: "", environment: "sandbox", preferred_channel: "all" }
   });
 
   useEffect(() => {
@@ -97,6 +98,75 @@ export default function Integrations() {
               />
             </div>
             <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan API key Xendit milik toko Anda sendiri. Transaksi pelanggan masuk langsung ke akun Xendit Anda.</p>
+          </div>
+        );
+
+      case "doku":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold">Aktifkan DOKU Gateway</label>
+              <input
+                type="checkbox"
+                checked={integrations.doku.is_active}
+                onChange={(e) => setIntegrations({ ...integrations, doku: { ...integrations.doku, is_active: e.target.checked } })}
+                className="rounded border-[hsl(var(--border))]"
+              />
+            </div>
+            <p className="text-[11px] text-[hsl(var(--muted))]">
+              Gunakan Client ID dan Shared Key DOKU (Checkout/Jokul API) milik toko Anda sendiri dari DOKU Dashboard &gt; Developer &gt; API Keys. Mendukung Virtual Account, E-Money (OVO/DANA/ShopeePay), dan minimarket.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Client ID</label>
+                <input
+                  type="text"
+                  value={integrations.doku.client_id}
+                  placeholder="BRN-0218-..."
+                  onChange={(e) => setIntegrations({ ...integrations, doku: { ...integrations.doku, client_id: e.target.value } })}
+                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Shared Key (Secret Key)</label>
+                <input
+                  type="password"
+                  value={integrations.doku.shared_key}
+                  placeholder="SK-..."
+                  onChange={(e) => setIntegrations({ ...integrations, doku: { ...integrations.doku, shared_key: e.target.value } })}
+                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
+                />
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Environment</label>
+                <select
+                  value={integrations.doku.environment}
+                  onChange={(e) => setIntegrations({ ...integrations, doku: { ...integrations.doku, environment: e.target.value } })}
+                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm"
+                >
+                  <option value="sandbox">Sandbox (Uji Coba)</option>
+                  <option value="production">Production (Transaksi Nyata)</option>
+                </select>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Metode Pembayaran</label>
+                <select
+                  value={integrations.doku.preferred_channel}
+                  onChange={(e) => setIntegrations({ ...integrations, doku: { ...integrations.doku, preferred_channel: e.target.value } })}
+                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm"
+                >
+                  <option value="all">Semua (VA + E-Wallet + Minimarket)</option>
+                  <option value="va">Virtual Account saja</option>
+                  <option value="ewallet">E-Wallet saja</option>
+                  <option value="minimart">Minimarket saja</option>
+                </select>
+              </div>
+            </div>
+            <p className="text-[11px] text-[hsl(var(--muted))]">
+              Daftarkan webhook notifikasi <code className="font-mono">https://api.dagangos.com/api/webhooks/doku</code> di DOKU Dashboard &gt; Developer &gt; Notification URL agar status pembayaran ter-update otomatis.
+            </p>
           </div>
         );
 
@@ -372,6 +442,7 @@ export default function Integrations() {
 
   const subtabs = [
     { id: "xendit", label: "Xendit", path: "/geraina/app/integrations/xendit" },
+    { id: "doku", label: "DOKU", path: "/geraina/app/integrations/doku" },
     { id: "midtrans", label: "Midtrans", path: "/geraina/app/integrations/midtrans" },
     { id: "stripe", label: "Stripe", path: "/geraina/app/integrations/stripe" },
     { id: "qris", label: "QRIS", path: "/geraina/app/integrations/qris" },

@@ -99,7 +99,8 @@ async def get_integrations(user: dict = Depends(get_current_user)):
             "stripe": { "is_active": False, "publishable_key": "", "secret_key": "" },
             "whatsapp": { "is_active": False, "phone_number_id": "", "access_token": "", "app_secret": "", "webhook_verify_token": "", "template_receipt": "dagangos_order_receipt", "template_receipt_lang": "id", "template_po": "dagangos_po_notify", "template_po_lang": "id", "auto_send_receipt": False },
             "telegram": { "is_active": False, "bot_token": "", "chat_id": "" },
-            "email": { "is_active": False, "smtp_host": "", "smtp_port": 587, "smtp_user": "" }
+            "email": { "is_active": False, "smtp_host": "", "smtp_port": 587, "smtp_user": "" },
+            "doku": { "is_active": False, "client_id": "", "shared_key": "", "environment": "sandbox", "preferred_channel": "all" }
         }
     return res
 
@@ -119,6 +120,19 @@ async def save_integrations(payload: Dict[str, Any], user: dict = Depends(get_cu
         })
         if clash:
             raise HTTPException(status_code=400, detail="Webhook Verify Token WhatsApp ini sudah dipakai toko lain — pilih string yang unik")
+
+    # Same collision guard for DOKU's Client-Id -- inbound webhook lookups key off
+    # client-id, so two stores sharing one would let DOKU's callback for store A
+    # get matched against store B's saved order/credentials.
+    doku = payload.get("doku") or {}
+    doku_client_id = str(doku.get("client_id") or "").strip()
+    if doku_client_id:
+        clash = await db.integrations.find_one({
+            "doku.client_id": doku_client_id,
+            "store_id": {"$ne": user["store_id"]},
+        })
+        if clash:
+            raise HTTPException(status_code=400, detail="Client ID DOKU ini sudah dipakai toko lain")
 
     update_data = {k: v for k, v in payload.items() if k not in ("_id", "store_id")}
     res = await db.integrations.find_one_and_update(
