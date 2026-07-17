@@ -221,7 +221,7 @@ function ImportDialog({ onClose, onDone }) {
 
         {result && (
           <div data-testid="import-result">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="card-surface p-4 text-center">
                 <p className="label-tiny">Ditambahkan</p>
                 <p className="font-display num-display text-3xl font-extrabold text-[hsl(var(--success))]" data-testid="import-inserted">
@@ -236,6 +236,12 @@ function ImportDialog({ onClose, onDone }) {
                 <p className="label-tiny">Dilewati</p>
                 <p className="font-display num-display text-3xl font-extrabold text-[hsl(var(--muted))]" data-testid="import-skipped">
                   {result.skipped}
+                </p>
+              </div>
+              <div className="card-surface p-4 text-center">
+                <p className="label-tiny">Kesalahan</p>
+                <p className={`font-display num-display text-3xl font-extrabold ${(result.errors?.length || 0) > 0 ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--muted))]"}`} data-testid="import-error-count">
+                  {result.errors?.length || 0}
                 </p>
               </div>
             </div>

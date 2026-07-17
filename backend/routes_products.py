@@ -202,8 +202,15 @@ async def bulk_import(
                 continue
             
             price_val = row.get("price")
-            price = float(price_val) if _is_not_empty(price_val) else 0.0
-            
+            if not _is_not_empty(price_val):
+                errors.append(f"Baris {idx + 2}: Kolom 'price' wajib diisi")
+                continue
+            try:
+                price = float(price_val)
+            except (TypeError, ValueError):
+                errors.append(f"Baris {idx + 2}: Nilai 'price' tidak valid ({price_val!r})")
+                continue
+
             sku = str(row.get("sku")).strip() if _is_not_empty(row.get("sku")) else None
             
             cost_val = row.get("cost")
