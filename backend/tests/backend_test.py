@@ -186,11 +186,18 @@ class TestOrders:
 
     def test_qris_order(self, authed, first_product):
         # Without a store-level Xendit API key configured (the default/BYO state -- see
-        # xendit_client.py), creating a qris order must fail loudly (502) rather than
-        # silently succeed with no QR code. This used to assert a 200 + xendit_qr_string,
-        # which relied on ALLOW_PAYMENT_MOCK-era fake QR generation; that mock path was
-        # removed, and routes_orders.py now raises instead of swallowing the error into
-        # an unsurfaced xendit_raw field (see create_order in routes_orders.py).
+        # xendit_client.py), creating a qris order must fail loudly rather than silently
+        # succeed with no QR code. This used to assert a 200 + xendit_qr_string, which
+        # relied on ALLOW_PAYMENT_MOCK-era fake QR generation; that mock path was removed,
+        # and routes_orders.py now raises instead of swallowing the error into an
+        # unsurfaced xendit_raw field (see create_order in routes_orders.py).
+        #
+        # Status code: this used to assert 502, matching an earlier draft of the fail-
+        # closed contract. That draft was changed to 400 in an earlier commit this
+        # session (see routes_orders.py's create_order) specifically because Cloudflare
+        # intercepts/swallows 502/504/52x responses from the origin with its own generic
+        # error page -- a 502 here would never actually reach the merchant as a readable
+        # message in production. This test was left asserting the stale 502 until now.
         p = first_product
         item = {
             "product_id": p["id"], "name": p["name"],
@@ -200,12 +207,13 @@ class TestOrders:
             "items": [item],
             "payment_method": "qris",
         })
-        assert r.status_code == 502, r.text
-        assert "Xendit" in r.json()["detail"]
+        assert r.status_code == 400, r.text
+        assert "QRIS" in r.json()["detail"]
 
     def test_ewallet_order(self, authed, first_product):
         # Same fail-closed contract as test_qris_order above: no Xendit key configured
-        # means the request must be rejected (502), not silently accepted as "pending".
+        # means the request must be rejected with a clean 400 (see the 502-vs-400 note
+        # in test_qris_order), not silently accepted as "pending".
         p = first_product
         item = {
             "product_id": p["id"], "name": p["name"],
@@ -218,8 +226,8 @@ class TestOrders:
             "customer_phone": "+628123456789",
             "customer_email": "test@example.com",
         })
-        assert r.status_code == 502, r.text
-        assert "Xendit" in r.json()["detail"]
+        assert r.status_code == 400, r.text
+        assert "E-Wallet" in r.json()["detail"]
 
     def test_stats(self, authed):
         # Create a cash order first
@@ -252,11 +260,11 @@ class TestWebhook:
     def test_valid_updates_order(self, authed, first_product):
         # create qris order -- requires a configured Xendit key (see test_qris_order);
         # in an unconfigured test environment create_order now correctly rejects this
-        # with 502 before an order even exists, so there's nothing to map the webhook to.
+        # with 400 before an order even exists, so there's nothing to map the webhook to.
         p = first_product
         item = {"product_id": p["id"], "name": p["name"], "price": p["price"], "quantity": 1, "subtotal": p["price"]}
         r = authed.post(f"{API}/orders", json={"items": [item], "payment_method": "qris"})
-        if r.status_code == 502:
+        if r.status_code == 400:
             pytest.skip("Skipping webhook status update test because Xendit is not configured in this environment.")
         assert r.status_code == 200
         order = r.json()
