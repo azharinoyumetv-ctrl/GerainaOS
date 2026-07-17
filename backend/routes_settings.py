@@ -134,6 +134,20 @@ async def save_integrations(payload: Dict[str, Any], user: dict = Depends(get_cu
         if clash:
             raise HTTPException(status_code=400, detail="Client ID DOKU ini sudah dipakai toko lain")
 
+    # Same collision guard for Xendit's webhook_token -- now that Xendit is per-store BYO
+    # (see xendit_client.py history note) rather than a single global key, the inbound
+    # webhook resolves the tenant by this token, so a duplicate would misroute one store's
+    # payment callbacks onto another's orders.
+    xendit = payload.get("xendit") or {}
+    xendit_token = str(xendit.get("webhook_token") or "").strip()
+    if xendit_token:
+        clash = await db.integrations.find_one({
+            "xendit.webhook_token": xendit_token,
+            "store_id": {"$ne": user["store_id"]},
+        })
+        if clash:
+            raise HTTPException(status_code=400, detail="Webhook Token Xendit ini sudah dipakai toko lain — pilih string yang unik")
+
     update_data = {k: v for k, v in payload.items() if k not in ("_id", "store_id")}
     res = await db.integrations.find_one_and_update(
         {"store_id": user["store_id"]},

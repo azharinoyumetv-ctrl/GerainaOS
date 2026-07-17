@@ -63,16 +63,25 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
         "updated_at": utcnow().isoformat(),
     }
 
-    # Xendit integrations -- resolved BEFORE stock is touched. A misconfigured/failed
+    # All gateway calls below -- resolved BEFORE stock is touched. A misconfigured/failed
     # gateway must fail the request cleanly (no order, no stock change) instead of
     # silently creating a "pending forever" order with no QR/checkout link and already
-    # -decremented stock: the previous version swallowed this exception into xendit_raw
+    # -decremented stock: an earlier version swallowed this exception into xendit_raw
     # only, which the frontend never surfaces (POS.jsx only renders the QR/link block
     # when xendit_qr_string / xendit_checkout_url is present) -- customer and cashier saw
     # nothing, silently.
+    #
+    # Xendit/DOKU are both BYO per-store: credentials come from this store's own
+    # integrations.{xendit,doku} config, entered via Pengaturan > Integrasi, never from a
+    # shared/global key. (Xendit used to read a single global XENDIT_SECRET_KEY env var
+    # instead -- meaning a merchant's own saved key was silently never used. Fixed to
+    # match DOKU/EDC/WhatsApp's per-tenant pattern.)
+    integ = await db.integrations.find_one({"store_id": user["store_id"]}, {"_id": 0}) if payload.payment_method in ("qris", "ewallet", "doku") else None
+
     if payload.payment_method == "qris":
+        xendit_cfg = (integ or {}).get("xendit") or {}
         try:
-            res = await create_qris(external_id=order_no, amount=int(round(calc["total"])))
+            res = await create_qris(cfg=xendit_cfg, external_id=order_no, amount=int(round(calc["total"])))
         except Exception as e:
             # 400, not 502: this is a "not configured / gateway declined" business outcome,
             # not an actual gateway failure. Cloudflare intercepts 502/504/52x responses from
@@ -87,8 +96,10 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
     elif payload.payment_method == "ewallet":
         if not payload.ewallet_channel:
             raise HTTPException(status_code=400, detail="ewallet_channel wajib untuk e-wallet")
+        xendit_cfg = (integ or {}).get("xendit") or {}
         try:
             res = await create_ewallet_charge(
+                cfg=xendit_cfg,
                 reference_id=order_no,
                 amount=int(round(calc["total"])),
                 channel_code=payload.ewallet_channel,
@@ -107,10 +118,6 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
         )
         doc["xendit_raw"] = res
     elif payload.payment_method == "doku":
-        # DOKU is BYO per-store (unlike Xendit's single global env-var key above) --
-        # credentials come from this store's own integrations.doku config, entered
-        # via Pengaturan > Integrasi, never from a shared/global key.
-        integ = await db.integrations.find_one({"store_id": user["store_id"]}, {"_id": 0})
         doku_cfg = (integ or {}).get("doku") or {}
         return_base = os.environ.get("DOKU_RETURN_URL", "https://dagangos.com/pos")
         try:

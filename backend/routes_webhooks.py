@@ -1,8 +1,13 @@
 """Xendit webhook handler.
 
 Endpoint: POST /api/webhooks/xendit
-Auth: header x-callback-token must match XENDIT_WEBHOOK_TOKEN.
-Maps reference_id back to order, updates payment_status.
+Auth: per-store -- header x-callback-token is looked up against each store's own
+integrations.xendit.webhook_token (BYO, like the Xendit credentials themselves; see
+xendit_client.py's history note for why this used to be a single global token/key and
+why that was broken). Maps reference_id back to THAT store's order (order_no is only
+unique per store+day -- see next_order_no in database.py -- so a global, unscoped
+{"xendit_reference_id": ref} match could silently update a different store's
+identically-numbered order; every match below is scoped by store_id too).
 """
 import hashlib
 import hmac
@@ -16,9 +21,10 @@ from doku_client import verify_doku_signature, map_doku_status
 
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
-WEBHOOK_TOKEN = os.environ.get("XENDIT_WEBHOOK_TOKEN", "")
 # Note: WhatsApp inbound signature verification is per-tenant (whatsapp.app_secret in each
 # store's integrations doc), NOT a single global secret -- see _verify_meta_signature below.
+# Xendit callback-token verification follows the same per-tenant pattern -- see
+# xendit_webhook below.
 
 
 def _map_status(payload: dict) -> str:
@@ -38,7 +44,7 @@ def _map_status(payload: dict) -> str:
     return "pending"
 
 
-async def _process(payload: dict):
+async def _process(payload: dict, store_id: str):
     db = get_db()
     # Possible fields: reference_id (e-wallet/qr v2), external_id (qr v1), data.reference_id
     ref = (
@@ -51,7 +57,7 @@ async def _process(payload: dict):
         return
     new_status = _map_status(payload if "status" in payload else (payload.get("data") or payload))
     await db.orders.update_one(
-        {"xendit_reference_id": ref},
+        {"xendit_reference_id": ref, "store_id": store_id},
         {
             "$set": {
                 "payment_status": new_status,
@@ -64,20 +70,33 @@ async def _process(payload: dict):
 
 @router.post("/xendit")
 async def xendit_webhook(req: Request, background: BackgroundTasks):
+    """Single shared URL for every tenant, same shape as the DOKU/WhatsApp handlers below:
+    the inbound x-callback-token tells us which store's own Xendit account this call
+    belongs to (each store pastes ITS OWN token into Pengaturan > Integrasi and configures
+    ITS OWN Xendit dashboard to call back here with it) -- nothing is trusted or acted on
+    until that lookup succeeds."""
     token = req.headers.get("x-callback-token") or req.headers.get("X-Callback-Token")
-    if not WEBHOOK_TOKEN or token != WEBHOOK_TOKEN:
+    if not token:
+        raise HTTPException(status_code=401, detail="Invalid callback token")
+    db = get_db()
+    tenant = await db.integrations.find_one({"xendit.webhook_token": token})
+    if not tenant or not (tenant.get("xendit") or {}).get("is_active"):
         raise HTTPException(status_code=401, detail="Invalid callback token")
     payload = await req.json()
-    background.add_task(_process, payload)
+    background.add_task(_process, payload, tenant["store_id"])
     return {"received": True}
 
 
 @router.post("/xendit/simulate")
-async def simulate_webhook(payload: dict, req: Request):
-    """Dev-only simulator (no token required) for local end-to-end tests."""
+async def simulate_webhook(payload: dict, req: Request, store_id: str = ""):
+    """Dev-only simulator (no token required) for local end-to-end tests. store_id must be
+    passed explicitly (query param) now that order matching is store-scoped -- there is no
+    single global Xendit account/token to infer it from anymore."""
     if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "false").lower() not in ("1", "true", "yes")):
         raise HTTPException(status_code=403, detail="Simulator disabled")
-    await _process(payload)
+    if not store_id:
+        raise HTTPException(status_code=400, detail="store_id wajib diisi untuk simulator")
+    await _process(payload, store_id)
     return {"ok": True}
 
 

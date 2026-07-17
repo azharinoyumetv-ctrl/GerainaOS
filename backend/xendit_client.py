@@ -1,4 +1,18 @@
-"""Xendit API client (test mode safe with mock fallback)."""
+"""Xendit API client -- BYO per-tenant credentials.
+
+HISTORY: this used to read a single global XENDIT_SECRET_KEY env var, shared
+across every store, while the Settings > Integrasi UI told merchants "use
+your own Xendit key -- transactions go to your own account." Those two
+things were both true and incompatible: a merchant's own key, once saved,
+was written to integrations.xendit.secret_key and then never read by
+anything -- the actual charge calls only ever consulted the env var. If that
+env var happened to be unset (as production currently is), literally no
+store's Xendit could work no matter what they entered. If it HAD been set,
+every store would have shared one Xendit merchant account, which is worse:
+cross-tenant payment collection under someone else's business identity.
+Converted to the same per-store BYO pattern as doku_client.py/EDC/WhatsApp:
+credentials come from the calling store's own integrations.xendit config.
+"""
 import os
 import uuid
 from typing import Any, Dict, Optional
@@ -8,26 +22,23 @@ XENDIT_BASE = "https://api.xendit.co"
 XENDIT_API_VERSION = "2022-07-31"
 
 
-def _key() -> str:
-    return os.environ.get("XENDIT_SECRET_KEY", "")
-
-
 class PaymentNotConfiguredError(Exception):
     """No real payment provider key configured (production, BYO not set up)."""
     pass
 
 
-def _is_mock_mode() -> bool:
+def _is_mock_mode(cfg: Dict[str, Any]) -> bool:
     # Mock payment responses are DEV-ONLY. In production, a merchant that hasn't
     # configured their own (BYO) Xendit key must get a clear error — never a fake QR.
     if os.environ.get("ALLOW_PAYMENT_MOCK", "false").lower() not in ("1", "true", "yes"):
         return False
-    k = _key()
+    k = (cfg.get("secret_key") or "").strip()
     return (not k) or k.startswith("xnd_development_REPLACE") or k == "test"
 
 
-async def _post(path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-    auth = httpx.BasicAuth(_key(), "")
+async def _post(cfg: Dict[str, Any], path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    key = (cfg.get("secret_key") or "").strip()
+    auth = httpx.BasicAuth(key, "")
     headers = {"api-version": XENDIT_API_VERSION}
     cb = os.environ.get("XENDIT_CALLBACK_URL")
     if cb:
@@ -40,8 +51,9 @@ async def _post(path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # ---------- QRIS Dynamic ----------
-async def create_qris(external_id: str, amount: int, currency: str = "IDR") -> Dict[str, Any]:
-    if _is_mock_mode():
+async def create_qris(cfg: Dict[str, Any], external_id: str, amount: int, currency: str = "IDR") -> Dict[str, Any]:
+    """cfg = the store's integrations.xendit dict: {is_active, secret_key, webhook_token}."""
+    if _is_mock_mode(cfg):
         # Mock for demo when no real key set
         return {
             "id": f"mock_qr_{uuid.uuid4().hex[:12]}",
@@ -56,7 +68,7 @@ async def create_qris(external_id: str, amount: int, currency: str = "IDR") -> D
             "type": "DYNAMIC",
             "_mock": True,
         }
-    if not _key():
+    if not cfg.get("is_active") or not (cfg.get("secret_key") or "").strip():
         raise PaymentNotConfiguredError(
             "Xendit belum dikonfigurasi. Tambahkan API key Xendit toko Anda di Pengaturan → Integrasi untuk menerima QRIS."
         )
@@ -67,11 +79,12 @@ async def create_qris(external_id: str, amount: int, currency: str = "IDR") -> D
         "amount": amount,
         "expires_at": None,
     }
-    return await _post("/qr_codes", payload)
+    return await _post(cfg, "/qr_codes", payload)
 
 
 # ---------- E-Wallet Charge ----------
 async def create_ewallet_charge(
+    cfg: Dict[str, Any],
     reference_id: str,
     amount: int,
     channel_code: str,
@@ -81,7 +94,8 @@ async def create_ewallet_charge(
     failure_url: Optional[str] = None,
     currency: str = "IDR",
 ) -> Dict[str, Any]:
-    if _is_mock_mode():
+    """cfg = the store's integrations.xendit dict: {is_active, secret_key, webhook_token}."""
+    if _is_mock_mode(cfg):
         action_url = f"https://example.com/mock-ewallet/{reference_id}"
         return {
             "id": f"mock_ewc_{uuid.uuid4().hex[:12]}",
@@ -98,7 +112,7 @@ async def create_ewallet_charge(
             "_mock": True,
         }
 
-    if not _key():
+    if not cfg.get("is_active") or not (cfg.get("secret_key") or "").strip():
         raise PaymentNotConfiguredError(
             "Xendit belum dikonfigurasi. Tambahkan API key Xendit toko Anda di Pengaturan → Integrasi untuk menerima e-wallet."
         )
@@ -123,4 +137,4 @@ async def create_ewallet_charge(
             "mobile_number": customer_phone or "+628123456789",
         },
     }
-    return await _post("/ewallets/charges", payload)
+    return await _post(cfg, "/ewallets/charges", payload)

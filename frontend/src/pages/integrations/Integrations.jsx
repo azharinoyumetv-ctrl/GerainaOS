@@ -94,8 +94,12 @@ export default function Integrations() {
                 type="text"
                 value={integrations.xendit.webhook_token}
                 onChange={(e) => setIntegrations({ ...integrations, xendit: { ...integrations.xendit, webhook_token: e.target.value } })}
+                placeholder="String bebas pilihan Anda sendiri — harus unik, tak boleh sama dengan toko lain"
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
               />
+              <p className="text-[11px] text-[hsl(var(--muted))]">
+                Daftarkan callback URL <code className="font-mono">https://api.dagangos.com/api/webhooks/xendit</code> di Xendit Dashboard Anda dengan Verification Token yang sama persis dengan yang diisi di sini.
+              </p>
             </div>
             <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan API key Xendit milik toko Anda sendiri. Transaksi pelanggan masuk langsung ke akun Xendit Anda.</p>
           </div>
