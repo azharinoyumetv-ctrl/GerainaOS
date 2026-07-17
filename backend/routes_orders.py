@@ -128,10 +128,24 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"DOKU gagal membuat pembayaran ({e}). Atur DOKU di Pengaturan > Integrasi.")
-        doku_payment = ((res.get("response") or {}).get("payment")) or (res.get("payment") or {})
-        doc["doku_id"] = (res.get("order") or {}).get("invoice_number") or order_no
+        # From this point DOKU has already committed the transaction on its own side
+        # (invoice created, may already have emailed the customer a payment link) --
+        # nothing below may raise and lose the order, or GerainaOS ends up with a real
+        # pending DOKU payment with zero local record (the webhook later no-ops silently
+        # since there's no matching order_no to update). Parse defensively: an
+        # unexpected response shape must degrade to missing fields, never an exception.
+        doku_payment: dict = {}
+        try:
+            resp_block = res.get("response") if isinstance(res, dict) else None
+            if isinstance(resp_block, dict) and isinstance(resp_block.get("payment"), dict):
+                doku_payment = resp_block["payment"]
+            elif isinstance(res, dict) and isinstance(res.get("payment"), dict):
+                doku_payment = res["payment"]
+        except Exception:
+            doku_payment = {}
+        doc["doku_id"] = ((res.get("order") or {}).get("invoice_number") if isinstance(res, dict) else None) or order_no
         doc["doku_token_id"] = doku_payment.get("token_id")
-        doc["doku_checkout_url"] = doku_payment.get("url")
+        doc["doku_checkout_url"] = doku_payment.get("url") or doku_payment.get("checkout_url")
         doc["doku_raw"] = res
 
     # Reduce stock atomically -- only after the payment gateway step above succeeded
@@ -143,7 +157,16 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
             {"$inc": {"stock": -it.quantity}},
         )
 
-    await db.orders.insert_one(doc)
+    try:
+        await db.orders.insert_one(doc)
+    except Exception:
+        # Same reasoning as above: for doku/qris/ewallet the gateway already committed
+        # externally, so losing the order here would be worse than a slightly incomplete
+        # record. Retry once with the raw gateway payload stripped, in case that (e.g. an
+        # oversized/odd-shaped doku_raw or xendit_raw blob) was what BSON choked on.
+        doc.pop("doku_raw", None)
+        doc.pop("xendit_raw", None)
+        await db.orders.insert_one(doc)
 
     # Auto-kirim struk ke WhatsApp pelanggan (best-effort; toggle "Kirim Struk Otomatis").
     # Diinisiasi toko -> wajib template. Pakai template KUSTOM dagangos_order_receipt (Bahasa
