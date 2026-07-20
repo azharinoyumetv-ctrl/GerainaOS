@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/api/client";
 import { Save, ShieldCheck } from "lucide-react";
@@ -41,10 +41,21 @@ export default function PaymentConfig() {
   const [config, setConfig] = useState(DEFAULT_PAYMENT_CONFIG);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  // Same unsequenced-request race already found and fixed in Attendance.jsx/Products.jsx/
+  // SupplierList.jsx: this effect re-fires on every type change (switching between Tunai/
+  // QRIS/E-Wallet/etc tabs all touch the same underlying document), so a slow GET issued on
+  // an earlier tab can resolve AFTER a save's own setConfig and silently overwrite the just-
+  // persisted value with stale pre-save data -- e.g. a saved COM9 drawer port reverting to
+  // whatever was on record when the page first mounted. Reported in TestSprite postrun-10.
+  // Bumping this ref at request-*issue* time (not response time) for both the fetch and the
+  // save means whichever request was issued last always wins, regardless of which resolves
+  // first.
+  const reqIdRef = useRef(0);
 
   useEffect(() => {
+    const reqId = ++reqIdRef.current;
     api.get("/payments/config").then((r) => {
-      if (r.data) setConfig(r.data);
+      if (r.data && reqId === reqIdRef.current) setConfig(r.data);
     }).catch(() => {});
   }, [type]);
 
@@ -377,9 +388,10 @@ export default function PaymentConfig() {
       return;
     }
     setSaving(true);
+    const reqId = ++reqIdRef.current;
     api.post("/payments/config", config)
       .then((r) => {
-        if (r.data) setConfig(r.data);
+        if (r.data && reqId === reqIdRef.current) setConfig(r.data);
         toast.success(`Konfigurasi pembayaran ${type.toUpperCase()} berhasil disimpan!`);
       })
       .catch((err) => {
