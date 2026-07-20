@@ -275,13 +275,26 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [filterCat, setFilterCat] = useState("all");
+  // Monotonic request id: search-as-you-type + category filter can both fire load()
+  // in quick succession (each keystroke debounces its own call, but the debounce only
+  // cancels the pending *timeout*, not a request already in flight). Two overlapping
+  // GET /products calls with different q/category params can resolve out of order --
+  // an earlier, narrower query (e.g. a mid-typing state that legitimately matches
+  // nothing) resolving AFTER the final, correct query would overwrite good results
+  // with "Belum ada produk." Same race-condition class already found and fixed in
+  // Attendance.jsx; guard here by only applying a response if it's still the latest
+  // request issued.
+  const loadReqIdRef = useRef(0);
 
   const load = async () => {
     setLoading(true);
+    const reqId = ++loadReqIdRef.current;
     try {
       const r = await api.get("/products", { params: { q: q || undefined, category: filterCat !== "all" ? filterCat : undefined } });
-      setItems(r.data);
-    } finally { setLoading(false); }
+      if (reqId === loadReqIdRef.current) setItems(r.data);
+    } finally {
+      if (reqId === loadReqIdRef.current) setLoading(false);
+    }
   };
 
   // Filter dropdown must reflect the same category values the product table shows
