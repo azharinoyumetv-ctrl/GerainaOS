@@ -34,11 +34,28 @@ export default function Pricing() {
   const [billing, setBilling] = useState("monthly");
   const { user, refresh } = useAuth();
   const [upgradingId, setUpgradingId] = useState(null);
+  // Whether this authenticated account already has a Geraina store. null = not checked yet
+  // (don't render either way until known, to avoid flashing the wrong CTA). This is what lets
+  // us show a real "Aktifkan Geraina" entry point for a DagangOS account that has a store in
+  // another module (e.g. DapurOS) but not this one -- previously the only way to reach
+  // /geraina/activate was accidentally, via a 409 from some unrelated API call once already
+  // inside the app (see the axios interceptor in api/client.js). "Mulai Gratis" in the nav is
+  // deliberately anonymous-only (new account + first store), so it's the wrong CTA for this
+  // case by design, not a bug -- this adds the CTA that was actually missing.
+  const [hasGerainaStore, setHasGerainaStore] = useState(null);
 
   useEffect(() => {
     api.get("/pricing/tiers").then((r) => setTiers(r.data)).catch(() => {});
     api.get("/pricing/addons").then((r) => setAddons(r.data)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!user) { setHasGerainaStore(null); return; }
+    api.get("/auth/me").then((r) => {
+      const stores = r.data?.stores || [];
+      setHasGerainaStore(stores.some((s) => s.module === "geraina"));
+    }).catch(() => {});
+  }, [user]);
 
   const isYearly = billing === "yearly";
 
@@ -82,7 +99,12 @@ export default function Pricing() {
           </Link>
           <div className="flex items-center gap-2">
             {user ? (
-              <Link to="/geraina/app/dashboard" className="px-4 py-2 rounded-xl text-white font-semibold text-sm" style={{ background: TEAL }} data-testid="pricing-nav-dashboard">Ke Dashboard →</Link>
+              <>
+                {hasGerainaStore === false && (
+                  <Link to="/geraina/activate" className="px-4 py-2 rounded-xl font-semibold text-sm hover:bg-slate-50" style={{ color: INK }} data-testid="pricing-nav-activate">Aktifkan Geraina</Link>
+                )}
+                <Link to="/geraina/app/dashboard" className="px-4 py-2 rounded-xl text-white font-semibold text-sm" style={{ background: TEAL }} data-testid="pricing-nav-dashboard">Ke Dashboard →</Link>
+              </>
             ) : (
               <>
                 <Link to="/geraina/login" className="px-4 py-2 rounded-xl font-semibold text-sm hover:bg-slate-50" style={{ color: INK }} data-testid="pricing-nav-login">Masuk</Link>
