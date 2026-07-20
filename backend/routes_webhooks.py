@@ -13,11 +13,12 @@ import hashlib
 import hmac
 import os
 from datetime import datetime, timezone
-from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, Depends
 from fastapi.responses import PlainTextResponse
 
 from database import get_db
 from doku_client import verify_doku_signature, map_doku_status
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
@@ -320,17 +321,70 @@ async def doku_webhook(req: Request, background: BackgroundTasks):
 
 
 @router.post("/doku/simulate")
-async def simulate_doku_webhook(payload: dict, req: Request):
-    """Dev-only DOKU webhook simulator (no signature required)."""
+async def simulate_doku_webhook(payload: dict, req: Request, store_id: str = ""):
+    """Dev-only DOKU webhook simulator (no signature required).
+
+    HISTORY: this originally matched only by {"order_no": invoice_number}, with no store_id
+    scope at all -- the exact class of cross-tenant collision bug fixed for the real /doku
+    and /xendit(/simulate) handlers elsewhere in this file (order_no is only unique per
+    store+day, see next_order_no in database.py). A simulator that can silently update a
+    different store's identically-numbered order is still a real bug even though it's
+    dev-gated. Brought in line with /xendit/simulate's contract: store_id is now required."""
     if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "false").lower() not in ("1", "true", "yes")):
         raise HTTPException(status_code=403, detail="Simulator disabled")
+    if not store_id:
+        raise HTTPException(status_code=400, detail="store_id wajib diisi untuk simulator")
     db = get_db()
     invoice_number = (payload.get("order") or {}).get("invoice_number") or payload.get("invoice_number")
     if not invoice_number:
         return {"ok": False}
     new_status = map_doku_status(payload)
     await db.orders.update_one(
-        {"order_no": invoice_number},
+        {"order_no": invoice_number, "store_id": store_id},
         {"$set": {"payment_status": new_status, "doku_webhook_payload": payload, "updated_at": datetime.now(timezone.utc).isoformat()}},
     )
     return {"ok": True}
+
+
+@router.post("/whatsapp/simulate")
+async def simulate_whatsapp_webhook(payload: dict, req: Request, store_id: str = ""):
+    """Dev-only WhatsApp inbound webhook simulator (no Meta signature required).
+
+    There was previously no simulate endpoint for WhatsApp at all -- TestSprite's
+    'Webhook Processing: WhatsApp inbound webhook is accepted' test had nothing to call.
+    Mirrors _process_whatsapp_inbound's real routing/storage shape (same
+    entry[].changes[].value.metadata.phone_number_id envelope Meta actually sends), but
+    skips the HMAC signature check and takes store_id explicitly rather than re-deriving
+    the tenant from phone_number_id, since a simulator is run by someone who already knows
+    which store they're testing."""
+    if (os.environ.get("ALLOW_WEBHOOK_SIMULATE", "false").lower() not in ("1", "true", "yes")):
+        raise HTTPException(status_code=403, detail="Simulator disabled")
+    if not store_id:
+        raise HTTPException(status_code=400, detail="store_id wajib diisi untuk simulator")
+    db = get_db()
+    tenant = await db.integrations.find_one({"store_id": store_id})
+    if not tenant or not (tenant.get("whatsapp") or {}).get("is_active"):
+        raise HTTPException(status_code=400, detail="WhatsApp belum dikonfigurasi/aktif untuk toko ini")
+    phone_number_id = (tenant.get("whatsapp") or {}).get("phone_number_id") or _extract_phone_number_id(payload) or "simulated"
+    try:
+        value = (((payload.get("entry") or [{}])[0]).get("changes") or [{}])[0].get("value") or payload
+    except Exception:
+        value = payload
+    await db.whatsapp_inbound.insert_one({
+        "store_id": store_id,
+        "phone_number_id": phone_number_id,
+        "payload": value,
+        "received_at": datetime.now(timezone.utc).isoformat(),
+        "_simulated": True,
+    })
+    return {"ok": True}
+
+
+@router.get("/whatsapp/inbound")
+async def list_whatsapp_inbound(user: dict = Depends(get_current_user)):
+    """Authenticated, store-scoped read of this store's own received inbound WhatsApp
+    messages (real + simulated) -- lets the Integrasi simulator panel show that a message
+    actually landed instead of firing a POST into the void with no way to verify it."""
+    db = get_db()
+    cursor = db.whatsapp_inbound.find({"store_id": user["store_id"]}, {"_id": 0}).sort("received_at", -1).limit(10)
+    return await cursor.to_list(length=10)

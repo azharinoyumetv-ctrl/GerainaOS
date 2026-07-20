@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/api/client";
-import { Save, Link2 } from "lucide-react";
+import { Save, Link2, FlaskConical } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { useAuth } from "@/auth/AuthContext";
 
 import { Link } from "react-router-dom";
 
@@ -11,6 +12,7 @@ export default function Integrations() {
   const pathPart = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : "";
   const rawType = params.type || pathPart || "xendit";
   const type = (rawType === "integrations" || !rawType) ? "xendit" : rawType.toLowerCase();
+  const { user } = useAuth();
 
   // Empty by default — each store brings its own (BYO) payment/notification credentials.
   const [integrations, setIntegrations] = useState({
@@ -23,10 +25,15 @@ export default function Integrations() {
     email: { is_active: false, smtp_host: "", smtp_port: 587, smtp_user: "" },
     doku: { is_active: false, client_id: "", shared_key: "", environment: "sandbox", preferred_channel: "all" }
   });
+  // Same unsequenced-GET race already fixed in Attendance.jsx/Products.jsx/SupplierList.jsx/
+  // PaymentConfig.jsx: this effect re-fires on every subtab switch, so a slow GET from an
+  // earlier tab could in principle resolve after a newer one. Guarded the same way.
+  const reqIdRef = useRef(0);
 
   useEffect(() => {
+    const reqId = ++reqIdRef.current;
     api.get("/integrations").then((r) => {
-      if (r.data) setIntegrations(r.data);
+      if (r.data && reqId === reqIdRef.current) setIntegrations(r.data);
     }).catch(() => {});
   }, [type]);
 
@@ -62,6 +69,85 @@ export default function Integrations() {
       setWaTesting(false);
     }
   };
+
+  // ---------- Webhook simulator (dev/testing only) ----------
+  // Server-gated behind ALLOW_WEBHOOK_SIMULATE -- disabled by default in production, so a
+  // real merchant's store can't be poked with fake payment/message events. Lets a developer
+  // (or an automated test) verify the webhook -> order/message pipeline end-to-end without
+  // needing a real gateway callback, instead of there being no way to exercise it at all.
+  const storeId = user?.store_id;
+  const [xenditSim, setXenditSim] = useState({ reference_id: "", status: "SUCCEEDED" });
+  const [xenditSimBusy, setXenditSimBusy] = useState(false);
+  const [xenditSimResult, setXenditSimResult] = useState(null);
+  const sendXenditSim = async () => {
+    if (!xenditSim.reference_id.trim()) { toast.error("Isi Order No (reference_id) dulu."); return; }
+    setXenditSimBusy(true);
+    setXenditSimResult(null);
+    try {
+      await api.post(`/webhooks/xendit/simulate?store_id=${encodeURIComponent(storeId || "")}`, {
+        reference_id: xenditSim.reference_id.trim(),
+        status: xenditSim.status,
+      });
+      setXenditSimResult({ ok: true, msg: `Terkirim. Order ${xenditSim.reference_id} akan ter-update ke status ${xenditSim.status === "SUCCEEDED" ? "paid" : xenditSim.status.toLowerCase()}.` });
+    } catch (e2) {
+      setXenditSimResult({ ok: false, msg: e2?.response?.data?.detail || "Gagal mengirim simulasi." });
+    } finally {
+      setXenditSimBusy(false);
+    }
+  };
+
+  const [dokuSim, setDokuSim] = useState({ invoice_number: "", status: "SUCCESS" });
+  const [dokuSimBusy, setDokuSimBusy] = useState(false);
+  const [dokuSimResult, setDokuSimResult] = useState(null);
+  const sendDokuSim = async () => {
+    if (!dokuSim.invoice_number.trim()) { toast.error("Isi Invoice Number dulu."); return; }
+    setDokuSimBusy(true);
+    setDokuSimResult(null);
+    try {
+      await api.post(`/webhooks/doku/simulate?store_id=${encodeURIComponent(storeId || "")}`, {
+        invoice_number: dokuSim.invoice_number.trim(),
+        status: dokuSim.status,
+      });
+      setDokuSimResult({ ok: true, msg: `Terkirim. Order ${dokuSim.invoice_number} akan ter-update ke status ${dokuSim.status === "SUCCESS" ? "paid" : dokuSim.status.toLowerCase()}.` });
+    } catch (e2) {
+      setDokuSimResult({ ok: false, msg: e2?.response?.data?.detail || "Gagal mengirim simulasi." });
+    } finally {
+      setDokuSimBusy(false);
+    }
+  };
+
+  const [waSim, setWaSim] = useState({ from: "", text: "" });
+  const [waSimBusy, setWaSimBusy] = useState(false);
+  const [waSimResult, setWaSimResult] = useState(null);
+  const [waInbound, setWaInbound] = useState([]);
+  const [waInboundLoading, setWaInboundLoading] = useState(false);
+  const loadWaInbound = () => {
+    setWaInboundLoading(true);
+    api.get("/webhooks/whatsapp/inbound").then((r) => setWaInbound(r.data || [])).catch(() => {}).finally(() => setWaInboundLoading(false));
+  };
+  const sendWaSim = async () => {
+    if (!waSim.from.trim() || !waSim.text.trim()) { toast.error("Isi nomor pengirim dan isi pesan dulu."); return; }
+    setWaSimBusy(true);
+    setWaSimResult(null);
+    try {
+      await api.post(`/webhooks/whatsapp/simulate?store_id=${encodeURIComponent(storeId || "")}`, {
+        entry: [{ changes: [{ value: {
+          metadata: { phone_number_id: integrations.whatsapp?.phone_number_id || "simulated" },
+          messages: [{ from: waSim.from.trim(), type: "text", text: { body: waSim.text.trim() } }],
+        } }] }],
+      });
+      setWaSimResult({ ok: true, msg: "Pesan simulasi diterima." });
+      loadWaInbound();
+    } catch (e2) {
+      setWaSimResult({ ok: false, msg: e2?.response?.data?.detail || "Gagal mengirim simulasi." });
+    } finally {
+      setWaSimBusy(false);
+    }
+  };
+  useEffect(() => {
+    if (type === "whatsapp") loadWaInbound();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
 
   if (!integrations) return <div className="p-4 sm:p-6 lg:p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data integrasi...</div>;
 
@@ -103,6 +189,39 @@ export default function Integrations() {
               </p>
             </div>
             <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan API key Xendit milik toko Anda sendiri. Transaksi pelanggan masuk langsung ke akun Xendit Anda.</p>
+
+            {/* Simulator webhook -- dev/testing only, lihat catatan di sendXenditSim */}
+            <div className="border-t border-[hsl(var(--border))] pt-3">
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase flex items-center gap-1.5">
+                <FlaskConical size={13} /> Simulator Webhook (Khusus Testing/Development)
+              </label>
+              <p className="text-[11px] text-[hsl(var(--muted))] mt-1 mb-2">
+                Kirim callback Xendit palsu ke order yang sudah ada, untuk memverifikasi alur webhook → status order tanpa transaksi nyata. Hanya aktif jika server diset <code className="font-mono">ALLOW_WEBHOOK_SIMULATE=true</code> — di produksi biasanya nonaktif.
+              </p>
+              <div className="flex flex-wrap gap-2 items-end">
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Order No</label>
+                  <input type="text" value={xenditSim.reference_id} onChange={(e) => setXenditSim({ ...xenditSim, reference_id: e.target.value })}
+                    placeholder="GR-20260720-0001" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs font-mono w-44" data-testid="xendit-sim-ref" />
+                </div>
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Status</label>
+                  <select value={xenditSim.status} onChange={(e) => setXenditSim({ ...xenditSim, status: e.target.value })}
+                    className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs" data-testid="xendit-sim-status">
+                    <option value="SUCCEEDED">SUCCEEDED (paid)</option>
+                    <option value="FAILED">FAILED</option>
+                    <option value="EXPIRED">EXPIRED</option>
+                  </select>
+                </div>
+                <button type="button" disabled={xenditSimBusy} onClick={sendXenditSim}
+                  className="btn-outline px-4 py-1.5 text-xs font-bold disabled:opacity-60" data-testid="xendit-sim-send">
+                  {xenditSimBusy ? "Mengirim…" : "Kirim Simulasi"}
+                </button>
+              </div>
+              {xenditSimResult && (
+                <p className={`text-xs mt-2 font-semibold ${xenditSimResult.ok ? "text-emerald-600" : "text-red-600"}`} data-testid="xendit-sim-result">{xenditSimResult.msg}</p>
+              )}
+            </div>
           </div>
         );
 
@@ -172,6 +291,39 @@ export default function Integrations() {
             <p className="text-[11px] text-[hsl(var(--muted))]">
               Daftarkan webhook notifikasi <code className="font-mono">https://api.dagangos.com/api/webhooks/doku</code> di DOKU Dashboard &gt; Developer &gt; Notification URL agar status pembayaran ter-update otomatis.
             </p>
+
+            {/* Simulator webhook -- dev/testing only */}
+            <div className="border-t border-[hsl(var(--border))] pt-3">
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase flex items-center gap-1.5">
+                <FlaskConical size={13} /> Simulator Webhook (Khusus Testing/Development)
+              </label>
+              <p className="text-[11px] text-[hsl(var(--muted))] mt-1 mb-2">
+                Kirim notifikasi DOKU palsu ke order yang sudah ada. Hanya aktif jika server diset <code className="font-mono">ALLOW_WEBHOOK_SIMULATE=true</code>.
+              </p>
+              <div className="flex flex-wrap gap-2 items-end">
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Invoice Number</label>
+                  <input type="text" value={dokuSim.invoice_number} onChange={(e) => setDokuSim({ ...dokuSim, invoice_number: e.target.value })}
+                    placeholder="GR-20260720-0001" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs font-mono w-44" data-testid="doku-sim-invoice" />
+                </div>
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Status</label>
+                  <select value={dokuSim.status} onChange={(e) => setDokuSim({ ...dokuSim, status: e.target.value })}
+                    className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs" data-testid="doku-sim-status">
+                    <option value="SUCCESS">SUCCESS (paid)</option>
+                    <option value="FAILED">FAILED</option>
+                    <option value="CANCEL">CANCEL (voided)</option>
+                  </select>
+                </div>
+                <button type="button" disabled={dokuSimBusy} onClick={sendDokuSim}
+                  className="btn-outline px-4 py-1.5 text-xs font-bold disabled:opacity-60" data-testid="doku-sim-send">
+                  {dokuSimBusy ? "Mengirim…" : "Kirim Simulasi"}
+                </button>
+              </div>
+              {dokuSimResult && (
+                <p className={`text-xs mt-2 font-semibold ${dokuSimResult.ok ? "text-emerald-600" : "text-red-600"}`} data-testid="doku-sim-result">{dokuSimResult.msg}</p>
+              )}
+            </div>
           </div>
         );
 
@@ -357,6 +509,59 @@ export default function Integrations() {
                 </p>
               )}
               <p className="text-[11px] text-[hsl(var(--muted))] mt-1">Isi Phone Number ID + Access Token di atas, lalu kirim tes ke nomor Anda sendiri untuk memastikan koneksi.</p>
+            </div>
+
+            {/* Simulator webhook masuk -- dev/testing only. "Kirim Tes" di atas menguji arah
+                KELUAR (toko -> pelanggan); ini menguji arah MASUK (pelanggan -> toko), yang
+                sebelumnya tidak punya cara untuk diuji sama sekali tanpa Meta App nyata. */}
+            <div className="border-t border-[hsl(var(--border))] pt-3">
+              <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase flex items-center gap-1.5">
+                <FlaskConical size={13} /> Simulator Pesan Masuk (Khusus Testing/Development)
+              </label>
+              <p className="text-[11px] text-[hsl(var(--muted))] mt-1 mb-2">
+                Simulasikan balasan pelanggan masuk lewat WhatsApp, tanpa perlu App Meta nyata. Hanya aktif jika server diset <code className="font-mono">ALLOW_WEBHOOK_SIMULATE=true</code>.
+              </p>
+              <div className="flex flex-wrap gap-2 items-end">
+                <div className="flex flex-col space-y-1">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Nomor Pengirim</label>
+                  <input type="text" value={waSim.from} onChange={(e) => setWaSim({ ...waSim, from: e.target.value })}
+                    placeholder="628123456789" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs font-mono w-40" data-testid="wa-sim-from" />
+                </div>
+                <div className="flex flex-col space-y-1 flex-1 min-w-[160px]">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Isi Pesan</label>
+                  <input type="text" value={waSim.text} onChange={(e) => setWaSim({ ...waSim, text: e.target.value })}
+                    placeholder="Halo, pesanan saya sudah sampai mana?" className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-xs" data-testid="wa-sim-text" />
+                </div>
+                <button type="button" disabled={waSimBusy} onClick={sendWaSim}
+                  className="btn-outline px-4 py-1.5 text-xs font-bold disabled:opacity-60" data-testid="wa-sim-send">
+                  {waSimBusy ? "Mengirim…" : "Kirim Simulasi"}
+                </button>
+              </div>
+              {waSimResult && (
+                <p className={`text-xs mt-2 font-semibold ${waSimResult.ok ? "text-emerald-600" : "text-red-600"}`} data-testid="wa-sim-result">{waSimResult.msg}</p>
+              )}
+
+              <div className="mt-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Pesan Masuk Terakhir</label>
+                  <button type="button" onClick={loadWaInbound} className="text-[10px] font-semibold text-[hsl(var(--primary))] hover:underline" data-testid="wa-inbound-refresh">
+                    {waInboundLoading ? "Memuat…" : "Muat Ulang"}
+                  </button>
+                </div>
+                {waInbound.length === 0 ? (
+                  <p className="text-[11px] text-[hsl(var(--muted))] mt-1" data-testid="wa-inbound-empty">Belum ada pesan masuk (nyata atau simulasi).</p>
+                ) : (
+                  <ul className="mt-1 space-y-1" data-testid="wa-inbound-list">
+                    {waInbound.map((m, i) => (
+                      <li key={i} className="text-[11px] border border-[hsl(var(--border))] rounded-md px-2 py-1.5 bg-[hsl(var(--background))]">
+                        <span className="font-mono text-[hsl(var(--muted))]">{m.received_at ? new Date(m.received_at).toLocaleString("id-ID") : "-"}</span>
+                        {m._simulated && <span className="ml-2 pill pill-warning text-[9px]">Simulasi</span>}
+                        <div className="mt-0.5">{m.payload?.messages?.[0]?.text?.body || JSON.stringify(m.payload)?.slice(0, 120)}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         );
