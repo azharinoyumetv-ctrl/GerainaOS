@@ -1,12 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "@/api/client";
 import { Clock } from "lucide-react";
 
 export default function Attendance() {
   const [attendance, setAttendance] = useState([]);
+  // Set as soon as a clock-in/clock-out mutation lands, so the initial mount GET -- if it's
+  // still in flight (e.g. a slow cold-start serverless invocation) -- doesn't overwrite the
+  // already-current, mutation-patched state with a stale pre-action snapshot once it finally
+  // resolves. See the comments in handleClockIn/handleClockOut for the full race description.
+  const hasMutatedRef = useRef(false);
 
   useEffect(() => {
-    api.get("/attendance").then((r) => setAttendance(r.data)).catch(() => {});
+    api.get("/attendance").then((r) => {
+      if (!hasMutatedRef.current) setAttendance(r.data);
+    }).catch(() => {});
   }, []);
 
   const handleClockIn = () => {
@@ -16,15 +23,27 @@ export default function Attendance() {
       clock_out: null,
       status: "Hadir"
     };
-    api.post("/attendance", payload).then(() => {
-      api.get("/attendance").then((r) => setAttendance(r.data)).catch(() => {});
+    // Patch state directly from the mutation's own response instead of firing a second,
+    // unawaited GET /attendance. Three independent GETs (this page's mount fetch, this
+    // one, and clock-out's) can resolve out of order against a serverless backend with
+    // variable cold-start latency -- a slow mount fetch resolving AFTER a fast post-action
+    // fetch would silently overwrite the fresh state with a stale snapshot, which is what
+    // made a just-completed clock-out appear to "not update" the table (the action
+    // succeeded server-side -- confirmed via the success alert -- but a stale GET response
+    // clobbered the UI afterward). Using the response body directly removes the race
+    // entirely since there's no second round-trip to race against.
+    api.post("/attendance", payload).then((r) => {
+      hasMutatedRef.current = true;
+      setAttendance((prev) => [r.data, ...prev]);
       alert("Absen Masuk (Clock In) berhasil dicatat!");
     });
   };
 
   const handleClockOut = (id) => {
-    api.put(`/attendance/${id}`).then(() => {
-      api.get("/attendance").then((r) => setAttendance(r.data)).catch(() => {});
+    // Same fix as handleClockIn above: patch from the PUT response, no follow-up GET race.
+    api.put(`/attendance/${id}`).then((r) => {
+      hasMutatedRef.current = true;
+      setAttendance((prev) => prev.map((a) => (a.id === id ? r.data : a)));
       alert("Absen Keluar (Clock Out) berhasil dicatat!");
     });
   };
