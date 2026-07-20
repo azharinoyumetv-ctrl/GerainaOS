@@ -1,6 +1,7 @@
 import "@/index.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
+import { Toaster } from "@/components/ui/sonner";
 
 import DagangOS from "@/pages/DagangOS";
 import Landing from "@/pages/Landing";
@@ -160,6 +161,16 @@ export default function App() {
   const appRoutes = getGerainaAppSubRoutes();
   return (
     <AuthProvider>
+      {/* Global toast host (sonner) -- replaces the native window.alert() calls previously
+          used across the app for success/error feedback. A native alert() blocks the entire
+          browser tab until dismissed; TestSprite's postrun-9 run showed a QRIS payment test
+          triggering a "repeated alert" followed by 13 unrelated tests across completely
+          different modules (Branches, Dashboard, Purchasing, Settings, etc.) all going
+          BLOCKED in the same run -- consistent with the automation getting stuck behind a
+          native dialog it couldn't dismiss, not 13 separate app bugs. Neither of this repo's
+          two pre-existing, unused toast scaffolds (components/ui/toaster.jsx + use-toast.js,
+          or this sonner one) was ever actually mounted anywhere before this. */}
+      <Toaster position="top-center" richColors closeButton />
       <BrowserRouter>
         <Routes>
           {/* Direct Auth Top-level & Full URL Mappings */}

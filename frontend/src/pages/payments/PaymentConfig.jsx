@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/api/client";
 import { Save, ShieldCheck } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 import { Link } from "react-router-dom";
 
@@ -379,11 +380,11 @@ export default function PaymentConfig() {
     api.post("/payments/config", config)
       .then((r) => {
         if (r.data) setConfig(r.data);
-        alert(`Konfigurasi pembayaran ${type.toUpperCase()} berhasil disimpan!`);
+        toast.success(`Konfigurasi pembayaran ${type.toUpperCase()} berhasil disimpan!`);
       })
       .catch((err) => {
         const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
-        alert(`Gagal menyimpan konfigurasi pembayaran ${type.toUpperCase()}: ${msg}`);
+        toast.error(`Gagal menyimpan konfigurasi pembayaran ${type.toUpperCase()}: ${msg}`);
       })
       .finally(() => {
         setSaving(false);

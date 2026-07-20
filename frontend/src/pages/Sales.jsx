@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api, { fmtIDR, downloadPdf } from "@/api/client";
 import { Printer, FileDown, Search, RefreshCw, Ban } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function Sales() {
   const [items, setItems] = useState([]);
@@ -25,7 +26,7 @@ export default function Sales() {
       await api.post(`/orders/${o.id}/void`);
       await load();
     } catch (e) {
-      alert(e?.response?.data?.detail || "Gagal membatalkan order (khusus Owner).");
+      toast.error(e?.response?.data?.detail || "Gagal membatalkan order (khusus Owner).");
     }
   };
 

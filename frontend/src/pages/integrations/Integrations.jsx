@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/api/client";
 import { Save, Link2 } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 import { Link } from "react-router-dom";
 
@@ -32,9 +33,9 @@ export default function Integrations() {
   const handleSave = (e) => {
     e.preventDefault();
     api.post("/integrations", integrations).then(() => {
-      alert(`Konfigurasi integrasi ${(type || 'midtrans').toUpperCase()} berhasil disimpan!`);
+      toast.success(`Konfigurasi integrasi ${(type || 'midtrans').toUpperCase()} berhasil disimpan!`);
     }).catch(() => {
-      alert(`Gagal menyimpan konfigurasi ${(type || 'midtrans').toUpperCase()}.`);
+      toast.error(`Gagal menyimpan konfigurasi ${(type || 'midtrans').toUpperCase()}.`);
     });
   };
 

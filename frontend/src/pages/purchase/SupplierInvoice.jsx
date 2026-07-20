@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
 import { CreditCard, Check } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function SupplierInvoice() {
   const [invoices, setInvoices] = useState([]);
@@ -19,7 +20,7 @@ export default function SupplierInvoice() {
       // Let's call mock API
       api.post("/purchase/invoices", { id, status: "Paid" }).then(() => {
         fetchInvoices();
-        alert("Faktur berhasil ditandai Lunas!");
+        toast.success("Faktur berhasil ditandai Lunas!");
       });
     }
   };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Send, Check } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function StockTransfer() {
   const [products, setProducts] = useState([]);
@@ -42,7 +43,7 @@ export default function StockTransfer() {
       setQty("");
       setToBranch("");
       fetchData();
-      alert("Transfer stok berhasil dikirim!");
+      toast.success("Transfer stok berhasil dikirim!");
     });
   };
 

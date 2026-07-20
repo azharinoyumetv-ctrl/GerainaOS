@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "@/api/client";
 import { Save, Printer, UserPlus } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 const DEFAULT_SETTINGS = {
   general: { store_name: "Geraina POS Store", currency: "IDR", timezone: "Asia/Jakarta" },
@@ -34,10 +35,10 @@ export default function Settings() {
   const handleSave = (e) => {
     e.preventDefault();
     api.post("/settings", settings).then(() => {
-      alert(`Pengaturan ${type.toUpperCase()} berhasil disimpan!`);
+      toast.success(`Pengaturan ${type.toUpperCase()} berhasil disimpan!`);
     }).catch((err) => {
       const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
-      alert(`Gagal menyimpan pengaturan ${type.toUpperCase()}: ${msg}`);
+      toast.error(`Gagal menyimpan pengaturan ${type.toUpperCase()}: ${msg}`);
     });
   };
 
@@ -56,7 +57,7 @@ export default function Settings() {
     const printerPort = settings?.printer?.printer_port || 9100;
     const bridgePort = settings?.printer?.bridge_port || 9899;
     if (!printerIp) {
-      alert("Isi IP Address printer terlebih dahulu.");
+      toast.error("Isi IP Address printer terlebih dahulu.");
       return;
     }
     setTestingPrint(true);
@@ -73,13 +74,11 @@ export default function Settings() {
       if (!resp.ok || !json?.ok) {
         throw new Error(json?.error || `HTTP ${resp.status}`);
       }
-      alert("Test print terkirim ke printer jaringan.");
+      toast.success("Test print terkirim ke printer jaringan.");
     } catch (err) {
-      alert(
-        `Gagal mengirim test print: ${err.message}\n\n` +
-        `Pastikan aplikasi Printer Bridge sedang berjalan di komputer ini (lihat folder printer-bridge/), ` +
-        `dan IP/port printer di atas sudah benar.`
-      );
+      toast.error(`Gagal mengirim test print: ${err.message}`, {
+        description: "Pastikan aplikasi Printer Bridge sedang berjalan di komputer ini (lihat folder printer-bridge/), dan IP/port printer di atas sudah benar.",
+      });
     } finally {
       setTestingPrint(false);
     }

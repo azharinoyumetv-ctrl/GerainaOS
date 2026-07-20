@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
 import { Save, Check } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function LoyaltyPoints() {
   const [conversionRate, setConversionRate] = useState("");
@@ -23,7 +24,7 @@ export default function LoyaltyPoints() {
       point_value: parseInt(pointValue),
       min_redeem_points: parseInt(minRedeem)
     }).then(() => {
-      alert("Aturan poin loyalitas berhasil disimpan!");
+      toast.success("Aturan poin loyalitas berhasil disimpan!");
     });
   };
 

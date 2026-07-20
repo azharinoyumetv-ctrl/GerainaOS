@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import api, { fmtIDR, downloadPdf } from "@/api/client";
+import { toast } from "@/components/ui/sonner";
 import {
   Search, Plus, Minus, Trash2, X, Printer, Download, CheckCircle2,
   Banknote, QrCode, Smartphone, RefreshCw, Barcode, CreditCard, Landmark,
@@ -50,7 +51,9 @@ function ReceiptDialog({ order, onClose }) {
       setPoll(r.data);
     } catch (err) {
       const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
-      alert(`Transaksi EDC gagal: ${msg}\n\nAnda masih bisa memproses kartu langsung di mesin EDC lalu tekan "Tandai sudah dibayar" di bawah setelah disetujui.`);
+      toast.error(`Transaksi EDC gagal: ${msg}`, {
+        description: "Anda masih bisa memproses kartu langsung di mesin EDC lalu tekan \"Tandai sudah dibayar\" di bawah setelah disetujui.",
+      });
     } finally {
       setEdcProcessing(false);
     }
@@ -265,7 +268,7 @@ export default function POS() {
       setScannedProduct(matched);
       setTimeout(() => setScannedProduct(null), 3000);
     } else {
-      alert("Produk dengan SKU/Barcode ini tidak ditemukan.");
+      toast.error("Produk dengan SKU/Barcode ini tidak ditemukan.");
     }
     setBarcodeInput("");
   };
@@ -318,7 +321,7 @@ export default function POS() {
       setReceipt(r.data);
       clearCart();
     } catch (e) {
-      alert(e?.response?.data?.detail || "Gagal checkout");
+      toast.error(e?.response?.data?.detail || "Gagal checkout");
     } finally { setSubmitting(false); }
   };
 

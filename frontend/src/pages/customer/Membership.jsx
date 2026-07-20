@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Check } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function Membership() {
   const [memberships, setMemberships] = useState([]);
@@ -32,7 +33,7 @@ export default function Membership() {
       setDiscount("");
       setDesc("");
       fetchMemberships();
-      alert("Membership level berhasil disimpan!");
+      toast.success("Membership level berhasil disimpan!");
     });
   };
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
 import { Check, ArrowRight, ChevronDown, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
+import { toast } from "@/components/ui/sonner";
 
 const JK = "'Plus Jakarta Sans', 'Figtree', sans-serif";
 const TEAL = "#0d9488";
@@ -47,13 +48,13 @@ export default function Pricing() {
       const res = await api.post("/pricing/upgrade", { tier_id: tierId });
       await refresh();
       if (res?.data?.status === "pending_manual_activation") {
-        alert(res.data.message || "Permintaan upgrade tercatat, menunggu aktivasi manual.");
+        toast.success(res.data.message || "Permintaan upgrade tercatat, menunggu aktivasi manual.");
       } else {
-        alert(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
+        toast.success(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
       }
     } catch (err) {
       const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
-      alert(`Gagal mengubah paket ke ${tierId.toUpperCase()}: ${msg}`);
+      toast.error(`Gagal mengubah paket ke ${tierId.toUpperCase()}: ${msg}`);
     } finally {
       setUpgradingId(null);
     }

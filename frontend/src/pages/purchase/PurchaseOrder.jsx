@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
 import { Plus, Check, ListRestart } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function PurchaseOrder() {
   const [suppliers, setSuppliers] = useState([]);
@@ -66,7 +67,7 @@ export default function PurchaseOrder() {
       setSupplierId("");
       setPoItems([]);
       fetchData();
-      alert("Purchase Order berhasil diterbitkan!");
+      toast.success("Purchase Order berhasil diterbitkan!");
     });
   };
 

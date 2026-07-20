@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api from "@/api/client";
 import { Clock } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function Attendance() {
   const [attendance, setAttendance] = useState([]);
@@ -35,7 +36,7 @@ export default function Attendance() {
     api.post("/attendance", payload).then((r) => {
       hasMutatedRef.current = true;
       setAttendance((prev) => [r.data, ...prev]);
-      alert("Absen Masuk (Clock In) berhasil dicatat!");
+      toast.success("Absen Masuk (Clock In) berhasil dicatat!");
     });
   };
 
@@ -44,7 +45,7 @@ export default function Attendance() {
     api.put(`/attendance/${id}`).then((r) => {
       hasMutatedRef.current = true;
       setAttendance((prev) => prev.map((a) => (a.id === id ? r.data : a)));
-      alert("Absen Keluar (Clock Out) berhasil dicatat!");
+      toast.success("Absen Keluar (Clock Out) berhasil dicatat!");
     });
   };
 

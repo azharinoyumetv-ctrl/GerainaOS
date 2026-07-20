@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
 import { Check, ClipboardCheck } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function GoodsReceiving() {
   const [orders, setOrders] = useState([]);
@@ -32,7 +33,7 @@ export default function GoodsReceiving() {
       // Also update the PO status to Received
       // Wait, mockDb does this, but let's notify the user
       fetchData();
-      alert(`Barang masuk dari PO ${po.po_no} berhasil diterima dan stok ditambahkan!`);
+      toast.success(`Barang masuk dari PO ${po.po_no} berhasil diterima dan stok ditambahkan!`);
     });
   };
 

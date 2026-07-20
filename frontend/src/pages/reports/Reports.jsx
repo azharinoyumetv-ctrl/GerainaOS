@@ -5,6 +5,7 @@ import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, Tooltip, CartesianGrid, Legend, LineChart, Line
 } from "recharts";
+import { toast } from "@/components/ui/sonner";
 
 import { Link } from "react-router-dom";
 
@@ -52,7 +53,7 @@ export default function Reports() {
     e.preventDefault();
     const amount = parseFloat(expenseForm.amount);
     if (!expenseForm.category || !amount || amount <= 0 || !expenseForm.expense_date) {
-      alert("Lengkapi kategori, jumlah, dan tanggal pengeluaran.");
+      toast.error("Lengkapi kategori, jumlah, dan tanggal pengeluaran.");
       return;
     }
     setSavingExpense(true);
@@ -66,7 +67,7 @@ export default function Reports() {
       reloadCashflowData();
     }).catch((err) => {
       const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
-      alert(`Gagal mencatat pengeluaran: ${msg}`);
+      toast.error(`Gagal mencatat pengeluaran: ${msg}`);
     }).finally(() => setSavingExpense(false));
   };
 
@@ -74,7 +75,7 @@ export default function Reports() {
     if (!window.confirm("Hapus catatan pengeluaran ini?")) return;
     api.delete(`/expenses/${id}`).then(() => reloadCashflowData()).catch((err) => {
       const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
-      alert(`Gagal menghapus: ${msg}`);
+      toast.error(`Gagal menghapus: ${msg}`);
     });
   };
 
@@ -440,7 +441,7 @@ export default function Reports() {
                 Pajak Pertambahan Nilai (PPN) dihitung otomatis berdasarkan PMK Republik Indonesia dengan tarif standar 11%.
                 Semua laporan perpajakan dapat diekspor langsung ke CSV untuk diimpor ke aplikasi e-Faktur DJP Online.
               </p>
-              <button onClick={() => alert("Laporan e-Faktur DJP siap diunduh (Format CSV).")} className="btn-primary w-full py-2 text-xs font-semibold">
+              <button onClick={() => toast.success("Laporan e-Faktur DJP siap diunduh (Format CSV).")} className="btn-primary w-full py-2 text-xs font-semibold">
                 Unduh Format e-Faktur CSV
               </button>
             </div>

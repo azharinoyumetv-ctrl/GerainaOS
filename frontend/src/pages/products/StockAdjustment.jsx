@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Check } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function StockAdjustment() {
   const [products, setProducts] = useState([]);
@@ -42,7 +43,7 @@ export default function StockAdjustment() {
       setQty("");
       setReason("");
       fetchData();
-      alert("Penyesuaian stok berhasil disimpan!");
+      toast.success("Penyesuaian stok berhasil disimpan!");
     });
   };
 

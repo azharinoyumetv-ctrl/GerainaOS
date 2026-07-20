@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
 import { Plus, Check, HandCoins } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function AccountsReceivable() {
   const [receivables, setReceivables] = useState([]);
@@ -43,7 +44,7 @@ export default function AccountsReceivable() {
       setAmount("");
       setDueDate("");
       fetchReceivables();
-      alert("Catatan Piutang Baru berhasil ditambahkan!");
+      toast.success("Catatan Piutang Baru berhasil ditambahkan!");
     }).catch((err) => {
       setFormError(err?.response?.data?.detail || "Gagal menyimpan catatan piutang.");
     }).finally(() => setSaving(false));
@@ -58,9 +59,9 @@ export default function AccountsReceivable() {
 
     api.put(`/debt/receivables/${id}`, { paid_amount: newPaid, status }).then(() => {
       fetchReceivables();
-      alert("Pembayaran piutang berhasil dicatat!");
+      toast.success("Pembayaran piutang berhasil dicatat!");
     }).catch((err) => {
-      alert(err?.response?.data?.detail || "Gagal mencatat pembayaran piutang.");
+      toast.error(err?.response?.data?.detail || "Gagal mencatat pembayaran piutang.");
     });
   };
 

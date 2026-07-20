@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
 import { Plus, Check, CreditCard } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function AccountsPayable() {
   const [payables, setPayables] = useState([]);
@@ -42,7 +43,7 @@ export default function AccountsPayable() {
       setAmount("");
       setDueDate("");
       fetchPayables();
-      alert("Catatan Hutang Baru berhasil ditambahkan!");
+      toast.success("Catatan Hutang Baru berhasil ditambahkan!");
     }).catch((err) => {
       setFormError(err?.response?.data?.detail || "Gagal menyimpan catatan hutang.");
     }).finally(() => setSaving(false));
@@ -57,9 +58,9 @@ export default function AccountsPayable() {
 
     api.put(`/debt/payables/${id}`, { paid_amount: newPaid, status }).then(() => {
       fetchPayables();
-      alert("Pembayaran hutang berhasil dicatat!");
+      toast.success("Pembayaran hutang berhasil dicatat!");
     }).catch((err) => {
-      alert(err?.response?.data?.detail || "Gagal mencatat pembayaran hutang.");
+      toast.error(err?.response?.data?.detail || "Gagal mencatat pembayaran hutang.");
     });
   };
 
