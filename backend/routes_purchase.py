@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from database import get_db, utcnow
 from models import (
     Supplier, SupplierBase, PurchaseOrder, PurchaseOrderCreate,
-    GoodsReceiving, GoodsReceivingCreate, SupplierInvoice, SupplierInvoiceCreate
+    GoodsReceiving, GoodsReceivingCreate, SupplierInvoice, SupplierInvoiceCreate,
+    SupplierInvoiceUpdate
 )
 from auth import get_current_user
 
@@ -179,6 +180,38 @@ async def create_supplier_invoice(payload: SupplierInvoiceCreate, user: dict = D
             "status": "Unpaid"
         }
         await db.debt_payables.insert_one(payable_doc)
-        
+
     doc.pop("_id", None)
     return doc
+
+@router.put("/api/purchase/invoices/{invoice_id}", response_model=SupplierInvoice)
+async def update_supplier_invoice(invoice_id: str, payload: SupplierInvoiceUpdate, user: dict = Depends(get_current_user)):
+    """Mark a supplier invoice paid/unpaid (or otherwise partially update it).
+
+    HISTORY: this endpoint didn't exist -- the frontend's 'Tandai Lunas' button POSTed
+    {id, status: 'Paid'} straight to the CREATE endpoint above, which ignores 'id' entirely
+    and requires invoice_no/po_no/amount/due_date that were never sent, so it 422'd with no
+    .catch() on the frontend (silent failure). Found while mirroring this session's DapurOS
+    debt-CRUD fix -- same bug, same fix, mirrored back here.
+    """
+    db = get_db()
+    update = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
+    if not update:
+        raise HTTPException(status_code=400, detail="Tidak ada perubahan")
+    res = await db.supplier_invoices.find_one_and_update(
+        {"id": invoice_id, "store_id": user["store_id"]},
+        {"$set": update},
+        return_document=True,
+        projection={"_id": 0},
+    )
+    if not res:
+        raise HTTPException(status_code=404, detail="Faktur tidak ditemukan")
+
+    # Keep the auto-created debt_payable record (see create_supplier_invoice above) in sync --
+    # otherwise marking the invoice paid leaves a stale "Unpaid" payable behind forever.
+    if update.get("status", "").lower() == "paid":
+        await db.debt_payables.update_many(
+            {"store_id": user["store_id"], "invoice_no": res["invoice_no"], "status": {"$ne": "Paid"}},
+            {"$set": {"status": "Paid", "paid_amount": res["amount"]}},
+        )
+    return res

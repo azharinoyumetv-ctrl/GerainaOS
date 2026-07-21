@@ -256,6 +256,10 @@ class SupplierInvoice(SupplierInvoiceCreate):
     store_id: str
     created_at: str = Field(default_factory=utcnow_iso)
 
+class SupplierInvoiceUpdate(BaseModel):
+    """Partial update -- used to mark an invoice paid without re-submitting the full record."""
+    status: Optional[str] = None
+
 class CustomerBase(BaseModel):
     name: str
     phone: Optional[str] = None
