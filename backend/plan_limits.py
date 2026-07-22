@@ -13,10 +13,9 @@ NEW creation once a store is at/over its limit. A missing/unrecognized plan is t
 "starter" (the most restrictive tier), matching the fail-closed default already used for
 the nav lock icons in AppLayout.jsx.
 
-Scope note: there is no device/license capacity check here. LicenseDevices.jsx is entirely
-mock data with no backing collection or registration endpoint, so "max_devices" has nothing
-real to count against yet -- enforcing it would require building a device-registration
-system first, which is separate, larger work.
+Device/seat capacity ("max_devices") is enforced the same way, but not from this module --
+see routes_devices.py, which calls check_capacity() against the real `devices` collection
+on registration.
 """
 from fastapi import HTTPException
 from routes_pricing import TIERS
