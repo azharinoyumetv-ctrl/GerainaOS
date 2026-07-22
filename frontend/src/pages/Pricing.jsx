@@ -15,11 +15,11 @@ const LINE = "#e6ece8";
 const TINT = "#e3f4f1";
 
 const FAQS = [
-  { q: "Apakah trial benar-benar gratis?", a: "Ya. 14 hari pemakaian fitur Pro, tanpa kartu kredit, dan Anda bisa berhenti kapan saja." },
-  { q: "Bisa pakai untuk multi-cabang?", a: "Bisa. Paket Multi-Branch mendukung outlet tanpa batas dengan konsolidasi laporan antar cabang." },
-  { q: "Metode pembayaran apa saja yang didukung?", a: "Tunai, QRIS dinamis, dan e-wallet OVO/DANA/ShopeePay/LinkAja via Xendit." },
-  { q: "Bisa impor produk lama dari Excel?", a: "Bisa. Halaman Produk menyediakan importer Excel/CSV dengan deteksi SKU duplikat." },
-  { q: "Apa beda Starter dan Pro?", a: "Pro membuka produk tanpa batas, impor Excel/CSV, dan invoice A4 — cocok untuk toko yang mulai berkembang." },
+  { q: "Apakah trial benar-benar gratis?", a: "Ya. 14 hari akses penuh fitur paket Business, tanpa kartu kredit, dan Anda bisa berhenti kapan saja." },
+  { q: "Bisa pakai untuk multi-outlet?", a: "Bisa. Paket Business sudah termasuk 3 outlet dengan konsolidasi laporan antar outlet. Butuh lebih banyak? Tinggal tambah outlet lewat add-on." },
+  { q: "Metode pembayaran apa saja yang didukung?", a: "Tunai, QRIS dinamis, e-wallet OVO/DANA/ShopeePay/LinkAja via Xendit." },
+  { q: "Bisa impor produk lama dari Excel?", a: "Bisa mulai paket Pro. Halaman Produk menyediakan importer Excel/CSV dengan deteksi SKU duplikat." },
+  { q: "Apa beda Starter dan Pro?", a: "Starter hanya mencatat transaksi kasir. Pro membuka purchase order, inventory valuation, piutang/utang, dan laporan lengkap — untuk toko yang beroperasi penuh." },
 ];
 
 function fmtMonthlyEq(yearly) {
@@ -31,7 +31,7 @@ export default function Pricing() {
   const [tiers, setTiers] = useState([]);
   const [addons, setAddons] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
-  const [billing, setBilling] = useState("monthly");
+  const [billing, setBilling] = useState("yearly");
   const { user, refresh } = useAuth();
   const [upgradingId, setUpgradingId] = useState(null);
   // Whether this authenticated account already has a Geraina store. null = not checked yet
@@ -79,12 +79,10 @@ export default function Pricing() {
 
   const priceText = (t) => {
     if (t.id === "trial") return "Gratis";
-    if (t.id === "multibranch") return isYearly ? "Custom" : `${fmtIDR(t.price_idr_monthly)}+`;
     return fmtIDR(isYearly ? t.price_idr_yearly : t.price_idr_monthly);
   };
   const renderPeriod = (t) => {
     if (t.id === "trial") return "14 hari";
-    if (t.id === "multibranch") return isYearly ? "" : "/bulan, mulai dari";
     return isYearly ? "/tahun" : "/bulan";
   };
 
@@ -118,10 +116,10 @@ export default function Pricing() {
       <section className="pt-16 sm:pt-20 pb-8 text-center px-5 sm:px-8" data-testid="pricing-hero">
         <span className="text-xs font-bold tracking-widest uppercase" style={{ color: TEAL }}>Harga</span>
         <h1 className="text-4xl sm:text-5xl font-extrabold mt-3 max-w-3xl mx-auto leading-tight" style={{ fontFamily: JK, color: INK }}>
-          Satu harga jujur. Tanpa biaya transaksi tersembunyi.
+          Mulai dari kasir sederhana. Naik ke sistem operasional lengkap saat bisnis berkembang.
         </h1>
         <p className="mt-4 max-w-xl mx-auto" style={{ color: BODY }}>
-          Pilih paket yang cocok dengan ukuran toko Anda. Bisa naik atau turun paket kapan saja.
+          Satu harga jujur, tanpa biaya transaksi tersembunyi. Bisa naik atau turun paket kapan saja.
         </p>
         <div className="inline-flex items-center gap-1 mt-8 p-1 rounded-full border" style={{ borderColor: LINE, background: "#fff" }} data-testid="billing-toggle">
           <button onClick={() => setBilling("monthly")} className="px-5 py-2 rounded-full text-sm font-semibold transition-colors" style={billing === "monthly" ? { background: TEAL, color: "#fff" } : { color: INK }} data-testid="billing-monthly">Bulanan</button>
@@ -132,12 +130,13 @@ export default function Pricing() {
       </section>
 
       <section className="py-10 px-5 sm:px-8">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {tiers.map((t) => (
-            <div key={t.id} className="rounded-2xl bg-white p-6 flex flex-col relative" style={{ border: t.highlight ? `2px solid ${TEAL}` : `1px solid ${LINE}` }} data-testid={`pricing-card-${t.id}`}>
+            <div key={t.id} className={`rounded-2xl bg-white flex flex-col relative ${t.highlight ? "p-7" : "p-6"}`} style={{ border: t.highlight ? `2px solid ${TEAL}` : `1px solid ${LINE}`, boxShadow: t.highlight ? "0 16px 40px -12px rgba(13,148,136,0.35)" : "none" }} data-testid={`pricing-card-${t.id}`}>
               {t.badge && <span className="absolute -top-3 left-6 text-[11px] font-bold px-2.5 py-1 rounded-full text-white" style={{ background: TEAL }} data-testid={`pricing-badge-${t.id}`}>{t.badge}</span>}
               <h3 className="text-xl font-bold" style={{ fontFamily: JK, color: INK }}>{t.name}</h3>
               <p className="text-sm mt-1 min-h-[36px]" style={{ color: MUTED }}>{t.tagline}</p>
+              {t.highlight_note && <p className="text-xs mt-1 font-semibold" style={{ color: TEAL_DARK }} data-testid={`pricing-highlight-note-${t.id}`}>{t.highlight_note}</p>}
               <div className="mt-5">
                 <p className="text-3xl font-extrabold leading-tight" style={{ fontFamily: JK, color: INK }}>{priceText(t)}</p>
                 <p className="text-xs mt-1" style={{ color: MUTED }}>{renderPeriod(t)}</p>
@@ -163,6 +162,11 @@ export default function Pricing() {
               )}
             </div>
           ))}
+        </div>
+        <div className="max-w-3xl mx-auto px-5 sm:px-8 mt-6 text-center">
+          <p className="text-xs" style={{ color: MUTED }} data-testid="pricing-disclaimer">
+            DagangOS adalah platform perangkat lunak mandiri. Paket tidak mencakup pelatihan pribadi, implementasi, dedicated account manager, custom development, atau jaminan waktu respons dukungan. Dokumentasi, panduan penggunaan, pemulihan akun, pembaruan sistem, dan pelaporan gangguan tersedia secara mandiri.
+          </p>
         </div>
       </section>
 

@@ -16,13 +16,12 @@ TIERS = [
         "price_idr_yearly": 0,
         "period_monthly": "14 hari",
         "period_yearly": "14 hari",
-        "tagline": "1 outlet, limited features",
+        "tagline": "14 hari, akses penuh fitur Business",
         "features": [
-            "1 outlet",
-            "Maks 100 produk",
-            "Unlimited transaksi",
-            "Akses fitur Pro",
+            "Semua fitur paket Business",
+            "3 outlet, device & akun setara Business",
             "Tanpa kartu kredit",
+            "Bisa berhenti kapan saja",
         ],
         "cta": "Mulai Trial",
         "highlight": False,
@@ -30,16 +29,19 @@ TIERS = [
     {
         "id": "starter",
         "name": "Starter",
-        "price_idr_monthly": 99000,
-        "price_idr_yearly": 990000,
+        "price_idr_monthly": 149000,
+        "price_idr_yearly": 1490000,
         "period_monthly": "/bulan",
         "period_yearly": "/tahun",
-        "tagline": "Small warung/toko",
+        "tagline": "Kasir digital dasar",
         "features": [
-            "1 outlet, 1 kasir",
-            "Hingga 500 produk",
-            "Laporan harian + ekspor PDF",
-            "QRIS + e-wallet (Xendit)",
+            "1 outlet, 1 device kasir",
+            "3 akun karyawan",
+            "Maks 1.000 produk, transaksi unlimited",
+            "POS + scan barcode",
+            "Tunai + catat manual QRIS/kartu/transfer/e-wallet",
+            "Stok dasar + notifikasi stok menipis",
+            "Database pelanggan + struk thermal",
         ],
         "cta": "Pilih Starter",
         "highlight": False,
@@ -47,63 +49,52 @@ TIERS = [
     {
         "id": "pro",
         "name": "Pro",
-        "price_idr_monthly": 249000,
-        "price_idr_yearly": 2490000,
+        "price_idr_monthly": 349000,
+        "price_idr_yearly": 3490000,
         "period_monthly": "/bulan",
         "period_yearly": "/tahun",
-        "tagline": "Main package — paling banyak dipilih",
+        "tagline": "Operasional lengkap 1 outlet",
         "features": [
-            "1 outlet, hingga 3 kasir",
-            "Produk unlimited",
-            "Excel/CSV import",
-            "Invoice A4 + thermal receipt",
-            "Webhook real-time",
+            "1 outlet, 5 device, 15 akun karyawan",
+            "Produk & transaksi unlimited",
+            "Import/export Excel/CSV",
+            "Purchase order, goods receiving & faktur supplier",
+            "Inventory valuation + analisis stok mati",
+            "QRIS + e-wallet otomatis (Xendit)",
+            "Piutang & utang",
+            "Laporan penjualan, stok & laba rugi",
         ],
         "cta": "Pilih Pro",
-        "highlight": True,
-        "badge": "Paling Direkomendasikan",
+        "highlight": False,
     },
     {
         "id": "business",
         "name": "Business",
-        "price_idr_monthly": 499000,
-        "price_idr_yearly": 4990000,
+        "price_idr_monthly": 549000,
+        "price_idr_yearly": 5490000,
         "period_monthly": "/bulan",
         "period_yearly": "/tahun",
-        "tagline": "Bigger store, multi-kasir",
+        "tagline": "Kontrol penuh, siap multi-outlet",
+        "highlight_note": "Semua fitur operasional, otomatisasi, dan multi-outlet dalam satu paket.",
         "features": [
-            "1 outlet, kasir unlimited",
-            "Produk unlimited",
-            "Multi-shift report",
-            "Custom branding struk",
-            "Analytics lanjutan",
+            "3 outlet, 15 device, 50 akun karyawan",
+            "Dashboard terpusat multi-outlet",
+            "Transfer stok & laporan konsolidasi antar outlet",
+            "Membership + loyalty points",
+            "Absensi karyawan + role & permission lanjutan",
+            "Integrasi WhatsApp otomatis",
+            "Webhook & integrasi pembayaran lanjutan",
+            "Monitoring piutang/utang terpusat",
         ],
         "cta": "Pilih Business",
-        "highlight": False,
-    },
-    {
-        "id": "multibranch",
-        "name": "Multi-Branch",
-        "price_idr_monthly": 799000,
-        "price_idr_yearly": None,
-        "period_monthly": "/bulan, mulai dari",
-        "period_yearly": "Custom",
-        "tagline": "Multiple branches",
-        "features": [
-            "Unlimited outlet",
-            "Konsolidasi laporan antar cabang",
-            "Transfer stok antar cabang",
-            "On-premise option",
-            "Training on-site",
-        ],
-        "cta": "Hubungi Sales",
-        "highlight": False,
+        "highlight": True,
+        "badge": "Nilai Terbaik",
     },
 ]
 
 ADDONS = [
-    {"id": "extra_device", "name": "Extra device", "price_idr": 49000, "unit": "/bulan"},
-    {"id": "extra_branch", "name": "Extra branch", "price_idr": 199000, "unit": "/bulan"},
+    {"id": "extra_device", "name": "Device kasir tambahan", "price_idr": 49000, "unit": "/bulan, khusus Pro (maks 2 device)"},
+    {"id": "extra_outlet", "name": "Outlet tambahan", "price_idr": 149000, "unit": "/bulan, khusus Business — termasuk 5 device & 15 akun karyawan"},
 ]
 
 
@@ -122,8 +113,8 @@ async def upgrade_plan(payload: dict, user: dict = Depends(require_admin)):
     """Self-service ONLY for free tiers (trial). Paid tiers are NOT granted here -- this
     endpoint used to set `plan` unconditionally for any tier_id, which meant any store admin
     could call it directly (bypassing the UI, which only ever wires the button to "trial" and
-    shows "Hubungi Sales" for every paid tier) and grant themselves Starter/Pro/Business/
-    Multi-Branch for free. No payment gateway is wired yet (Xendit/Midtrans keys pending), so
+    shows "Hubungi Sales" for every paid tier) and grant themselves Starter/Pro/Business
+    for free. No payment gateway is wired yet (Xendit/Midtrans keys pending), so
     until a real payment-confirmed activation flow exists, paid-tier requests are recorded and
     left pending for manual activation by DagangOS staff after payment is confirmed offline --
     matching what the Billing settings tab already tells users. Replace this with a real
