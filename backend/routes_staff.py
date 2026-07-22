@@ -18,6 +18,8 @@ async def list_staff(user: dict = Depends(get_current_user)):
 @router.post("/api/staff", response_model=Staff)
 async def create_staff(payload: StaffBase, user: dict = Depends(get_current_user)):
     db = get_db()
+    from plan_limits import check_capacity
+    await check_capacity(db, user["store_id"], user.get("plan"), "staff", "max_employees")
     existing = await db.staff.find_one({"store_id": user["store_id"], "email": payload.email})
     if existing:
         raise HTTPException(status_code=400, detail="Email staff sudah terdaftar")

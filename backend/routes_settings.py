@@ -187,6 +187,8 @@ async def list_branches(user: dict = Depends(get_current_user)):
 @router.post("/api/branches", response_model=Branch)
 async def create_branch(payload: BranchBase, user: dict = Depends(get_current_user)):
     db = get_db()
+    from plan_limits import check_outlet_capacity
+    await check_outlet_capacity(db, user["store_id"], user.get("plan"))
     existing = await db.branches.find_one({"store_id": user["store_id"], "name": payload.name})
     if existing:
         raise HTTPException(status_code=400, detail="Cabang/Outlet sudah terdaftar")

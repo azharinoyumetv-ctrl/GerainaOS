@@ -48,6 +48,8 @@ async def list_category_names(user: dict = Depends(get_current_user)):
 @router.post("")
 async def create_product(payload: ProductCreate, user: dict = Depends(get_current_user)):
     db = get_db()
+    from plan_limits import check_capacity
+    await check_capacity(db, user["store_id"], user.get("plan"), "products", "max_products")
     doc = {
         "id": str(uuid.uuid4()),
         "store_id": user["store_id"],

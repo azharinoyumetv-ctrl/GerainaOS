@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Trash2, Edit } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 export default function BranchManagement() {
   const [branches, setBranches] = useState([]);
@@ -28,11 +29,19 @@ export default function BranchManagement() {
         setEditingId(null);
         clearForm();
         fetchBranches();
+      }).catch((err) => {
+        toast.error(err?.response?.data?.detail || "Gagal memperbarui cabang.");
       });
     } else {
       api.post("/branches", payload).then(() => {
         clearForm();
         fetchBranches();
+      }).catch((err) => {
+        // Previously had no .catch() at all -- a failed create (e.g. the outlet-capacity
+        // cap from plan_limits.py) silently did nothing: no toast, form stayed filled,
+        // no indication anything went wrong. Same fake-silence bug class as the branch
+        // list's fetch swallow, just worse since this one is a user-initiated write.
+        toast.error(err?.response?.data?.detail || "Gagal menambahkan cabang.");
       });
     }
   };

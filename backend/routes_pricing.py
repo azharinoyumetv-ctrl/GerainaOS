@@ -17,6 +17,9 @@ TIERS = [
         "period_monthly": "14 hari",
         "period_yearly": "14 hari",
         "tagline": "14 hari, akses penuh fitur Business",
+        "max_outlets": 3,
+        "max_employees": 50,
+        "max_products": None,
         "features": [
             "Semua fitur paket Business",
             "3 outlet, device & akun setara Business",
@@ -34,6 +37,9 @@ TIERS = [
         "period_monthly": "/bulan",
         "period_yearly": "/tahun",
         "tagline": "Kasir digital dasar",
+        "max_outlets": 1,
+        "max_employees": 3,
+        "max_products": 1000,
         "features": [
             "1 outlet, 1 device kasir",
             "3 akun karyawan",
@@ -54,6 +60,9 @@ TIERS = [
         "period_monthly": "/bulan",
         "period_yearly": "/tahun",
         "tagline": "Operasional lengkap 1 outlet",
+        "max_outlets": 1,
+        "max_employees": 15,
+        "max_products": None,
         "features": [
             "1 outlet, 5 device, 15 akun karyawan",
             "Produk & transaksi unlimited",
@@ -76,6 +85,9 @@ TIERS = [
         "period_yearly": "/tahun",
         "tagline": "Kontrol penuh, siap multi-outlet",
         "highlight_note": "Semua fitur operasional, otomatisasi, dan multi-outlet dalam satu paket.",
+        "max_outlets": 3,
+        "max_employees": 50,
+        "max_products": None,
         "features": [
             "3 outlet, 15 device, 50 akun karyawan",
             "Dashboard terpusat multi-outlet",
