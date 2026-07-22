@@ -1,23 +1,110 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "@/auth/AuthContext";
-import { Crown, Smartphone, Wifi, ShieldCheck, CalendarRange, Clock } from "lucide-react";
+import api from "@/api/client";
+import { toast } from "@/components/ui/sonner";
+import { Crown, Smartphone, ShieldCheck, CalendarRange, PlusCircle, Trash2 } from "lucide-react";
+
+// Persistent per-browser device identity, separate from GerainaOS/DapurOS's own key so the
+// two modules (which may share an origin under /geraina and /dapuros) never collide on the
+// same device_id and cross-link registrations between otherwise-separate store scopes.
+const DEVICE_ID_KEY = "geraina_device_id";
+
+function getOrCreateDeviceId() {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = (window.crypto?.randomUUID ? window.crypto.randomUUID() : `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
+
+function guessDeviceName() {
+  const ua = navigator.userAgent || "";
+  const isTablet = /Tablet|iPad/i.test(ua);
+  const isMobile = !isTablet && /Mobi|Android/i.test(ua);
+  const browser = /Edg\//.test(ua) ? "Edge" : /Chrome\//.test(ua) ? "Chrome" : /Firefox\//.test(ua) ? "Firefox" : /Safari\//.test(ua) ? "Safari" : "Browser";
+  const kind = isTablet ? "Tablet" : isMobile ? "Ponsel" : "Desktop";
+  return `${browser} - ${kind}`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return "-";
+  try {
+    return new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  } catch {
+    return "-";
+  }
+}
+
+const PLAN_LABEL = {
+  trial: "Free Trial (14 Hari)",
+  starter: "Starter Plan",
+  pro: "Pro Plan",
+  business: "Business Plan",
+};
 
 export default function LicenseDevices() {
   const { user } = useAuth();
+  const [devices, setDevices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [maxDevices, setMaxDevices] = useState(null);
+  const [deviceName, setDeviceName] = useState(guessDeviceName());
+  const [registering, setRegistering] = useState(false);
+  const [removingId, setRemovingId] = useState(null);
+  const deviceId = getOrCreateDeviceId();
 
-  const mockDevices = [
-    { id: "DEV-08122-TAB", name: "Main Terminal (Tablet)", type: "Android Tablet", status: "Aktif", since: "2026-06-10" },
-    { id: "DEV-09211-MOB", name: "Mobile POS 1", type: "Handheld POS Terminal", status: "Aktif", since: "2026-06-12" },
-  ];
+  const loadDevices = () => {
+    setLoading(true);
+    api.get("/devices")
+      .then((r) => setDevices(r.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
 
-  const getPlanLabel = (plan) => {
-    switch (plan) {
-      case "trial": return "Free Trial (14 Hari)";
-      case "starter": return "Starter Plan";
-      case "pro": return "Pro Plan (Paling Populer)";
-      case "business": return "Business Plan";
-      case "multibranch": return "Multi-Branch Enterprise";
-      default: return "Free Trial";
+  useEffect(() => {
+    loadDevices();
+  }, []);
+
+  useEffect(() => {
+    api.get("/pricing/tiers")
+      .then((r) => {
+        const tier = (r.data || []).find((t) => t.id === (user?.plan || "trial"));
+        setMaxDevices(tier ? tier.max_devices : null);
+      })
+      .catch(() => {});
+  }, [user?.plan]);
+
+  const isThisDeviceRegistered = devices.some((d) => d.device_id === deviceId);
+
+  const handleRegister = () => {
+    if (!deviceName.trim()) {
+      toast.error("Nama perangkat wajib diisi.");
+      return;
     }
+    setRegistering(true);
+    api.post("/devices", { device_id: deviceId, name: deviceName.trim(), user_agent: navigator.userAgent })
+      .then(() => {
+        toast.success("Perangkat berhasil didaftarkan.");
+        loadDevices();
+      })
+      .catch((err) => {
+        toast.error(err?.response?.data?.detail || "Gagal mendaftarkan perangkat.");
+      })
+      .finally(() => setRegistering(false));
+  };
+
+  const handleRemove = (d) => {
+    if (!window.confirm(`Hapus perangkat "${d.name}"? Slot perangkat akan kembali tersedia.`)) return;
+    setRemovingId(d.id);
+    api.delete(`/devices/${d.id}`)
+      .then(() => {
+        toast.success("Perangkat dihapus.");
+        loadDevices();
+      })
+      .catch((err) => {
+        toast.error(err?.response?.data?.detail || "Gagal menghapus perangkat.");
+      })
+      .finally(() => setRemovingId(null));
   };
 
   return (
@@ -39,7 +126,7 @@ export default function LicenseDevices() {
             </div>
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[hsl(220,70%,15%)] text-white text-xs font-semibold">
               <Crown size={14} className="text-amber-400" />
-              <span>{getPlanLabel(user?.plan)}</span>
+              <span>{PLAN_LABEL[user?.plan] || "Free Trial (14 Hari)"}</span>
             </div>
           </div>
 
@@ -57,13 +144,13 @@ export default function LicenseDevices() {
 
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-semibold text-[hsl(var(--muted))] uppercase">
-                <Wifi size={14} className="text-blue-600" />
-                <span>Batas Sinkronisasi Offline</span>
+                <Smartphone size={14} className="text-blue-600" />
+                <span>Kapasitas Perangkat</span>
               </div>
-              <p className="text-sm font-bold text-[hsl(var(--foreground))]" data-testid="license-grace">
-                7 Hari Tersisa
+              <p className="text-sm font-bold text-[hsl(var(--foreground))]" data-testid="license-device-capacity">
+                {maxDevices == null ? `${devices.length} perangkat terdaftar` : `${devices.length} dari ${maxDevices} perangkat`}
               </p>
-              <p className="text-xs text-[hsl(var(--muted))]">Sinkronisasi data otomatis dengan cloud.</p>
+              <p className="text-xs text-[hsl(var(--muted))]">Jumlah perangkat yang boleh aktif sesuai paket Anda.</p>
             </div>
 
             <div className="space-y-1 sm:col-span-2">
@@ -79,29 +166,39 @@ export default function LicenseDevices() {
           </div>
         </div>
 
-        {/* Sync Info Widget */}
+        {/* Register this device */}
         <div className="card-surface p-6 bg-gradient-to-b from-[hsl(220,40%,98%)] to-[hsl(220,40%,95%)] border-[hsl(220,30%,85%)] space-y-4">
           <div className="flex items-center gap-2 text-[hsl(220,70%,20%)]">
-            <Clock size={18} />
-            <h3 className="font-display font-bold">Status Sinkronisasi Cloud</h3>
+            <Smartphone size={18} />
+            <h3 className="font-display font-bold">Perangkat Ini</h3>
           </div>
-          <div className="space-y-3 text-sm text-[hsl(220,30%,25%)]">
-            <div className="flex justify-between">
-              <span>Sinkronisasi Database</span>
-              <span className="font-semibold text-emerald-600">Terhubung</span>
+          {isThisDeviceRegistered ? (
+            <div className="p-3 bg-white/60 rounded border border-[hsl(220,30%,88%)] text-xs text-[hsl(220,10%,45%)] leading-relaxed" data-testid="device-already-registered">
+              Perangkat ini sudah terdaftar pada lisensi toko Anda.
             </div>
-            <div className="flex justify-between">
-              <span>Sinkronisasi Terakhir</span>
-              <span className="font-semibold">Baru Saja</span>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-[hsl(220,10%,45%)] leading-relaxed">
+                Perangkat ini belum terdaftar. Beri nama lalu daftarkan untuk memakai 1 slot perangkat dari paket Anda.
+              </p>
+              <input
+                type="text"
+                value={deviceName}
+                onChange={(e) => setDeviceName(e.target.value)}
+                placeholder="Nama perangkat (mis. Kasir Depan)"
+                className="w-full text-sm border border-[hsl(220,30%,85%)] rounded-lg px-3 py-2 outline-none bg-white"
+                data-testid="device-name-input"
+              />
+              <button
+                onClick={handleRegister}
+                disabled={registering}
+                className="w-full flex items-center justify-center gap-2 text-xs font-bold text-white py-2.5 rounded-lg bg-[hsl(220,70%,20%)] disabled:opacity-60"
+                data-testid="register-device-btn"
+              >
+                <PlusCircle size={14} /> {registering ? "Mendaftarkan…" : "Daftarkan Perangkat Ini"}
+              </button>
             </div>
-            <div className="flex justify-between">
-              <span>Pencadangan Cloud</span>
-              <span className="font-semibold text-emerald-600">Aktif</span>
-            </div>
-          </div>
-          <div className="p-3 bg-white/60 rounded border border-[hsl(220,30%,88%)] text-xs text-[hsl(220,10%,45%)] leading-relaxed">
-            Data transaksi dicadangkan otomatis ke server aman DagangOS setiap 5 menit.
-          </div>
+          )}
         </div>
 
         {/* Devices list */}
@@ -115,24 +212,43 @@ export default function LicenseDevices() {
             <table className="w-full text-sm text-left border-collapse">
               <thead>
                 <tr className="border-b border-[hsl(var(--border))] text-xs text-[hsl(var(--muted))] uppercase">
-                  <th className="py-2.5 font-semibold">ID Perangkat</th>
-                  <th className="py-2.5 font-semibold">Nama Terminal</th>
-                  <th className="py-2.5 font-semibold">Tipe Perangkat</th>
-                  <th className="py-2.5 font-semibold">Aktif Sejak</th>
+                  <th className="py-2.5 font-semibold">Nama Perangkat</th>
+                  <th className="py-2.5 font-semibold">Terdaftar Sejak</th>
+                  <th className="py-2.5 font-semibold">Terakhir Aktif</th>
                   <th className="py-2.5 font-semibold text-right">Status</th>
+                  <th className="py-2.5 font-semibold text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
-                {mockDevices.map((d) => (
+                {loading ? (
+                  <tr><td colSpan={5} className="py-6 text-center text-xs text-[hsl(var(--muted))]">Memuat…</td></tr>
+                ) : devices.length === 0 ? (
+                  <tr><td colSpan={5} className="py-6 text-center text-xs text-[hsl(var(--muted))]" data-testid="no-devices">Belum ada perangkat terdaftar.</td></tr>
+                ) : devices.map((d) => (
                   <tr key={d.id} className="text-sm font-medium" data-testid={`device-row-${d.id}`}>
-                    <td className="py-3 font-mono text-xs">{d.id}</td>
-                    <td className="py-3">{d.name}</td>
-                    <td className="py-3 text-[hsl(var(--muted))]">{d.type}</td>
-                    <td className="py-3 text-[hsl(var(--muted))]">{d.since}</td>
+                    <td className="py-3">
+                      {d.name}
+                      {d.device_id === deviceId && (
+                        <span className="ml-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-[hsl(220,70%,95%)] text-[hsl(220,70%,30%)]">Perangkat ini</span>
+                      )}
+                    </td>
+                    <td className="py-3 text-[hsl(var(--muted))]">{fmtDate(d.created_at)}</td>
+                    <td className="py-3 text-[hsl(var(--muted))]">{fmtDate(d.last_seen_at)}</td>
                     <td className="py-3 text-right">
                       <span className="pill pill-success text-[9px] py-0.5 px-2">
                         {d.status}
                       </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <button
+                        onClick={() => handleRemove(d)}
+                        disabled={removingId === d.id}
+                        className="p-1.5 rounded text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                        title="Hapus perangkat"
+                        data-testid={`remove-device-${d.id}`}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </td>
                   </tr>
                 ))}

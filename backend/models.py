@@ -355,6 +355,23 @@ class Branch(BranchBase):
     store_id: str
     created_at: str = Field(default_factory=utcnow_iso)
 
+# ---------- Devices (real, plan-capped device/seat registration) ----------
+# Replaces the previous LicenseDevices.jsx page, which showed hardcoded mock rows with no
+# backend behind them -- not acceptable for a live production app. `device_id` is a
+# client-generated UUID persisted in the browser's localStorage (not the Mongo `id`), so the
+# same browser re-registering updates its existing row instead of consuming another seat.
+class DeviceCreate(BaseModel):
+    device_id: str
+    name: str
+    user_agent: Optional[str] = None
+
+class Device(DeviceCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
+    status: str = "Aktif"
+    created_at: str = Field(default_factory=utcnow_iso)
+    last_seen_at: Optional[str] = None
+
 # ---------- Expenses (for P&L / cashflow reporting) ----------
 class ExpenseCreate(BaseModel):
     category: str  # e.g. "Sewa", "Gaji", "Listrik", "Bahan Baku", "Lainnya"
