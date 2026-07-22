@@ -1,11 +1,12 @@
 import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/auth/AuthContext";
+import { toast } from "@/components/ui/sonner";
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse, ClipboardList,
   Truck, Users, Landmark, CreditCard, BarChart3, UserCheck,
   GitBranch, Cpu, Settings, Info, ChevronDown, ChevronRight,
-  LogOut, Sparkles, Crown, Shield, Leaf, Utensils, Menu, X
+  LogOut, Sparkles, Crown, Shield, Leaf, Utensils, Menu, X, Lock
 } from "lucide-react";
 
 const ROLE_PERMISSIONS = {
@@ -35,7 +36,7 @@ const MENU_STRUCTURE = [
       { to: "/geraina/app/products/brands", label: "Merek" },
       { to: "/geraina/app/products/units", label: "Satuan" },
       { to: "/geraina/app/products/stock-adjustment", label: "Penyesuaian Stok" },
-      { to: "/geraina/app/products/stock-transfer", label: "Transfer Stok" }
+      { to: "/geraina/app/products/stock-transfer", label: "Transfer Stok", minPlan: "business" }
     ]
   },
   {
@@ -44,37 +45,39 @@ const MENU_STRUCTURE = [
     key: "inventory",
     sub: [
       { to: "/geraina/app/inventory/overview", label: "Ringkasan Stok" },
-      { to: "/geraina/app/inventory/movement", label: "Mutasi Stok" },
-      { to: "/geraina/app/inventory/valuation", label: "Penilaian Inventaris" },
+      { to: "/geraina/app/inventory/movement", label: "Mutasi Stok", minPlan: "pro" },
+      { to: "/geraina/app/inventory/valuation", label: "Penilaian Inventaris", minPlan: "pro" },
       { to: "/geraina/app/inventory/low-stock", label: "Stok Menipis" },
-      { to: "/geraina/app/inventory/dead-stock", label: "Stok Mati" }
+      { to: "/geraina/app/inventory/dead-stock", label: "Stok Mati", minPlan: "pro" }
     ]
   },
   {
     label: "Pembelian",
     icon: ClipboardList,
     key: "purchase",
+    minPlan: "pro",
     sub: [
       { to: "/geraina/app/purchase/orders", label: "Order Pembelian (PO)" },
       { to: "/geraina/app/purchase/receiving", label: "Penerimaan Barang" },
       { to: "/geraina/app/purchase/invoices", label: "Faktur Pemasok" }
     ]
   },
-  { to: "/geraina/app/suppliers", icon: Truck, label: "Pemasok", key: "suppliers" },
+  { to: "/geraina/app/suppliers", icon: Truck, label: "Pemasok", key: "suppliers", minPlan: "pro" },
   {
     label: "Pelanggan",
     icon: Users,
     key: "customers",
     sub: [
       { to: "/geraina/app/customers", label: "Daftar Pelanggan" },
-      { to: "/geraina/app/customers/membership", label: "Keanggotaan" },
-      { to: "/geraina/app/customers/loyalty", label: "Poin Loyalitas" }
+      { to: "/geraina/app/customers/membership", label: "Keanggotaan", minPlan: "business" },
+      { to: "/geraina/app/customers/loyalty", label: "Poin Loyalitas", minPlan: "business" }
     ]
   },
   {
     label: "Hutang Piutang",
     icon: Landmark,
     key: "debt",
+    minPlan: "pro",
     sub: [
       { to: "/geraina/app/debt/receivable", label: "Piutang Usaha" },
       { to: "/geraina/app/debt/payable", label: "Utang Usaha" }
@@ -97,6 +100,7 @@ const MENU_STRUCTURE = [
     label: "Laporan",
     icon: BarChart3,
     key: "reports",
+    minPlan: "pro",
     sub: [
       { to: "/geraina/app/reports/sales", label: "Penjualan" },
       { to: "/geraina/app/reports/product", label: "Produk" },
@@ -112,23 +116,24 @@ const MENU_STRUCTURE = [
     key: "staff",
     sub: [
       { to: "/geraina/app/staff/management", label: "Manajemen Staf" },
-      { to: "/geraina/app/staff/roles", label: "Peran" },
-      { to: "/geraina/app/staff/permissions", label: "Izin Akses" },
-      { to: "/geraina/app/staff/attendance", label: "Absensi" }
+      { to: "/geraina/app/staff/roles", label: "Peran", minPlan: "business" },
+      { to: "/geraina/app/staff/permissions", label: "Izin Akses", minPlan: "business" },
+      { to: "/geraina/app/staff/attendance", label: "Absensi", minPlan: "business" }
     ]
   },
-  { to: "/geraina/app/branches", icon: GitBranch, label: "Cabang", key: "branches" },
+  { to: "/geraina/app/branches", icon: GitBranch, label: "Cabang", key: "branches", minPlan: "business" },
   {
     label: "Integrasi",
     icon: Cpu,
     key: "integrations",
+    minPlan: "pro",
     sub: [
       { to: "/geraina/app/integrations/xendit", label: "Xendit" },
       { to: "/geraina/app/integrations/midtrans", label: "Midtrans" },
       { to: "/geraina/app/integrations/stripe", label: "Stripe" },
-      { to: "/geraina/app/integrations/whatsapp", label: "WhatsApp" },
-      { to: "/geraina/app/integrations/telegram", label: "Telegram" },
-      { to: "/geraina/app/integrations/email", label: "Email" }
+      { to: "/geraina/app/integrations/whatsapp", label: "WhatsApp", minPlan: "business" },
+      { to: "/geraina/app/integrations/telegram", label: "Telegram", minPlan: "business" },
+      { to: "/geraina/app/integrations/email", label: "Email", minPlan: "business" }
     ]
   },
   {
@@ -147,6 +152,28 @@ const MENU_STRUCTURE = [
   },
   { to: "/geraina/app/about", icon: Info, label: "Tentang", key: "about" }
 ];
+
+// Plan-gated nav (cosmetic only -- there is no backend enforcement behind this yet; every
+// endpoint is still reachable regardless of plan). This just shows what each tier unlocks and
+// nudges upgrades, per the Starter/Pro/Business repackaging. "trial" ranks as Business since
+// the 14-day trial now grants full Business-level access.
+const PLAN_RANK = { starter: 0, pro: 1, business: 2, trial: 2 };
+const PLAN_LABEL = { starter: "Starter", pro: "Pro", business: "Business" };
+
+function planRank(plan) {
+  return PLAN_RANK[plan] ?? 0;
+}
+
+function isLocked(minPlan, userPlan) {
+  if (!minPlan || minPlan === "starter") return false;
+  return planRank(userPlan) < planRank(minPlan);
+}
+
+function notifyLocked(minPlan) {
+  toast.error(`Fitur ini tersedia dalam paket ${PLAN_LABEL[minPlan] || "Pro"}.`, {
+    action: { label: "Lihat Paket", onClick: () => { window.location.href = "/geraina/pricing"; } },
+  });
+}
 
 function trialDaysLeft(iso) {
   if (!iso) return null;
@@ -310,6 +337,26 @@ export default function AppLayout() {
             const Icon = item.icon;
             if (item.sub) {
               const isOpen = openMenus[item.key];
+              const subsWithLock = item.sub.map((s) => ({ ...s, _minPlan: s.minPlan || item.minPlan || "starter" }));
+              const allLocked = subsWithLock.every((s) => isLocked(s._minPlan, user?.plan));
+
+              if (allLocked) {
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => notifyLocked(item.minPlan || subsWithLock[0]._minPlan)}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-[hsl(var(--muted))] hover:bg-[hsl(var(--secondary))]/50 transition-colors text-left"
+                    data-testid={`menu-locked-${item.key}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon size={18} className="opacity-50" />
+                      <span>{item.label}</span>
+                    </div>
+                    <Lock size={13} className="opacity-60" />
+                  </button>
+                );
+              }
+
               return (
                 <div key={item.key} className="space-y-0.5">
                   <button
@@ -328,25 +375,55 @@ export default function AppLayout() {
                   </button>
                   {isOpen && (
                     <div className="pl-9 space-y-0.5 border-l border-[hsl(var(--border))]/50 ml-5">
-                      {item.sub.map((subItem) => (
-                        <NavLink
-                          key={subItem.to}
-                          to={subItem.to}
-                          end
-                          className={({ isActive }) =>
-                            `block px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                              isActive
-                                ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]"
-                                : "text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"
-                            }`
-                          }
-                        >
-                          {subItem.label}
-                        </NavLink>
-                      ))}
+                      {subsWithLock.map((subItem) => {
+                        const locked = isLocked(subItem._minPlan, user?.plan);
+                        if (locked) {
+                          return (
+                            <button
+                              key={subItem.to}
+                              onClick={() => notifyLocked(subItem._minPlan)}
+                              className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs font-medium rounded-md text-[hsl(var(--muted))]/70 hover:bg-[hsl(var(--secondary))]/50 transition-colors text-left"
+                              data-testid={`submenu-locked-${subItem.to.split("/").pop()}`}
+                            >
+                              <span>{subItem.label}</span>
+                              <Lock size={11} className="opacity-60 shrink-0" />
+                            </button>
+                          );
+                        }
+                        return (
+                          <NavLink
+                            key={subItem.to}
+                            to={subItem.to}
+                            end
+                            className={({ isActive }) =>
+                              `block px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                                isActive
+                                  ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]"
+                                  : "text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"
+                              }`
+                            }
+                          >
+                            {subItem.label}
+                          </NavLink>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
+              );
+            }
+
+            const leafLocked = isLocked(item.minPlan, user?.plan);
+            if (leafLocked) {
+              return (
+                <button
+                  key={item.to}
+                  onClick={() => notifyLocked(item.minPlan)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-[hsl(var(--muted))] hover:bg-[hsl(var(--secondary))]/50 transition-colors text-left"
+                  data-testid={`menu-locked-${item.key}`}
+                >
+                  <Icon size={18} className="opacity-50" /> <span className="flex-1">{item.label}</span> <Lock size={13} className="opacity-60" />
+                </button>
               );
             }
 
