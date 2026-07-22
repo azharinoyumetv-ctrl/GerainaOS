@@ -11,6 +11,7 @@ identically-numbered order; every match below is scoped by store_id too).
 """
 import hashlib
 import hmac
+import logging
 import os
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, Depends
@@ -21,6 +22,8 @@ from doku_client import verify_doku_signature, map_doku_status
 from auth import get_current_user
 
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
+
+logger = logging.getLogger("geraina.webhooks")
 
 # Note: WhatsApp inbound signature verification is per-tenant (whatsapp.app_secret in each
 # store's integrations doc), NOT a single global secret -- see _verify_meta_signature below.
@@ -56,9 +59,46 @@ async def _process(payload: dict, store_id: str):
     )
     if not ref:
         return
+
+    # Look up the order first (instead of blind update_one), scoped by the tenant this webhook
+    # token belongs to, so we know what it's actually worth. This lets us verify the amount
+    # before ever flipping to "paid", so a tampered or replayed webhook can't mark an order
+    # paid for less than it's actually worth. Ported from DapurOS's routes_webhooks.py, which
+    # had this hardening and this file didn't.
+    order = await db.orders.find_one(
+        {"xendit_reference_id": ref, "store_id": store_id}, {"_id": 0, "id": 1, "store_id": 1, "total": 1, "order_no": 1}
+    )
+    if not order:
+        logger.warning("Xendit webhook: no order found for reference_id=%s store_id=%s", ref, store_id)
+        return
+
     new_status = _map_status(payload if "status" in payload else (payload.get("data") or payload))
+
+    if new_status == "paid":
+        webhook_amount = (
+            payload.get("amount")
+            or payload.get("capture_amount")
+            or payload.get("charge_amount")
+            or (payload.get("data") or {}).get("amount")
+        )
+        if webhook_amount is not None:
+            try:
+                if round(float(webhook_amount)) != round(float(order.get("total", 0))):
+                    logger.warning(
+                        "Xendit webhook amount mismatch for order_no=%s store_id=%s: "
+                        "webhook_amount=%r order_total=%r — ignoring payment_status update.",
+                        order.get("order_no"), order.get("store_id"), webhook_amount, order.get("total"),
+                    )
+                    return
+            except (TypeError, ValueError):
+                logger.warning(
+                    "Xendit webhook: could not parse amount %r for order_no=%s — ignoring payment_status update.",
+                    webhook_amount, order.get("order_no"),
+                )
+                return
+
     await db.orders.update_one(
-        {"xendit_reference_id": ref, "store_id": store_id},
+        {"xendit_reference_id": ref, "store_id": order["store_id"]},
         {
             "$set": {
                 "payment_status": new_status,
