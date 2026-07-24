@@ -71,6 +71,8 @@ export default function Register() {
             <div>
               <label className="label-tiny">Nama Toko</label>
               <input
+                name="organization"
+                autoComplete="organization"
                 className="input-field mt-1.5"
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
@@ -83,6 +85,8 @@ export default function Register() {
               <label className="label-tiny">Email Pemilik</label>
               <input
                 type="email"
+                name="email"
+                autoComplete="email"
                 className="input-field mt-1.5"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -95,6 +99,8 @@ export default function Register() {
               <label className="label-tiny">Password (min 6)</label>
               <input
                 type="password"
+                name="new-password"
+                autoComplete="new-password"
                 className="input-field mt-1.5"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

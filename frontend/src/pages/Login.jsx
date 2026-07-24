@@ -104,13 +104,13 @@ export default function Login() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold mb-1.5" style={{ color: "#22423b" }} data-testid="login-email-label">Alamat email</label>
-              <input type="email" required data-testid="login-email-input" value={email}
+              <input type="email" name="email" autoComplete="email" required data-testid="login-email-input" value={email}
                 onChange={(e) => setEmail(e.target.value)} placeholder="nama@toko.com"
                 style={inputBase} onFocus={focusOn} onBlur={focusOff} />
             </div>
             <div>
               <label className="block text-sm font-semibold mb-1.5" style={{ color: "#22423b" }} data-testid="login-password-label">Kata sandi</label>
-              <input type="password" required data-testid="login-password-input" value={password}
+              <input type="password" name="password" autoComplete="current-password" required data-testid="login-password-input" value={password}
                 onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
                 style={inputBase} onFocus={focusOn} onBlur={focusOff} />
             </div>
