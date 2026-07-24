@@ -44,6 +44,7 @@ def _user_public(user: dict) -> dict:
         "store_id": user.get("store_id"),
         "store_name": user.get("store_name"),
         "trial_ends_at": user.get("trial_ends_at"),
+        "trial_expired_at": user.get("trial_expired_at"),
         "plan": user.get("plan", "trial"),
     }
 

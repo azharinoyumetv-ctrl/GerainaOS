@@ -11,7 +11,7 @@ import jwt
 from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordBearer
 
-from database import get_db
+from database import get_db, utcnow
 
 JWT_SECRET = os.environ.get("JWT_SECRET_KEY", "change-me")
 if JWT_SECRET == "change-me" and os.environ.get("ENV") == "production":
@@ -47,6 +47,50 @@ def create_access_token(user_id: str, store_id: str, role: str, email: str) -> s
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
 
 
+async def _maybe_downgrade_expired_trial(user: dict) -> dict:
+    """Lazy trial-expiry enforcement, run on every authenticated request via _decode_identity
+    (both get_current_user and get_identity route through it). There's no scheduled-job infra
+    in this deployment to sweep expired trials on a timer, so the check happens on-read
+    instead: once trial_ends_at has passed, downgrade to "starter" -- the same fail-closed
+    default plan_limits.py already falls back to for unknown/missing plans -- both in the DB
+    and on the in-memory dict, so every check_capacity()/require_plan() call later in THIS
+    SAME request already sees the corrected plan instead of a stale "trial".
+
+    Note: the frontend's AuthContext only fetches /auth/me on mount, not on a timer, so a tab
+    left open past the trial deadline won't visually update its nav lock icons until next
+    reload/login -- but every actual API call is still re-checked here regardless of what the
+    UI displays, so this is a cosmetic staleness window, not a bypass."""
+    if user.get("plan") != "trial":
+        return user
+    ends_at = user.get("trial_ends_at")
+    if not ends_at:
+        return user
+    try:
+        expires = datetime.fromisoformat(ends_at)
+    except (TypeError, ValueError):
+        return user
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) < expires:
+        return user
+
+    db = get_db()
+    stamp = utcnow().isoformat()
+    await db.users.find_one_and_update(
+        {"id": user["id"], "plan": "trial"},
+        {"$set": {"plan": "starter", "trial_expired_at": stamp}},
+    )
+    # Best-effort only -- store.plan is never read for authorization (every check_capacity()/
+    # require_plan() call reads user.get("plan")), this just keeps it from looking stale.
+    await db.stores.update_many(
+        {"owner_user_id": user["id"], "plan": "trial"},
+        {"$set": {"plan": "starter"}},
+    )
+    user["plan"] = "starter"
+    user["trial_expired_at"] = stamp
+    return user
+
+
 async def _decode_identity(token: str) -> dict:
     cred_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -61,6 +105,7 @@ async def _decode_identity(token: str) -> dict:
     user = await db.users.find_one({"id": payload.get("sub")}, {"_id": 0, "password_hash": 0})
     if not user:
         raise cred_exc
+    user = await _maybe_downgrade_expired_trial(user)
     return user
 
 
