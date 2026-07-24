@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
-import { Leaf, ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 export default function Register() {
   const [storeName, setStoreName] = useState("");
@@ -38,7 +38,7 @@ export default function Register() {
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 relative bg-grain"
            style={{ background: "linear-gradient(135deg, hsl(151,39%,17%), hsl(151,39%,12%))" }}>
         <Link to="/geraina" className="text-white font-display font-bold text-xl flex items-center gap-2">
-          <Leaf size={22} className="text-[hsl(9,65%,62%)]" /> Geraina POS <span className="text-xs text-white/60 font-medium">by DagangOS</span>
+          <img src="/assets/brand/geraina-icon.png" alt="" className="w-6 h-6 object-contain" /> Geraina POS <span className="text-xs text-white/60 font-medium">by DagangOS</span>
         </Link>
         <div className="text-white space-y-5 max-w-md">
           <p className="label-tiny" style={{ color: "hsl(9,65%,75%)" }}>Geraina POS by DagangOS</p>

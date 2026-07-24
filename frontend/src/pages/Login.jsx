@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
-import { ArrowRight, ShoppingBag, ScanLine, Boxes } from "lucide-react";
+import { ArrowRight, ScanLine, Boxes } from "lucide-react";
 
 const JAKARTA = "'Plus Jakarta Sans', 'Figtree', sans-serif";
 const ACCENT = "#0d9488";
@@ -57,9 +57,7 @@ export default function Login() {
         <div className="absolute -left-20 -bottom-20 w-72 h-72 rounded-full" style={{ background: "rgba(255,255,255,.05)" }} />
 
         <Link to="/geraina" className="relative flex items-center gap-2.5 text-white">
-          <span className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,.14)" }}>
-            <ShoppingBag size={18} />
-          </span>
+          <img src="/assets/brand/geraina-icon.png" alt="" className="w-9 h-9 object-contain" />
           <span className="font-bold text-lg" style={{ fontFamily: JAKARTA }}>Geraina POS</span>
           <span className="text-xs font-medium text-white/60">by DagangOS</span>
         </Link>
@@ -87,9 +85,7 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
         <form onSubmit={submit} className="w-full max-w-sm" data-testid="login-form">
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-            <span className="w-9 h-9 rounded-xl flex items-center justify-center text-white" style={{ background: ACCENT }}>
-              <ShoppingBag size={18} />
-            </span>
+            <img src="/assets/brand/geraina-icon.png" alt="" className="w-9 h-9 object-contain" />
             <span className="font-bold text-lg" style={{ fontFamily: JAKARTA, color: "#0f2622" }}>Geraina POS</span>
             <span className="text-xs font-medium" style={{ color: "#6d857f" }}>by DagangOS</span>
           </div>
