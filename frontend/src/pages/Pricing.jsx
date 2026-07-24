@@ -43,6 +43,8 @@ export default function Pricing() {
   // deliberately anonymous-only (new account + first store), so it's the wrong CTA for this
   // case by design, not a bug -- this adds the CTA that was actually missing.
   const [hasGerainaStore, setHasGerainaStore] = useState(null);
+  const [myAddons, setMyAddons] = useState([]);
+  const [buyingAddonId, setBuyingAddonId] = useState(null);
 
   useEffect(() => {
     api.get("/pricing/tiers").then((r) => setTiers(r.data)).catch(() => {});
@@ -56,6 +58,13 @@ export default function Pricing() {
       setHasGerainaStore(stores.some((s) => s.module === "geraina"));
     }).catch(() => {});
   }, [user]);
+
+  const loadMyAddons = () => {
+    if (!user) { setMyAddons([]); return; }
+    api.get("/pricing/addons/my").then((r) => setMyAddons(r.data || [])).catch(() => {});
+  };
+
+  useEffect(loadMyAddons, [user]);
 
   const isYearly = billing === "yearly";
 
@@ -75,6 +84,33 @@ export default function Pricing() {
     } finally {
       setUpgradingId(null);
     }
+  };
+
+  const handleBuyAddon = async (addonId, addonName) => {
+    setBuyingAddonId(addonId);
+    try {
+      const res = await api.post("/pricing/addons/purchase", { addon_id: addonId });
+      toast.success(res?.data?.message || `Permintaan add-on "${addonName}" tercatat.`);
+      loadMyAddons();
+    } catch (err) {
+      const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
+      toast.error(`Gagal mengajukan add-on "${addonName}": ${msg}`);
+    } finally {
+      setBuyingAddonId(null);
+    }
+  };
+
+  // extra_device is Pro-only, capped at 2 per store; extra_outlet is Business-only. Both
+  // eligibility checks are enforced again server-side in purchase_addon() -- this is just so
+  // the button reflects reality instead of only failing after a click.
+  const addonEligiblePlan = { extra_device: "pro", extra_outlet: "business" };
+  const addonStatus = (addonId) => {
+    const mine = myAddons.filter((a) => a.addon_id === addonId);
+    const active = mine.filter((a) => a.status === "active").length;
+    const pending = mine.filter((a) => a.status === "pending").length;
+    const eligible = !user || user.plan === addonEligiblePlan[addonId];
+    const maxed = addonId === "extra_device" && active + pending >= 2;
+    return { active, pending, eligible, maxed };
   };
 
   const priceText = (t) => {
@@ -178,14 +214,37 @@ export default function Pricing() {
             <p className="mt-2 max-w-xl mx-auto text-sm" style={{ color: BODY }}>Hanya bayar saat Anda butuh lebih. Bisa ditambahkan ke paket apa saja.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {addons.map((a) => (
-              <div key={a.id} className="rounded-2xl bg-white p-5 flex items-start justify-between gap-3 border" style={{ borderColor: LINE }} data-testid={`addon-${a.id}`}>
-                <div><p className="font-bold text-base" style={{ fontFamily: JK, color: INK }}>{a.name}</p><p className="text-xs mt-0.5" style={{ color: MUTED }}>{a.unit}</p></div>
-                <p className="font-extrabold text-base whitespace-nowrap" style={{ fontFamily: JK, color: INK }}>{a.price_idr != null ? fmtIDR(a.price_idr) : `${fmtIDR(a.price_idr_min)} – ${fmtIDR(a.price_idr_max)}`}</p>
-              </div>
-            ))}
+            {addons.map((a) => {
+              const st = addonStatus(a.id);
+              return (
+                <div key={a.id} className="rounded-2xl bg-white p-5 flex flex-col gap-3 border" style={{ borderColor: LINE }} data-testid={`addon-${a.id}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div><p className="font-bold text-base" style={{ fontFamily: JK, color: INK }}>{a.name}</p><p className="text-xs mt-0.5" style={{ color: MUTED }}>{a.unit}</p></div>
+                    <p className="font-extrabold text-base whitespace-nowrap" style={{ fontFamily: JK, color: INK }}>{a.price_idr != null ? fmtIDR(a.price_idr) : `${fmtIDR(a.price_idr_min)} – ${fmtIDR(a.price_idr_max)}`}</p>
+                  </div>
+                  {!user ? (
+                    <Link to="/geraina/login" className="text-center py-2 rounded-lg border text-xs font-semibold" style={{ borderColor: LINE, color: INK }} data-testid={`addon-cta-${a.id}`}>Masuk untuk membeli</Link>
+                  ) : !st.eligible ? (
+                    <p className="text-xs text-center py-2" style={{ color: MUTED }} data-testid={`addon-cta-${a.id}`}>Tersedia mulai paket {addonEligiblePlan[a.id] === "business" ? "Business" : "Pro"}</p>
+                  ) : st.active > 0 ? (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: TINT, color: TEAL_DARK }} data-testid={`addon-status-${a.id}`}>Aktif ×{st.active}</span>
+                      {!st.maxed && (
+                        <button onClick={() => handleBuyAddon(a.id, a.name)} disabled={buyingAddonId !== null} className="text-xs font-semibold px-3 py-1.5 rounded-lg border" style={{ borderColor: LINE, color: INK }} data-testid={`addon-cta-${a.id}`}>{buyingAddonId === a.id ? "Memproses…" : "Tambah lagi"}</button>
+                      )}
+                    </div>
+                  ) : st.pending > 0 ? (
+                    <span className="text-xs font-semibold text-center py-2 rounded-lg" style={{ color: MUTED }} data-testid={`addon-status-${a.id}`}>Menunggu Aktivasi ({st.pending})</span>
+                  ) : st.maxed ? (
+                    <span className="text-xs font-semibold text-center py-2 rounded-lg" style={{ color: MUTED }} data-testid={`addon-status-${a.id}`}>Batas Tercapai (2/2)</span>
+                  ) : (
+                    <button onClick={() => handleBuyAddon(a.id, a.name)} disabled={buyingAddonId !== null} className="w-full py-2 rounded-lg text-white text-xs font-semibold" style={{ background: TEAL }} data-testid={`addon-cta-${a.id}`}>{buyingAddonId === a.id ? "Memproses…" : "Ajukan Add-on"}</button>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <p className="text-xs text-center mt-6" style={{ color: MUTED }}>Add-on ditagih terpisah dari langganan dan bisa diaktifkan kapan saja.</p>
+          <p className="text-xs text-center mt-6" style={{ color: MUTED }}>Add-on ditagih terpisah dari langganan. Permintaan diaktifkan manual oleh tim kami setelah pembayaran dikonfirmasi.</p>
         </div>
       </section>
 

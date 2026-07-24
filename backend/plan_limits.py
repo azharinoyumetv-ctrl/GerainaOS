@@ -61,29 +61,58 @@ def require_plan(min_plan: str):
     return _dep
 
 
+async def _active_addon_counts(db, store_id: str) -> dict:
+    """Count ACTIVE (staff-approved) addon purchases per addon_id for a store. Pending/rejected
+    requests grant nothing yet -- see routes_pricing.py's purchase_addon() for why activation is
+    a manual step (no subscription payment gateway wired to this app's own billing, same
+    reason /pricing/upgrade records paid-tier changes as pending instead of granting instantly)."""
+    counts = {}
+    async for doc in db.addon_purchases.find({"store_id": store_id, "status": "active"}, {"_id": 0, "addon_id": 1}):
+        counts[doc["addon_id"]] = counts.get(doc["addon_id"], 0) + 1
+    return counts
+
+
+def _addon_bonus(counts: dict, field: str) -> int:
+    """Extra capacity granted by active addons, matching ADDONS' own descriptions in
+    routes_pricing.py: extra_device = +1 device each; extra_outlet bundles +1 outlet, +5
+    devices, +15 employee seats each ("termasuk 5 device & 15 akun karyawan")."""
+    extra_device = counts.get("extra_device", 0)
+    extra_outlet = counts.get("extra_outlet", 0)
+    if field == "max_devices":
+        return extra_device + extra_outlet * 5
+    if field == "max_employees":
+        return extra_outlet * 15
+    return 0
+
+
 async def check_capacity(db, store_id: str, plan: str, collection: str, field: str):
-    """Raise 403 if the store is already at its plan's cap for `field` (e.g. "max_employees")
-    on `collection` (e.g. "staff"). None/missing cap on the tier means unlimited."""
+    """Raise 403 if the store is already at its plan's cap (plus any active addon bonus) for
+    `field` (e.g. "max_employees") on `collection` (e.g. "staff"). None/missing cap on the tier
+    means unlimited."""
     tier = _tier_for(plan)
     cap = tier.get(field)
     if cap is None:
         return
+    counts = await _active_addon_counts(db, store_id)
+    cap += _addon_bonus(counts, field)
     count = await db[collection].count_documents({"store_id": store_id})
     if count >= cap:
         raise HTTPException(
             status_code=403,
-            detail=f"Batas paket {tier.get('name', 'Anda')} tercapai ({cap}). Upgrade paket untuk menambah lagi.",
+            detail=f"Batas paket {tier.get('name', 'Anda')} tercapai ({cap}). Upgrade paket atau beli add-on untuk menambah lagi.",
         )
 
 
 async def check_outlet_capacity(db, store_id: str, plan: str):
-    """Raise 403 if adding one more branch would exceed the plan's max_outlets. The store's
-    own base location always counts as outlet #1, so the `branches` collection may hold at
-    most (cap - 1) additional records."""
+    """Raise 403 if adding one more branch would exceed the plan's max_outlets (plus any active
+    extra_outlet addons). The store's own base location always counts as outlet #1, so the
+    `branches` collection may hold at most (cap - 1) additional records."""
     tier = _tier_for(plan)
     cap = tier.get("max_outlets")
     if cap is None:
         return
+    counts = await _active_addon_counts(db, store_id)
+    cap += counts.get("extra_outlet", 0)
     count = await db.branches.count_documents({"store_id": store_id})
     if count + 1 >= cap:
         raise HTTPException(
