@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from database import get_db, utcnow, next_order_no
 from models import OrderCreate, Order, OrderLineItem
 from auth import get_current_user, require_admin
+from plan_limits import require_plan
 from xendit_client import create_qris, create_ewallet_charge
 from doku_client import create_doku_checkout, DokuNotConfiguredError
 
@@ -256,8 +257,10 @@ async def stats(user: dict = Depends(get_current_user)):
 
 
 @router.get("/product-sales")
-async def product_sales(user: dict = Depends(get_current_user), days: int = 30, limit: int = 10):
-    """Laporan produk terjual REAL: agregasi qty + revenue per produk dari order LUNAS."""
+async def product_sales(user: dict = Depends(require_plan("pro")), days: int = 30, limit: int = 10):
+    """Laporan produk terjual REAL: agregasi qty + revenue per produk dari order LUNAS.
+
+    Pro-tier feature (part of the Laporan module) -- see AppLayout.jsx minPlan."""
     db = get_db()
     from datetime import datetime, timezone, timedelta
     after = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()

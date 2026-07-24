@@ -9,6 +9,7 @@ from models import (
     DebtPayable, DebtPayableCreate, DebtPayableUpdate
 )
 from auth import get_current_user
+from plan_limits import require_plan
 
 router = APIRouter(tags=["customers_debt"])
 
@@ -68,15 +69,15 @@ async def delete_customer(cust_id: str, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Pelanggan tidak ditemukan")
     return {"ok": True}
 
-# ---------- Memberships ----------
+# ---------- Memberships (Business-tier feature -- see AppLayout.jsx minPlan) ----------
 @router.get("/api/customers/memberships", response_model=List[Membership])
-async def list_memberships(user: dict = Depends(get_current_user)):
+async def list_memberships(user: dict = Depends(require_plan("business"))):
     db = get_db()
     cursor = db.memberships.find({"store_id": user["store_id"]}, {"_id": 0}).sort("min_points", 1)
     return await cursor.to_list(length=100)
 
 @router.post("/api/customers/memberships", response_model=Membership)
-async def create_membership(payload: MembershipBase, user: dict = Depends(get_current_user)):
+async def create_membership(payload: MembershipBase, user: dict = Depends(require_plan("business"))):
     db = get_db()
     existing = await db.memberships.find_one({"store_id": user["store_id"], "name": payload.name})
     if existing:
@@ -93,9 +94,9 @@ async def create_membership(payload: MembershipBase, user: dict = Depends(get_cu
     doc.pop("_id", None)
     return doc
 
-# ---------- Loyalty Rules ----------
+# ---------- Loyalty Rules (Business-tier feature -- see AppLayout.jsx minPlan) ----------
 @router.get("/api/customers/loyalty", response_model=LoyaltyRules)
-async def get_loyalty_rules(user: dict = Depends(get_current_user)):
+async def get_loyalty_rules(user: dict = Depends(require_plan("business"))):
     db = get_db()
     rules = await db.loyalty_rules.find_one({"store_id": user["store_id"]}, {"_id": 0})
     if not rules:
@@ -104,7 +105,7 @@ async def get_loyalty_rules(user: dict = Depends(get_current_user)):
     return rules
 
 @router.post("/api/customers/loyalty", response_model=LoyaltyRules)
-async def save_loyalty_rules(payload: LoyaltyRules, user: dict = Depends(get_current_user)):
+async def save_loyalty_rules(payload: LoyaltyRules, user: dict = Depends(require_plan("business"))):
     db = get_db()
     doc = payload.model_dump()
     doc["store_id"] = user["store_id"]
@@ -115,15 +116,15 @@ async def save_loyalty_rules(payload: LoyaltyRules, user: dict = Depends(get_cur
     )
     return payload
 
-# ---------- Debt Receivables (Piutang) ----------
+# ---------- Debt Receivables (Piutang) -- Pro-tier feature, see AppLayout.jsx minPlan ----------
 @router.get("/api/debt/receivables", response_model=List[DebtReceivable])
-async def list_receivables(user: dict = Depends(get_current_user)):
+async def list_receivables(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.debt_receivables.find({"store_id": user["store_id"]}, {"_id": 0})
     return await cursor.to_list(length=100)
 
 @router.post("/api/debt/receivables", response_model=DebtReceivable)
-async def create_receivable(payload: DebtReceivableCreate, user: dict = Depends(get_current_user)):
+async def create_receivable(payload: DebtReceivableCreate, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     doc = {
         "id": str(uuid.uuid4()),
@@ -141,7 +142,7 @@ async def create_receivable(payload: DebtReceivableCreate, user: dict = Depends(
     return doc
 
 @router.put("/api/debt/receivables/{receivable_id}", response_model=DebtReceivable)
-async def update_receivable(receivable_id: str, payload: DebtReceivableUpdate, user: dict = Depends(get_current_user)):
+async def update_receivable(receivable_id: str, payload: DebtReceivableUpdate, user: dict = Depends(require_plan("pro"))):
     """Record a payment/settlement against an existing receivable (partial or full)."""
     db = get_db()
     update = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
@@ -157,15 +158,15 @@ async def update_receivable(receivable_id: str, payload: DebtReceivableUpdate, u
         raise HTTPException(status_code=404, detail="Catatan piutang tidak ditemukan")
     return res
 
-# ---------- Debt Payables (Hutang) ----------
+# ---------- Debt Payables (Hutang) -- Pro-tier feature, see AppLayout.jsx minPlan ----------
 @router.get("/api/debt/payables", response_model=List[DebtPayable])
-async def list_payables(user: dict = Depends(get_current_user)):
+async def list_payables(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.debt_payables.find({"store_id": user["store_id"]}, {"_id": 0})
     return await cursor.to_list(length=100)
 
 @router.post("/api/debt/payables", response_model=DebtPayable)
-async def create_payable(payload: DebtPayableCreate, user: dict = Depends(get_current_user)):
+async def create_payable(payload: DebtPayableCreate, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     doc = {
         "id": str(uuid.uuid4()),
@@ -182,7 +183,7 @@ async def create_payable(payload: DebtPayableCreate, user: dict = Depends(get_cu
     return doc
 
 @router.put("/api/debt/payables/{payable_id}", response_model=DebtPayable)
-async def update_payable(payable_id: str, payload: DebtPayableUpdate, user: dict = Depends(get_current_user)):
+async def update_payable(payable_id: str, payload: DebtPayableUpdate, user: dict = Depends(require_plan("pro"))):
     """Record a payment/settlement against an existing payable (partial or full)."""
     db = get_db()
     update = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}

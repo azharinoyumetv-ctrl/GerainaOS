@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from database import get_db, utcnow
 from models import Branch, BranchBase
 from auth import get_current_user, require_admin
+from plan_limits import require_plan, plan_rank
 
 router = APIRouter(tags=["settings"])
 
@@ -86,9 +87,12 @@ async def save_payments_config(payload: Dict[str, Any], user: dict = Depends(get
     )
     return res
 
-# ---------- Integrations ----------
+# ---------- Integrations (Pro-tier floor; WhatsApp/Telegram/Email are Business-only within
+# it -- see AppLayout.jsx minPlan. One combined get/set endpoint covers all providers, so the
+# WhatsApp/Telegram/Email restriction is enforced inline in save_integrations below rather than
+# via the Depends, since a Pro user must still be able to save Xendit/Midtrans/Stripe/DOKU.) ----------
 @router.get("/api/integrations")
-async def get_integrations(user: dict = Depends(get_current_user)):
+async def get_integrations(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     res = await db.integrations.find_one({"store_id": user["store_id"]}, {"_id": 0})
     if not res:
@@ -106,6 +110,13 @@ async def get_integrations(user: dict = Depends(get_current_user)):
 
 @router.post("/api/integrations")
 async def save_integrations(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
+    if plan_rank(user.get("plan")) < plan_rank("pro"):
+        raise HTTPException(status_code=403, detail="Integrasi pihak ketiga tersedia mulai paket Pro. Upgrade paket untuk mengakses fitur ini.")
+    if plan_rank(user.get("plan")) < plan_rank("business"):
+        for key, label in (("whatsapp", "WhatsApp"), ("telegram", "Telegram"), ("email", "Email")):
+            if (payload.get(key) or {}).get("is_active"):
+                raise HTTPException(status_code=403, detail=f"Integrasi {label} hanya tersedia di paket Business. Upgrade paket untuk mengaktifkan.")
+
     db = get_db()
 
     # WhatsApp inbound routing/signature verification key on webhook_verify_token and
@@ -174,18 +185,20 @@ async def test_whatsapp(payload: Dict[str, Any], user: dict = Depends(require_ad
     access_token = str(payload.get("access_token") or "").strip()
     if not phone_number_id or not access_token:
         raise HTTPException(status_code=400, detail="Phone Number ID dan Access Token WhatsApp belum diisi")
+    if plan_rank(user.get("plan")) < plan_rank("business"):
+        raise HTTPException(status_code=403, detail="Integrasi WhatsApp hanya tersedia di paket Business. Upgrade paket untuk mengaktifkan.")
     cfg = {"is_active": True, "phone_number_id": phone_number_id, "access_token": access_token}
     return await send_meta_message(cfg, target, template_name="hello_world", params=[], lang="en_US")
 
-# ---------- Branches ----------
+# ---------- Branches (Business-tier feature -- see AppLayout.jsx minPlan) ----------
 @router.get("/api/branches", response_model=List[Branch])
-async def list_branches(user: dict = Depends(get_current_user)):
+async def list_branches(user: dict = Depends(require_plan("business"))):
     db = get_db()
     cursor = db.branches.find({"store_id": user["store_id"]}, {"_id": 0}).sort("name", 1)
     return await cursor.to_list(length=100)
 
 @router.post("/api/branches", response_model=Branch)
-async def create_branch(payload: BranchBase, user: dict = Depends(get_current_user)):
+async def create_branch(payload: BranchBase, user: dict = Depends(require_plan("business"))):
     db = get_db()
     from plan_limits import check_outlet_capacity
     await check_outlet_capacity(db, user["store_id"], user.get("plan"))
@@ -205,7 +218,7 @@ async def create_branch(payload: BranchBase, user: dict = Depends(get_current_us
     return doc
 
 @router.put("/api/branches/{branch_id}", response_model=Branch)
-async def update_branch(branch_id: str, payload: BranchBase, user: dict = Depends(get_current_user)):
+async def update_branch(branch_id: str, payload: BranchBase, user: dict = Depends(require_plan("business"))):
     db = get_db()
     res = await db.branches.find_one_and_update(
         {"id": branch_id, "store_id": user["store_id"]},
@@ -222,7 +235,7 @@ async def update_branch(branch_id: str, payload: BranchBase, user: dict = Depend
     return res
 
 @router.delete("/api/branches/{branch_id}")
-async def delete_branch(branch_id: str, user: dict = Depends(get_current_user)):
+async def delete_branch(branch_id: str, user: dict = Depends(require_plan("business"))):
     db = get_db()
     res = await db.branches.delete_one({"id": branch_id, "store_id": user["store_id"]})
     if res.deleted_count == 0:

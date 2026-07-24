@@ -9,18 +9,19 @@ from models import (
     SupplierInvoiceUpdate
 )
 from auth import get_current_user
+from plan_limits import require_plan
 
 router = APIRouter(tags=["purchase"])
 
-# ---------- Suppliers ----------
+# ---------- Suppliers (Pro-tier feature -- see AppLayout.jsx minPlan) ----------
 @router.get("/api/suppliers", response_model=List[Supplier])
-async def list_suppliers(user: dict = Depends(get_current_user)):
+async def list_suppliers(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.suppliers.find({"store_id": user["store_id"]}, {"_id": 0}).sort("name", 1)
     return await cursor.to_list(length=100)
 
 @router.post("/api/suppliers", response_model=Supplier)
-async def create_supplier(payload: SupplierBase, user: dict = Depends(get_current_user)):
+async def create_supplier(payload: SupplierBase, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     existing = await db.suppliers.find_one({"store_id": user["store_id"], "name": payload.name})
     if existing:
@@ -40,7 +41,7 @@ async def create_supplier(payload: SupplierBase, user: dict = Depends(get_curren
     return doc
 
 @router.put("/api/suppliers/{sup_id}", response_model=Supplier)
-async def update_supplier(sup_id: str, payload: SupplierBase, user: dict = Depends(get_current_user)):
+async def update_supplier(sup_id: str, payload: SupplierBase, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     res = await db.suppliers.find_one_and_update(
         {"id": sup_id, "store_id": user["store_id"]},
@@ -59,22 +60,22 @@ async def update_supplier(sup_id: str, payload: SupplierBase, user: dict = Depen
     return res
 
 @router.delete("/api/suppliers/{sup_id}")
-async def delete_supplier(sup_id: str, user: dict = Depends(get_current_user)):
+async def delete_supplier(sup_id: str, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     res = await db.suppliers.delete_one({"id": sup_id, "store_id": user["store_id"]})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Supplier tidak ditemukan")
     return {"ok": True}
 
-# ---------- Purchase Orders ----------
+# ---------- Purchase Orders (Pro-tier feature -- see AppLayout.jsx minPlan) ----------
 @router.get("/api/purchase/orders", response_model=List[PurchaseOrder])
-async def list_purchase_orders(user: dict = Depends(get_current_user)):
+async def list_purchase_orders(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.purchase_orders.find({"store_id": user["store_id"]}, {"_id": 0}).sort("created_at", -1)
     return await cursor.to_list(length=100)
 
 @router.post("/api/purchase/orders", response_model=PurchaseOrder)
-async def create_purchase_order(payload: PurchaseOrderCreate, user: dict = Depends(get_current_user)):
+async def create_purchase_order(payload: PurchaseOrderCreate, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     doc = {
         "id": str(uuid.uuid4()),
@@ -114,15 +115,15 @@ async def create_purchase_order(payload: PurchaseOrderCreate, user: dict = Depen
     doc.pop("_id", None)
     return doc
 
-# ---------- Goods Receiving ----------
+# ---------- Goods Receiving (Pro-tier feature -- see AppLayout.jsx minPlan) ----------
 @router.get("/api/purchase/receiving", response_model=List[GoodsReceiving])
-async def list_receiving(user: dict = Depends(get_current_user)):
+async def list_receiving(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.goods_receiving.find({"store_id": user["store_id"]}, {"_id": 0}).sort("received_at", -1)
     return await cursor.to_list(length=100)
 
 @router.post("/api/purchase/receiving", response_model=GoodsReceiving)
-async def create_receiving(payload: GoodsReceivingCreate, user: dict = Depends(get_current_user)):
+async def create_receiving(payload: GoodsReceivingCreate, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     doc = {
         "id": str(uuid.uuid4()),
@@ -143,15 +144,15 @@ async def create_receiving(payload: GoodsReceivingCreate, user: dict = Depends(g
     doc.pop("_id", None)
     return doc
 
-# ---------- Supplier Invoices ----------
+# ---------- Supplier Invoices (Pro-tier feature -- see AppLayout.jsx minPlan) ----------
 @router.get("/api/purchase/invoices", response_model=List[SupplierInvoice])
-async def list_supplier_invoices(user: dict = Depends(get_current_user)):
+async def list_supplier_invoices(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.supplier_invoices.find({"store_id": user["store_id"]}, {"_id": 0}).sort("created_at", -1)
     return await cursor.to_list(length=100)
 
 @router.post("/api/purchase/invoices", response_model=SupplierInvoice)
-async def create_supplier_invoice(payload: SupplierInvoiceCreate, user: dict = Depends(get_current_user)):
+async def create_supplier_invoice(payload: SupplierInvoiceCreate, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     doc = {
         "id": str(uuid.uuid4()),
@@ -185,7 +186,7 @@ async def create_supplier_invoice(payload: SupplierInvoiceCreate, user: dict = D
     return doc
 
 @router.put("/api/purchase/invoices/{invoice_id}", response_model=SupplierInvoice)
-async def update_supplier_invoice(invoice_id: str, payload: SupplierInvoiceUpdate, user: dict = Depends(get_current_user)):
+async def update_supplier_invoice(invoice_id: str, payload: SupplierInvoiceUpdate, user: dict = Depends(require_plan("pro"))):
     """Mark a supplier invoice paid/unpaid (or otherwise partially update it).
 
     HISTORY: this endpoint didn't exist -- the frontend's 'Tandai Lunas' button POSTed

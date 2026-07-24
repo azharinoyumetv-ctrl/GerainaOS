@@ -8,6 +8,7 @@ from models import (
     StockAdjustment, StockAdjustmentCreate, StockTransfer, StockTransferCreate
 )
 from auth import get_current_user
+from plan_limits import require_plan
 
 router = APIRouter(prefix="/api/products", tags=["inventory"])
 
@@ -184,15 +185,15 @@ async def create_adjustment(payload: StockAdjustmentCreate, user: dict = Depends
     doc.pop("_id", None)
     return doc
 
-# ---------- Stock Transfers ----------
+# ---------- Stock Transfers (Business-tier feature -- see AppLayout.jsx minPlan) ----------
 @router.get("/stock-transfers", response_model=List[StockTransfer])
-async def list_transfers(user: dict = Depends(get_current_user)):
+async def list_transfers(user: dict = Depends(require_plan("business"))):
     db = get_db()
     cursor = db.stock_transfers.find({"store_id": user["store_id"]}, {"_id": 0}).sort("created_at", -1)
     return await cursor.to_list(length=100)
 
 @router.post("/stock-transfers", response_model=StockTransfer)
-async def create_transfer(payload: StockTransferCreate, user: dict = Depends(get_current_user)):
+async def create_transfer(payload: StockTransferCreate, user: dict = Depends(require_plan("business"))):
     db = get_db()
     doc = {
         "id": str(uuid.uuid4()),

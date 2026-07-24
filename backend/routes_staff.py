@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from database import get_db, utcnow
 from models import Staff, StaffBase, Attendance, AttendanceCreate
 from auth import get_current_user
+from plan_limits import require_plan
 
 router = APIRouter(tags=["staff"])
 
@@ -91,15 +92,15 @@ async def delete_staff(staff_id: str, user: dict = Depends(get_current_user)):
     await db.users.delete_one({"id": staff_id})
     return {"ok": True}
 
-# ---------- Attendance ----------
+# ---------- Attendance (Business-tier feature -- see AppLayout.jsx minPlan) ----------
 @router.get("/api/attendance", response_model=List[Attendance])
-async def list_attendance(user: dict = Depends(get_current_user)):
+async def list_attendance(user: dict = Depends(require_plan("business"))):
     db = get_db()
     cursor = db.attendance.find({"store_id": user["store_id"]}, {"_id": 0}).sort("clock_in", -1)
     return await cursor.to_list(length=100)
 
 @router.post("/api/attendance", response_model=Attendance)
-async def log_attendance(payload: AttendanceCreate, user: dict = Depends(get_current_user)):
+async def log_attendance(payload: AttendanceCreate, user: dict = Depends(require_plan("business"))):
     db = get_db()
     doc = {
         "id": str(uuid.uuid4()),
@@ -114,7 +115,7 @@ async def log_attendance(payload: AttendanceCreate, user: dict = Depends(get_cur
     return doc
 
 @router.put("/api/attendance/{att_id}", response_model=Attendance)
-async def update_attendance(att_id: str, user: dict = Depends(get_current_user)):
+async def update_attendance(att_id: str, user: dict = Depends(require_plan("business"))):
     """Clock-out: update an existing attendance record with clock_out time."""
     db = get_db()
     from bson import ObjectId

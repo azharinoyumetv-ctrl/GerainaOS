@@ -16,15 +16,49 @@ the nav lock icons in AppLayout.jsx.
 Device/seat capacity ("max_devices") is enforced the same way, but not from this module --
 see routes_devices.py, which calls check_capacity() against the real `devices` collection
 on registration.
+
+require_plan() below is a separate, third kind of gate: per-*module* authorization (does this
+plan include this feature at all), as opposed to check_capacity()'s per-*record-count* gate
+(how many of a feature the plan allows). It's the backend half of the plan-locked nav icons in
+AppLayout.jsx -- that lock icon only stops nav-clicks; require_plan() is what stops a direct
+URL/API call from reaching a locked module regardless of how the request got there.
 """
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
+from auth import get_current_user
 from routes_pricing import TIERS
 
 _TIER_BY_ID = {t["id"]: t for t in TIERS}
 
+# SYNC: KEEP IN SYNC with PLAN_RANK in frontend/src/layouts/AppLayout.jsx and
+# frontend/src/components/RoleGuard.jsx -- trial ranks as business-equivalent everywhere,
+# matching the pricing page's own claim that the 14-day trial grants full Business access.
+PLAN_RANK = {"starter": 0, "pro": 1, "business": 2, "trial": 2}
+
+
+def plan_rank(plan):
+    return PLAN_RANK.get(plan, 0)
+
 
 def _tier_for(plan):
     return _TIER_BY_ID.get(plan) or _TIER_BY_ID["starter"]
+
+
+def require_plan(min_plan: str):
+    """FastAPI dependency factory: 403s if the caller's plan ranks below `min_plan`, otherwise
+    behaves exactly like Depends(get_current_user) (returns the same user dict) -- so it's a
+    drop-in replacement for `Depends(get_current_user)` on any route that's entirely gated
+    behind one plan floor. For routes that need BOTH an existing Depends (e.g. require_admin)
+    AND a plan check, don't swap the Depends -- call plan_rank(user.get("plan")) inline in the
+    function body instead (see save_integrations for an example)."""
+    async def _dep(user: dict = Depends(get_current_user)) -> dict:
+        if plan_rank(user.get("plan")) < plan_rank(min_plan):
+            tier = _tier_for(min_plan)
+            raise HTTPException(
+                status_code=403,
+                detail=f"Fitur ini tersedia mulai paket {tier.get('name', min_plan)}. Upgrade paket untuk mengakses fitur ini.",
+            )
+        return user
+    return _dep
 
 
 async def check_capacity(db, store_id: str, plan: str, collection: str, field: str):
