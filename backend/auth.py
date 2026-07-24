@@ -47,19 +47,28 @@ def create_access_token(user_id: str, store_id: str, role: str, email: str) -> s
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
 
 
-async def _maybe_downgrade_expired_trial(user: dict) -> dict:
+async def _maybe_expire_trial(user: dict) -> dict:
     """Lazy trial-expiry enforcement, run on every authenticated request via _decode_identity
     (both get_current_user and get_identity route through it). There's no scheduled-job infra
     in this deployment to sweep expired trials on a timer, so the check happens on-read
-    instead: once trial_ends_at has passed, downgrade to "starter" -- the same fail-closed
-    default plan_limits.py already falls back to for unknown/missing plans -- both in the DB
-    and on the in-memory dict, so every check_capacity()/require_plan() call later in THIS
-    SAME request already sees the corrected plan instead of a stale "trial".
+    instead: once trial_ends_at has passed, the account is marked plan="expired" -- a
+    sentinel that is NOT a real, purchasable tier. (Earlier this fell back to "starter", but
+    starter is itself a PAID plan -- silently granting it for free when a trial lapses defeats
+    the entire point of gating. An expired trial must lose access, not get a free plan.)
+
+    get_current_user() below hard-blocks any request whose resolved user has plan=="expired"
+    with 402. Only the billing endpoints (get_billing_user/require_billing_admin in
+    routes_pricing.py) skip that block, so an expired account can still pay to reactivate
+    itself instead of being locked out forever with no way back in.
+
+    The plan is corrected both in the DB and on the in-memory dict, so every check later in
+    THIS SAME request already sees "expired" instead of a stale "trial".
 
     Note: the frontend's AuthContext only fetches /auth/me on mount, not on a timer, so a tab
-    left open past the trial deadline won't visually update its nav lock icons until next
+    left open past the trial deadline won't visually flip to the paywall until next
     reload/login -- but every actual API call is still re-checked here regardless of what the
-    UI displays, so this is a cosmetic staleness window, not a bypass."""
+    UI displays, so this is a cosmetic staleness window, not a bypass (the API itself already
+    returns 402 the moment the deadline passes)."""
     if user.get("plan") != "trial":
         return user
     ends_at = user.get("trial_ends_at")
@@ -78,15 +87,15 @@ async def _maybe_downgrade_expired_trial(user: dict) -> dict:
     stamp = utcnow().isoformat()
     await db.users.find_one_and_update(
         {"id": user["id"], "plan": "trial"},
-        {"$set": {"plan": "starter", "trial_expired_at": stamp}},
+        {"$set": {"plan": "expired", "trial_expired_at": stamp}},
     )
     # Best-effort only -- store.plan is never read for authorization (every check_capacity()/
     # require_plan() call reads user.get("plan")), this just keeps it from looking stale.
     await db.stores.update_many(
         {"owner_user_id": user["id"], "plan": "trial"},
-        {"$set": {"plan": "starter"}},
+        {"$set": {"plan": "expired"}},
     )
-    user["plan"] = "starter"
+    user["plan"] = "expired"
     user["trial_expired_at"] = stamp
     return user
 
@@ -105,13 +114,15 @@ async def _decode_identity(token: str) -> dict:
     user = await db.users.find_one({"id": payload.get("sub")}, {"_id": 0, "password_hash": 0})
     if not user:
         raise cred_exc
-    user = await _maybe_downgrade_expired_trial(user)
+    user = await _maybe_expire_trial(user)
     return user
 
 
 async def get_identity(token: str = Depends(oauth2_scheme)) -> dict:
     """Akun (owner) saja, tanpa resolusi toko. Untuk endpoint yang tidak butuh toko aktif
-    (mis. /auth/me, /auth/stores)."""
+    (mis. /auth/me, /auth/stores). Deliberately NOT gated on plan=="expired" -- /auth/me must
+    keep working even when the account is locked out, otherwise the frontend could never
+    detect the expired state or show the paywall in the first place."""
     return await _decode_identity(token)
 
 
@@ -131,15 +142,12 @@ async def _resolve_store(user: dict, module: str) -> Optional[dict]:
     return None
 
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    x_dagangos_module: str = Header(default="geraina", alias="X-DagangOS-Module"),
-) -> dict:
-    """Akun + toko aktif sesuai modul (header X-DagangOS-Module). Dipakai semua route data,
-    sehingga data tetap ter-scope per toko (store_id). Jika akun belum punya toko untuk modul
-    ini, kembalikan 409 `no_store_for_module` agar frontend menawarkan pembuatan toko."""
+async def _resolve_current(token: str, module: str) -> dict:
+    """Shared by get_current_user and get_billing_user: decode identity (incl. lazy trial-
+    expiry accounting) and resolve the active store for this module. Does NOT itself block on
+    plan=="expired" -- callers decide whether that matters for them."""
     user = await _decode_identity(token)
-    module = (x_dagangos_module or "geraina").lower()
+    module = (module or "geraina").lower()
     store = await _resolve_store(user, module)
     if not store:
         raise HTTPException(status_code=409, detail="no_store_for_module")
@@ -149,7 +157,48 @@ async def get_current_user(
     return user
 
 
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    x_dagangos_module: str = Header(default="geraina", alias="X-DagangOS-Module"),
+) -> dict:
+    """Akun + toko aktif sesuai modul (header X-DagangOS-Module). Dipakai semua route data,
+    sehingga data tetap ter-scope per toko (store_id). Jika akun belum punya toko untuk modul
+    ini, kembalikan 409 `no_store_for_module` agar frontend menawarkan pembuatan toko.
+
+    Hard-blocks with 402 if the trial has expired and no paid plan was ever purchased --
+    "starter" is itself a paid tier, so an expired trial must NOT quietly fall back to it for
+    free; the service stops until the account subscribes. Billing routes use get_billing_user
+    / require_billing_admin instead of this dependency, precisely so an expired account can
+    still reach /pricing/upgrade and /pricing/addons/purchase to pay and unlock itself again."""
+    user = await _resolve_current(token, x_dagangos_module)
+    if user.get("plan") == "expired":
+        raise HTTPException(
+            status_code=402,
+            detail="Masa trial telah berakhir dan belum ada langganan aktif. Pilih paket untuk melanjutkan menggunakan layanan.",
+        )
+    return user
+
+
+async def get_billing_user(
+    token: str = Depends(oauth2_scheme),
+    x_dagangos_module: str = Header(default="geraina", alias="X-DagangOS-Module"),
+) -> dict:
+    """Same resolution as get_current_user but WITHOUT the expired-trial block. Reserved for
+    the billing endpoints (upgrade / addon purchase / addon history) in routes_pricing.py --
+    those must stay reachable exactly when everything else is locked out, or an expired
+    account could never pay to reactivate itself."""
+    return await _resolve_current(token, x_dagangos_module)
+
+
 async def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    if user.get("role") not in ("admin", "Owner"):
+        raise HTTPException(status_code=403, detail="Peran Owner diperlukan untuk aksi ini")
+    return user
+
+
+async def require_billing_admin(user: dict = Depends(get_billing_user)) -> dict:
+    """Same admin-role check as require_admin, but built on get_billing_user so it stays
+    reachable on an expired trial. Used only by the billing endpoints in routes_pricing.py."""
     if user.get("role") not in ("admin", "Owner"):
         raise HTTPException(status_code=403, detail="Peran Owner diperlukan untuk aksi ini")
     return user

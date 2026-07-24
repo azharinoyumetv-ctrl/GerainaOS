@@ -32,7 +32,11 @@ _TIER_BY_ID = {t["id"]: t for t in TIERS}
 # SYNC: KEEP IN SYNC with PLAN_RANK in frontend/src/layouts/AppLayout.jsx and
 # frontend/src/components/RoleGuard.jsx -- trial ranks as business-equivalent everywhere,
 # matching the pricing page's own claim that the 14-day trial grants full Business access.
-PLAN_RANK = {"starter": 0, "pro": 1, "business": 2, "trial": 2}
+# "expired" (set by auth._maybe_expire_trial once trial_ends_at passes) ranks below starter
+# so it never accidentally reads as "has at least starter access" anywhere that forgets to
+# check for it explicitly -- though in practice auth.get_current_user() 402s an expired
+# account before any of these checks run at all; this is defense in depth, not the real gate.
+PLAN_RANK = {"expired": -1, "starter": 0, "pro": 1, "business": 2, "trial": 2}
 
 
 def plan_rank(plan):

@@ -157,7 +157,7 @@ const MENU_STRUCTURE = [
 // endpoint is still reachable regardless of plan). This just shows what each tier unlocks and
 // nudges upgrades, per the Starter/Pro/Business repackaging. "trial" ranks as Business since
 // the 14-day trial now grants full Business-level access.
-const PLAN_RANK = { starter: 0, pro: 1, business: 2, trial: 2 };
+const PLAN_RANK = { expired: -1, starter: 0, pro: 1, business: 2, trial: 2 };
 const PLAN_LABEL = { starter: "Starter", pro: "Pro", business: "Business" };
 
 function planRank(plan) {
