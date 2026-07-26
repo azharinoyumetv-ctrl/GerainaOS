@@ -370,3 +370,64 @@
   .brand-auth-shell::after,
   .brand-auth-shell > div:last-child { animation: none; }
 }
+
+/* Daylight ecosystem pass: public and operational pages stay visually related
+   without forcing every surface into a dark presentation. */
+.ecosystem-command-rail {
+  color: hsl(153 38% 20%);
+  border-color: hsl(151 35% 73% / .55) !important;
+  background:
+    radial-gradient(circle at 15% 0%, hsl(151 74% 52% / .18), transparent 18rem),
+    linear-gradient(180deg, hsl(148 42% 97%), hsl(151 35% 93%)) !important;
+  box-shadow: 18px 0 55px hsl(153 45% 25% / .08);
+}
+.ecosystem-command-rail > div,
+.ecosystem-command-rail > nav { border-color: hsl(151 30% 68% / .35) !important; }
+.ecosystem-command-rail nav > a:hover,
+.ecosystem-command-rail nav > div > button:hover,
+.ecosystem-command-rail nav > button:hover { background: hsl(151 65% 42% / .1) !important; }
+.ecosystem-command-rail nav > a[aria-current="page"] {
+  color: hsl(154 70% 8%) !important;
+  background: linear-gradient(100deg, hsl(151 74% 62%), hsl(160 75% 72%)) !important;
+}
+[data-testid="odoo-ecosystem-menu"] {
+  color: hsl(153 38% 18%) !important;
+  border-color: hsl(151 28% 78%) !important;
+  background: hsl(150 38% 98% / .98) !important;
+  box-shadow: 0 24px 64px hsl(154 45% 20% / .18) !important;
+}
+[data-testid="odoo-ecosystem-menu"] * { border-color: hsl(151 25% 82% / .8) !important; }
+.brand-auth-shell { background: hsl(150 38% 96%) !important; }
+.brand-auth-shell::after {
+  border-color: hsl(151 74% 45% / .22);
+  box-shadow: 0 0 100px hsl(151 74% 45% / .12), inset 0 0 90px hsl(151 74% 45% / .07);
+}
+.brand-auth-shell > div:first-child {
+  color: hsl(153 45% 17%);
+  background:
+    linear-gradient(hsl(151 74% 42% / .05) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(151 74% 42% / .05) 1px, transparent 1px),
+    radial-gradient(circle at 30% 30%, hsl(151 74% 52% / .24), transparent 28rem),
+    hsl(150 45% 95%) !important;
+}
+.brand-auth-shell > div:last-child {
+  background: hsl(150 45% 99% / .97) !important;
+  box-shadow: -30px 0 80px hsl(155 35% 35% / .1);
+}
+.ecosystem-pricing {
+  color: hsl(153 38% 16%);
+  background:
+    radial-gradient(circle at 50% 2%, hsl(151 74% 54% / .24), transparent 32rem),
+    linear-gradient(180deg, hsl(150 42% 96%), hsl(150 32% 99%)) !important;
+}
+.ecosystem-pricing [data-testid="pricing-hero"] { color: hsl(153 38% 16%) !important; }
+.ecosystem-pricing [data-testid="pricing-hero"] h1 { color: hsl(153 38% 16%) !important; }
+.ecosystem-pricing [data-testid="pricing-hero"] p { color: hsl(151 15% 39%) !important; }
+.ecosystem-pricing [data-testid="billing-toggle"] { box-shadow: 0 16px 40px hsl(155 40% 25% / .12); }
+@media (max-width: 1023px) {
+  [data-testid="app-mobile-topbar"] {
+    color: hsl(153 38% 17%);
+    border-color: hsl(151 35% 70% / .42) !important;
+    background: hsl(150 42% 97% / .94) !important;
+  }
+}

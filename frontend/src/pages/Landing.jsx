@@ -151,6 +151,50 @@ function PosVisual() {
   );
 }
 
+function RetailFeatureScene({ index }) {
+  if (index === 0) {
+    return <div className="feature-sim sim-pos" aria-label="Simulasi kasir">
+      <div className="sim-pos-products"><b>Produk</b>{["Air mineral", "Kopi", "Snack", "Susu"].map((item, itemIndex) => <span key={item} style={{ "--delay": `${itemIndex * 0.35}s` }}><i />{item}<small>+</small></span>)}</div>
+      <div className="sim-pos-cart"><small>KERANJANG AKTIF</small><strong>3 produk</strong><div><span>Total</span><b>Rp 42.000</b></div><button type="button">Bayar</button></div>
+      <i className="sim-scan" />
+    </div>;
+  }
+  if (index === 1) {
+    return <div className="feature-sim sim-stock" aria-label="Simulasi inventori">
+      <div className="stock-rack">{[78, 44, 91, 27, 63, 85].map((level, itemIndex) => <div key={level}><span style={{ "--level": `${level}%`, "--delay": `${itemIndex * 0.18}s` }} /><small>{level}%</small></div>)}</div>
+      <div className="stock-status"><b>Stok bergerak</b><span><i />Masuk</span><span><i />Keluar</span><span className="warning"><i />Minimum</span></div>
+      <i className="stock-packet" /><i className="stock-packet second" />
+    </div>;
+  }
+  if (index === 2) {
+    return <div className="feature-sim sim-supply" aria-label="Simulasi pembelian dan supplier">
+      <div className="supply-node"><small>01</small><b>Purchase order</b><span>PO-0248</span></div>
+      <div className="supply-path"><i /></div>
+      <div className="supply-node"><small>02</small><b>Supplier</b><span>Pesanan diproses</span></div>
+      <div className="supply-path"><i /></div>
+      <div className="supply-node"><small>03</small><b>Penerimaan</b><span>Stok diperbarui</span></div>
+    </div>;
+  }
+  if (index === 3) {
+    return <div className="feature-sim sim-report" aria-label="Simulasi laporan">
+      <div className="report-metric"><small>RINGKASAN HARI INI</small><b>Penjualan &amp; aktivitas</b><span>Data diperbarui dari transaksi</span></div>
+      <div className="report-chart">{[35, 58, 43, 74, 61, 88, 72].map((value, itemIndex) => <i key={value} style={{ "--x": itemIndex, "--y": `${100 - value}%`, "--delay": `${itemIndex * 0.12}s` }} />)}<span className="chart-sweep" /></div>
+    </div>;
+  }
+  if (index === 4) {
+    return <div className="feature-sim sim-outlet" aria-label="Simulasi multi outlet">
+      <div className="outlet-core"><img src="/assets/brand/geraina-icon.png" alt="" /><b>Pusat</b></div>
+      {["Outlet Utara", "Outlet Tengah", "Outlet Selatan"].map((outlet, itemIndex) => <div className={`outlet-node outlet-${itemIndex + 1}`} key={outlet}><i /><b>{outlet}</b><small>Terhubung</small></div>)}
+      <span className="outlet-orbit" /><span className="outlet-orbit orbit-two" />
+    </div>;
+  }
+  return <div className="feature-sim sim-access" aria-label="Simulasi hak akses">
+    <div className="access-head"><b>Kontrol peran</b><span>4 fungsi operasional</span></div>
+    {["Kasir", "Supervisor", "Inventori", "Pemilik"].map((role, roleIndex) => <div className="access-row" key={role}><b>{role}</b>{[0, 1, 2, 3].map((cell) => <i key={cell} className={cell <= roleIndex ? "allowed" : ""} style={{ "--delay": `${(roleIndex + cell) * 0.08}s` }} />)}</div>)}
+    <span className="access-scan" />
+  </div>;
+}
+
 export default function Landing() {
   const [activeFeature, setActiveFeature] = useState(0);
   const selectedFeature = FEATURES[activeFeature];
@@ -190,6 +234,28 @@ export default function Landing() {
         @media(max-width:1050px){.neo-workbench{grid-template-columns:270px 1fr}}
         @media(max-width:720px){.neo-workbench{display:block}.neo-feature-rail{border-right:0;display:grid;grid-template-columns:1fr 1fr}.neo-feature-tab{padding:15px 8px;grid-template-columns:28px 1fr}.neo-feature-tab span{display:none}.neo-feature-tab:hover,.neo-feature-tab.is-active{padding-left:12px}.neo-feature-stage{min-height:420px;padding:34px 22px}.neo-stage-icon{width:54px;height:54px}}
       `}</style>
+      <style>{`
+        .neo-page{background:#f5fbf7;color:#0b2a1a}
+        .neo-page:before{background:radial-gradient(circle at 78% 8%,rgba(39,223,117,.22),transparent 34rem),radial-gradient(circle at 12% 38%,rgba(30,124,255,.11),transparent 30rem),linear-gradient(rgba(19,92,54,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(19,92,54,.035) 1px,transparent 1px);background-size:auto,auto,46px 46px,46px 46px}
+        .neo-nav{background:rgba(250,255,252,.82);border-color:rgba(15,79,43,.12);box-shadow:0 12px 42px rgba(14,77,41,.08)}.neo-links,.neo-mobile a{color:#4e695a}.neo-links a:hover{color:#0b2a1a}.neo-button{color:#123c27;background:rgba(255,255,255,.76);border-color:rgba(18,91,50,.15)}.neo-primary{color:#032411}.neo-menu{color:#123c27;background:white}
+        .neo-kicker{background:#e9fff1;color:#145b32;border-color:rgba(39,180,95,.25)}.neo-lead,.neo-section-head p,.neo-stage-copy p,.neo-solution-copy p{color:#577063}.neo-check{color:#657c70}.neo-check b{color:#173b27}
+        .pos-stage{filter:drop-shadow(0 30px 45px rgba(26,93,56,.13))}.pos-glow{background:radial-gradient(circle,rgba(39,223,117,.3),transparent 62%)}
+        .neo-strip{background:rgba(255,255,255,.7);border-color:rgba(15,79,43,.12)}.neo-strip-item{color:#4c6758;border-color:rgba(15,79,43,.12)}
+        .neo-workbench{min-height:560px;border:1px solid rgba(15,79,43,.12);border-radius:30px;overflow:hidden;background:rgba(255,255,255,.74);box-shadow:0 30px 80px rgba(21,85,49,.1)}
+        .neo-feature-rail{background:rgba(236,249,240,.68);border-color:rgba(15,79,43,.12)}.neo-feature-tab{color:#547061;border-color:rgba(15,79,43,.1);padding-left:22px}.neo-feature-tab svg{color:#4f7760}.neo-feature-tab span{color:#718b7d}.neo-feature-tab:hover,.neo-feature-tab.is-active{padding-left:29px;color:#092d1a;background:linear-gradient(90deg,rgba(39,223,117,.17),rgba(255,255,255,.2))}.neo-feature-tab.is-active{box-shadow:inset 3px 0 ${ACCENT}}
+        .neo-feature-stage{padding:42px 48px;background:radial-gradient(circle at 84% 16%,rgba(39,223,117,.17),transparent 25rem),linear-gradient(145deg,rgba(255,255,255,.75),rgba(237,249,241,.75))}.neo-feature-stage:before{display:none}.neo-stage-icon{background:#e9fff1;box-shadow:0 15px 35px rgba(28,162,82,.13)}.neo-stage-copy h3{color:#0b2a1a}
+        .neo-solution{border-color:rgba(15,79,43,.12)}.neo-flow>div{border-color:rgba(15,79,43,.12)}.neo-flow b{color:#123c27}.neo-flow span{color:#62796c}
+        .feature-sim{position:relative;height:245px;margin-top:28px;overflow:hidden;border:1px solid rgba(19,101,52,.12);border-radius:24px;background:linear-gradient(145deg,#fff,#eef9f2);box-shadow:inset 0 1px #fff}
+        .sim-pos{display:grid;grid-template-columns:1.25fr .75fr;gap:12px;padding:20px}.sim-pos-products{display:grid;grid-template-columns:1fr 1fr;gap:9px}.sim-pos-products>b{grid-column:1/-1;font-size:11px;color:#789083}.sim-pos-products span{position:relative;display:flex;align-items:center;gap:8px;padding:10px;border:1px solid rgba(20,92,49,.1);border-radius:12px;background:#fff;font-size:10px;font-weight:700;animation:sim-rise .6s both;animation-delay:var(--delay)}.sim-pos-products span i{width:23px;height:23px;border-radius:8px;background:linear-gradient(145deg,#75efaa,#1ebd64)}.sim-pos-products small{margin-left:auto;color:#17aa58}.sim-pos-cart{padding:17px;border-radius:16px;color:white;background:#123c27;display:flex;flex-direction:column}.sim-pos-cart small{font-size:8px;color:#99b7a6}.sim-pos-cart>strong{font:700 22px ${JK};margin:8px 0 auto}.sim-pos-cart>div{display:flex;justify-content:space-between;align-items:end;padding-top:12px;border-top:1px solid rgba(255,255,255,.13)}.sim-pos-cart>div span{font-size:9px}.sim-pos-cart>div b{color:${ACCENT}}.sim-pos-cart button{border:0;border-radius:9px;background:${ACCENT};font-weight:800;padding:9px;margin-top:11px}.sim-scan{position:absolute;left:18px;right:41%;height:2px;background:${ACCENT};box-shadow:0 0 16px ${ACCENT};animation:scan-y 3s ease-in-out infinite}
+        .sim-stock{padding:25px 27px}.stock-rack{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;height:150px;align-items:end;border-bottom:2px solid #aac7b5}.stock-rack>div{height:130px;position:relative;border:1px solid rgba(18,92,48,.12);border-radius:10px 10px 0 0;background:#fff;overflow:hidden}.stock-rack>div span{position:absolute;left:0;right:0;bottom:0;height:var(--level);background:linear-gradient(#69e69f,#25ba66);animation:fill-stock .9s both;animation-delay:var(--delay)}.stock-rack small{position:absolute;left:0;right:0;top:9px;text-align:center;font-weight:800;font-size:9px;z-index:2}.stock-status{display:flex;gap:18px;align-items:center;padding-top:15px;font-size:9px;color:#60786a}.stock-status b{margin-right:auto;color:#173c27;font-size:11px}.stock-status i{display:inline-block;width:7px;height:7px;border-radius:50%;background:${ACCENT};margin-right:5px}.stock-status .warning i{background:#ff9f39}.stock-packet{position:absolute;width:10px;height:10px;border-radius:50%;left:5%;bottom:87px;background:white;box-shadow:0 0 0 4px ${ACCENT},0 0 18px ${ACCENT};animation:stock-move 4.8s linear infinite}.stock-packet.second{animation-delay:-2.4s}
+        .sim-supply{display:grid;grid-template-columns:1fr .45fr 1fr .45fr 1fr;align-items:center;padding:32px}.supply-node{min-height:128px;padding:20px;border:1px solid rgba(19,101,52,.13);border-radius:18px;background:#fff;box-shadow:0 15px 30px rgba(21,80,45,.07);animation:sim-rise .65s both}.supply-node small{font-weight:800;color:${ACCENT_2}}.supply-node b,.supply-node span{display:block}.supply-node b{font:700 13px ${JK};margin:25px 0 6px}.supply-node span{font-size:9px;color:#6a8174}.supply-path{height:1px;background:#9ecbb2;position:relative}.supply-path i{position:absolute;top:-4px;width:9px;height:9px;border-radius:50%;background:${ACCENT};box-shadow:0 0 12px ${ACCENT};animation:path-run 2.4s linear infinite}
+        .sim-report{display:grid;grid-template-columns:.7fr 1.3fr;padding:26px;gap:25px}.report-metric{display:flex;flex-direction:column;justify-content:center}.report-metric small{font-size:8px;color:${ACCENT_2};font-weight:800}.report-metric b{font:700 22px/1.15 ${JK};margin:10px 0}.report-metric span{font-size:9px;color:#71887b}.report-chart{position:relative;border-left:1px solid #bcd1c4;border-bottom:1px solid #bcd1c4;background:repeating-linear-gradient(0deg,transparent 0 37px,rgba(30,98,57,.07) 38px);overflow:hidden}.report-chart>i{position:absolute;left:calc(5% + var(--x)*15%);top:var(--y);width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid ${ACCENT_2};box-shadow:0 0 0 5px rgba(39,223,117,.12);animation:point-in .5s both;animation-delay:var(--delay)}.report-chart>i:not(:last-of-type):after{content:"";position:absolute;left:7px;top:3px;width:calc(15vw - 10px);max-width:90px;height:2px;background:${ACCENT_2};transform:rotate(-15deg);transform-origin:left}.chart-sweep{position:absolute;top:0;bottom:0;width:25%;background:linear-gradient(90deg,transparent,rgba(72,231,136,.18),transparent);animation:chart-sweep 3.5s linear infinite}
+        .sim-outlet{display:grid;place-items:center}.outlet-core,.outlet-node{position:absolute;display:grid;place-items:center;text-align:center;border-radius:18px;background:#fff;box-shadow:0 15px 35px rgba(18,78,44,.12);z-index:2}.outlet-core{width:106px;height:106px}.outlet-core img{width:52px}.outlet-core b{font-size:10px}.outlet-node{width:118px;height:68px}.outlet-node i{position:absolute;top:-4px;width:8px;height:8px;border-radius:50%;background:${ACCENT};box-shadow:0 0 12px ${ACCENT}}.outlet-node b{font-size:10px}.outlet-node small{font-size:8px;color:#6d8578}.outlet-1{left:7%;top:22%}.outlet-2{right:7%;top:18%}.outlet-3{right:14%;bottom:12%}.outlet-orbit{position:absolute;width:52%;height:72%;border:1px solid rgba(30,180,88,.24);border-radius:50%;animation:outlet-spin 9s linear infinite}.orbit-two{width:75%;height:46%;animation-direction:reverse;animation-duration:12s}
+        .sim-access{padding:22px 28px}.access-head{display:flex;justify-content:space-between;padding-bottom:13px;border-bottom:1px solid rgba(19,101,52,.12)}.access-head b{font-size:12px}.access-head span{font-size:9px;color:#6e8478}.access-row{display:grid;grid-template-columns:1fr repeat(4,42px);gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(19,101,52,.08)}.access-row b{font-size:10px}.access-row i{width:31px;height:19px;border-radius:20px;background:#dce8e0;position:relative}.access-row i:after{content:"";position:absolute;width:13px;height:13px;left:3px;top:3px;border-radius:50%;background:white;transition:.3s}.access-row i.allowed{background:${ACCENT};animation:permit .4s both;animation-delay:var(--delay)}.access-row i.allowed:after{left:15px}.access-scan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,${ACCENT},transparent);box-shadow:0 0 14px ${ACCENT};animation:scan-y 3.2s ease-in-out infinite}
+        .neo-cta-panel{color:white}.neo-footer{background:#eaf5ee;border-color:rgba(15,79,43,.12)}.neo-footer-inner{color:#557063}.neo-footer a:hover{color:#123c27}
+        @keyframes sim-rise{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}@keyframes scan-y{0%,100%{top:15%}50%{top:85%}}@keyframes fill-stock{from{height:0}to{height:var(--level)}}@keyframes stock-move{from{left:5%}to{left:93%}}@keyframes path-run{from{left:0}to{left:100%}}@keyframes point-in{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}@keyframes chart-sweep{from{left:-30%}to{left:110%}}@keyframes outlet-spin{to{transform:rotate(360deg)}}@keyframes permit{from{transform:scale(.65)}to{transform:none}}
+        @media(max-width:720px){.neo-workbench{border-radius:22px}.neo-feature-stage{padding:28px 20px}.feature-sim{height:265px}.sim-supply{padding:18px;grid-template-columns:1fr 20px 1fr 20px 1fr}.supply-node{padding:11px}.supply-node b{font-size:10px}.sim-report{grid-template-columns:1fr}.report-metric{display:none}.access-row{grid-template-columns:1fr repeat(4,30px);gap:4px}.access-row i{transform:scale(.8)}}
+      `}</style>
       <Nav />
       <main>
         <section className="neo-hero">
@@ -226,7 +292,7 @@ export default function Landing() {
             </div>
             <div className="neo-feature-stage" key={selectedFeature.title}>
               <div className="neo-stage-head"><div className="neo-stage-icon"><SelectedFeatureIcon size={32} /></div><div className="neo-stage-copy"><small>Modul aktif · 0{activeFeature + 1}</small><h3>{selectedFeature.title}</h3><p>{selectedFeature.text}</p></div></div>
-              <div className="neo-stage-visual" aria-hidden="true"><span className="neo-stage-line" />{[2, 5, 3, 6, 4, 7, 5, 8, 4, 6, 3, 7].map((height, index) => <i className="neo-stage-bar" key={index} style={{ "--bar": (height + activeFeature) % 8 }} />)}</div>
+              <RetailFeatureScene index={activeFeature} />
             </div>
           </div>
         </section>
