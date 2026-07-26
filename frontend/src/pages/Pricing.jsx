@@ -123,7 +123,7 @@ export default function Pricing() {
   };
 
   return (
-    <div data-testid="pricing-page" style={{ fontFamily: JK, background: "#f7fbfa", color: BODY, minHeight: "100vh" }}>
+    <div className="ecosystem-pricing" data-testid="pricing-page" style={{ fontFamily: JK, background: "#f7fbfa", color: BODY, minHeight: "100vh" }}>
       <header className="sticky top-0 z-50 backdrop-blur border-b" style={{ background: "rgba(247,251,250,.85)", borderColor: LINE }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           <Link to="/geraina" className="flex items-center gap-2.5" data-testid="pricing-nav-logo">

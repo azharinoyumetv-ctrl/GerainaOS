@@ -152,6 +152,10 @@ function PosVisual() {
 }
 
 export default function Landing() {
+  const [activeFeature, setActiveFeature] = useState(0);
+  const selectedFeature = FEATURES[activeFeature];
+  const SelectedFeatureIcon = selectedFeature.icon;
+
   return (
     <div className="neo-page">
       <style>{`
@@ -167,6 +171,24 @@ export default function Landing() {
         @media(max-width:720px){.neo-shell,.neo-hero,.neo-strip-inner,.neo-section,.neo-cta-panel,.neo-footer-inner{width:min(100% - 28px,1220px)}.neo-title{font-size:43px}.neo-checks{grid-template-columns:1fr}.pos-stage{height:490px;transform:scale(.82);margin:-35px auto}.neo-strip-inner{grid-template-columns:repeat(3,1fr)}.neo-strip-item:nth-child(3){border-right:0}.neo-strip-item:nth-child(-n+3){border-bottom:1px solid ${LINE}}.neo-section-head{display:block}.neo-section-head p{margin-top:16px}.neo-grid{grid-template-columns:1fr}.neo-solution{padding:24px}.neo-flow{grid-template-columns:1fr 1fr}.neo-cta-panel{display:block;text-align:center;padding:32px 22px}.neo-cta-panel .neo-cta{justify-content:center}.neo-footer-inner{display:block;text-align:center}.neo-footer-brand,.neo-footer-links{justify-content:center}.neo-footer-links{margin-top:17px}}
         @media(max-width:480px){.pos-stage{height:420px;transform:scale(.68);margin:-75px -21%}.neo-strip-inner{grid-template-columns:1fr 1fr}.neo-strip-item:nth-child(n){border-bottom:1px solid ${LINE}}.neo-strip-item:nth-child(2n){border-right:0}.neo-flow{grid-template-columns:1fr}.neo-footer-links{flex-wrap:wrap}}
         @media(prefers-reduced-motion:reduce){.neo-page *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+      `}</style>
+      <style>{`
+        .neo-workbench{display:grid;grid-template-columns:330px 1fr;min-height:470px;border-top:1px solid ${LINE};border-bottom:1px solid ${LINE}}
+        .neo-feature-rail{display:flex;flex-direction:column;border-right:1px solid ${LINE}}
+        .neo-feature-tab{appearance:none;border:0;border-bottom:1px solid ${LINE};background:transparent;color:#6f8d7b;text-align:left;padding:20px 6px;display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:12px;cursor:pointer;transition:.22s}
+        .neo-feature-tab svg{color:#557565}.neo-feature-tab b{font:700 14px ${JK}}.neo-feature-tab span{font:800 10px ${JK};color:#41604e}
+        .neo-feature-tab:hover,.neo-feature-tab.is-active{padding-left:16px;color:white;background:linear-gradient(90deg,rgba(39,223,117,.12),transparent)}
+        .neo-feature-tab.is-active svg,.neo-feature-tab.is-active span{color:${ACCENT}}
+        .neo-feature-stage{position:relative;overflow:hidden;padding:46px 54px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(circle at 80% 30%,rgba(39,223,117,.12),transparent 32rem)}
+        .neo-feature-stage:before{content:"";position:absolute;inset:-40% 0 auto;height:40%;background:linear-gradient(transparent,rgba(39,223,117,.12),transparent);animation:stage-scan 4s linear infinite}
+        .neo-stage-head{position:relative;display:flex;gap:20px;align-items:flex-start}.neo-stage-icon{width:68px;height:68px;display:grid;place-items:center;border:1px solid rgba(39,223,117,.38);border-radius:18px;color:${ACCENT};background:rgba(39,223,117,.08);box-shadow:0 0 36px rgba(39,223,117,.13)}
+        .neo-stage-copy small{color:${ACCENT};letter-spacing:.16em;text-transform:uppercase;font-size:10px;font-weight:800}.neo-stage-copy h3{font:800 clamp(28px,4vw,46px)/1.1 ${JK};margin:9px 0 13px}.neo-stage-copy p{color:${MUTED};line-height:1.75;max-width:650px;margin:0}
+        .neo-stage-visual{position:relative;height:180px;display:flex;align-items:end;gap:10px;border-bottom:1px solid ${LINE}}.neo-stage-bar{flex:1;height:calc(28px + var(--bar) * 18px);max-height:150px;background:linear-gradient(180deg,${ACCENT},rgba(39,223,117,.08));border-radius:5px 5px 0 0;transform-origin:bottom;animation:bar-rise .62s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--bar) * 55ms);box-shadow:0 0 18px rgba(39,223,117,.12)}
+        .neo-stage-line{position:absolute;left:0;right:0;top:42%;height:1px;background:linear-gradient(90deg,transparent,${BLUE},transparent);box-shadow:0 0 12px ${BLUE}}
+        .neo-solution{border-radius:0;border-left:0;border-right:0;padding:42px 0;background:transparent}.neo-flow{gap:0}.neo-flow>div{position:relative;border-radius:0;border-width:0 0 0 1px;background:transparent;padding:18px 18px 18px 22px}.neo-flow>div:after{content:"";position:absolute;right:-4px;top:28px;width:7px;height:7px;border-radius:50%;background:${ACCENT};box-shadow:0 0 14px ${ACCENT}}.neo-flow>div:last-child:after{display:none}
+        @keyframes stage-scan{to{transform:translateY(750px)}}@keyframes bar-rise{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
+        @media(max-width:1050px){.neo-workbench{grid-template-columns:270px 1fr}}
+        @media(max-width:720px){.neo-workbench{display:block}.neo-feature-rail{border-right:0;display:grid;grid-template-columns:1fr 1fr}.neo-feature-tab{padding:15px 8px;grid-template-columns:28px 1fr}.neo-feature-tab span{display:none}.neo-feature-tab:hover,.neo-feature-tab.is-active{padding-left:12px}.neo-feature-stage{min-height:420px;padding:34px 22px}.neo-stage-icon{width:54px;height:54px}}
       `}</style>
       <Nav />
       <main>
@@ -194,7 +216,19 @@ export default function Landing() {
 
         <section id="fitur" className="neo-section">
           <div className="neo-section-head"><div><small>Fitur utama</small><h2>Perangkat operasional untuk bisnis retail</h2></div><p>Struktur halaman, interaksi, dan visual mengikuti keluarga DagangOS, sedangkan konten dan warna tetap spesifik untuk retail.</p></div>
-          <div className="neo-grid">{FEATURES.map((feature) => <article className="neo-card" key={feature.title}><feature.icon size={28} strokeWidth={1.7} /><h3>{feature.title}</h3><p>{feature.text}</p></article>)}</div>
+          <div className="neo-workbench">
+            <div className="neo-feature-rail" role="tablist" aria-label="Fitur Geraina POS">
+              {FEATURES.map((feature, index) => (
+                <button key={feature.title} type="button" role="tab" aria-selected={activeFeature === index} className={`neo-feature-tab ${activeFeature === index ? "is-active" : ""}`} onClick={() => setActiveFeature(index)} onMouseEnter={() => setActiveFeature(index)}>
+                  <feature.icon size={20} /><b>{feature.title}</b><span>0{index + 1}</span>
+                </button>
+              ))}
+            </div>
+            <div className="neo-feature-stage" key={selectedFeature.title}>
+              <div className="neo-stage-head"><div className="neo-stage-icon"><SelectedFeatureIcon size={32} /></div><div className="neo-stage-copy"><small>Modul aktif · 0{activeFeature + 1}</small><h3>{selectedFeature.title}</h3><p>{selectedFeature.text}</p></div></div>
+              <div className="neo-stage-visual" aria-hidden="true"><span className="neo-stage-line" />{[2, 5, 3, 6, 4, 7, 5, 8, 4, 6, 3, 7].map((height, index) => <i className="neo-stage-bar" key={index} style={{ "--bar": (height + activeFeature) % 8 }} />)}</div>
+            </div>
+          </div>
         </section>
 
         <section id="solusi" className="neo-section" style={{ paddingTop: 0 }}>

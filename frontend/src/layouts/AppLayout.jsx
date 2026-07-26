@@ -217,7 +217,7 @@ export default function AppLayout() {
   });
 
   return (
-    <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-[hsl(var(--background))]" data-testid="app-layout">
+    <div className="ecosystem-app-shell h-screen flex flex-col lg:flex-row overflow-hidden bg-[hsl(var(--background))]" data-testid="app-layout">
       {/* Mobile/tablet top bar -- hidden on desktop (lg+), where the sidebar is always visible */}
       <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface))]" data-testid="app-mobile-topbar">
         <button
@@ -244,7 +244,7 @@ export default function AppLayout() {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] border-r border-[hsl(var(--border))] bg-[hsl(var(--surface))] flex flex-col h-screen overflow-hidden transition-transform duration-200 ease-out
+        className={`ecosystem-command-rail fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] border-r border-[hsl(var(--border))] bg-[hsl(var(--surface))] flex flex-col h-screen overflow-hidden transition-transform duration-200 ease-out
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
           lg:static lg:translate-x-0 lg:w-64 lg:max-w-none lg:z-auto`}
         data-testid="app-sidebar"
@@ -259,7 +259,7 @@ export default function AppLayout() {
               <button
                 onClick={() => setShowEcosystemSwitcher(!showEcosystemSwitcher)}
                 className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))] text-[hsl(var(--foreground))] transition-all flex items-center gap-1 text-xs font-bold"
-                title="Switch Ecosystem App (Odoo Style)"
+                title="Beralih aplikasi DagangOS"
                 data-testid="odoo-ecosystem-switcher-btn"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -292,7 +292,7 @@ export default function AppLayout() {
                   { mod: "geraina", label: "Geraina POS", desc: "Retail & Toko OS", img: "/assets/brand/geraina-icon.png", tone: "blue", home: "/geraina/app/dashboard", activate: "/geraina/activate" },
                 ];
                 return (
-                  <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="suite-list pt-1">
                     {tiles.map(({ mod, label, desc, img, tone, home, activate }) => {
                       const isOn = activated.has(mod);
                       const box = tone === "orange"
@@ -304,7 +304,7 @@ export default function AppLayout() {
                         <a
                           key={mod}
                           href={isOn ? home : activate}
-                          className={`p-2.5 rounded-xl border transition-all block text-left ${box}`}
+                          className={`suite-row p-2.5 border transition-all block text-left ${box}`}
                           data-testid={`suite-tile-${mod}`}
                         >
                           <div className="flex items-center gap-1.5 mb-1">
@@ -497,8 +497,10 @@ export default function AppLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 overflow-y-auto bg-[hsl(var(--background))]">
-        <Outlet />
+      <main className="ecosystem-workspace flex-1 min-w-0 overflow-y-auto bg-[hsl(var(--background))]">
+        <div key={location.pathname} className="route-stage">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

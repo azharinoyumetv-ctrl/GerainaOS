@@ -46,7 +46,7 @@ export default function Login() {
   const focusOff = (e) => { e.target.style.borderColor = "#dfe6e3"; e.target.style.boxShadow = "none"; };
 
   return (
-    <div className="min-h-screen flex" style={{ fontFamily: JAKARTA, background: "#f7fbfa" }}>
+    <div className="brand-auth-shell min-h-screen flex" style={{ fontFamily: JAKARTA, background: "#f7fbfa" }}>
       {/* Brand panel */}
       <div
         className="hidden lg:flex flex-col justify-between w-1/2 p-12 relative overflow-hidden"
@@ -87,7 +87,7 @@ export default function Login() {
             Kasir pintar untuk toko Indonesia.
           </h2>
           <p className="text-white/70 mt-4 leading-relaxed">
-            Scan, tambah, bayar — di bawah 100ms. Kelola stok grosir, harga bertingkat, dan laporan dari satu dasbor.
+            Scan, tambah, bayar, lalu kelola stok grosir, harga bertingkat, dan laporan dari satu dasbor.
           </p>
           <ul className="mt-8 space-y-3 text-sm text-white/85">
             <li className="flex items-center gap-3"><ScanLine size={18} className="text-white/70" /> Kasir cepat & sinkron barcode scanner</li>

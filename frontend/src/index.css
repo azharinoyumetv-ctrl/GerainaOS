@@ -127,13 +127,15 @@
   .pill-muted   { background: hsl(0 0% 0% / 0.05); color: hsl(0 0% 35%); }
 }
 
-/* Hero accent grain (subtle SVG noise via data URI) */
+/* Shared ecosystem atmosphere: CSS-only, lightweight, and motion-safe. */
 .bg-grain::before {
   content: "";
   position: absolute; inset: 0;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  opacity: 0.6;
-  mix-blend-mode: multiply;
+  background:
+    linear-gradient(90deg, hsl(var(--primary) / .035) 1px, transparent 1px),
+    linear-gradient(hsl(var(--primary) / .035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
   pointer-events: none;
 }
 
@@ -141,4 +143,230 @@
 @keyframes fadeup {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* DagangOS family application shell */
+.ecosystem-app-shell {
+  --ecosystem-glow: 151 74% 46%;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 82% -10%, hsl(var(--ecosystem-glow) / .12), transparent 30rem),
+    linear-gradient(135deg, hsl(150 32% 98%), hsl(160 28% 96%)) !important;
+}
+
+.ecosystem-command-rail {
+  color: hsl(145 35% 92%);
+  border-color: hsl(151 60% 36% / .22) !important;
+  background:
+    radial-gradient(circle at 20% 0%, hsl(151 75% 48% / .17), transparent 18rem),
+    linear-gradient(180deg, hsl(155 55% 9%), hsl(156 48% 5%)) !important;
+  box-shadow: 18px 0 60px hsl(156 70% 4% / .18);
+}
+
+.ecosystem-command-rail > div,
+.ecosystem-command-rail > nav {
+  border-color: hsl(151 50% 70% / .12) !important;
+  background-color: transparent !important;
+}
+
+.ecosystem-command-rail a,
+.ecosystem-command-rail button,
+.ecosystem-command-rail select {
+  color: inherit;
+}
+
+.ecosystem-command-rail nav > a,
+.ecosystem-command-rail nav > div > button,
+.ecosystem-command-rail nav > button {
+  position: relative;
+  border-radius: 8px !important;
+}
+
+.ecosystem-command-rail nav > a:hover,
+.ecosystem-command-rail nav > div > button:hover,
+.ecosystem-command-rail nav > button:hover {
+  background: hsl(151 55% 70% / .09) !important;
+  transform: translateX(3px);
+}
+
+.ecosystem-command-rail nav > a[aria-current="page"] {
+  color: hsl(154 70% 8%) !important;
+  background: linear-gradient(100deg, hsl(151 74% 51%), hsl(160 75% 63%)) !important;
+  box-shadow: 0 10px 28px hsl(151 80% 36% / .22);
+}
+
+.suite-list {
+  display: grid;
+}
+
+.suite-row {
+  border-width: 0 0 1px !important;
+  border-radius: 0 !important;
+}
+
+.ecosystem-workspace {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+.route-stage {
+  min-height: 100%;
+  animation: route-enter .42s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.operational-surface,
+.card-surface {
+  position: relative;
+  overflow: hidden;
+  border-color: hsl(151 32% 78% / .7) !important;
+  border-radius: 10px !important;
+  background: hsl(0 0% 100% / .78) !important;
+  box-shadow: 0 1px 0 hsl(0 0% 100%), 0 18px 45px hsl(155 38% 23% / .07);
+  backdrop-filter: blur(14px);
+  transition: border-color .22s, transform .22s, box-shadow .22s;
+}
+
+.operational-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: linear-gradient(transparent, hsl(var(--primary) / .65), transparent);
+  opacity: 0;
+  transition: opacity .22s;
+}
+
+.operational-surface:hover {
+  border-color: hsl(var(--primary) / .3) !important;
+  box-shadow: 0 1px 0 white, 0 22px 55px hsl(155 38% 23% / .1);
+}
+
+.operational-surface:hover::before { opacity: 1; }
+
+.ecosystem-workspace table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.ecosystem-workspace tbody tr {
+  transition: background-color .18s, transform .18s;
+}
+
+.ecosystem-workspace tbody tr:hover {
+  background: hsl(var(--primary) / .045);
+}
+
+.ecosystem-workspace input,
+.ecosystem-workspace select,
+.ecosystem-workspace textarea {
+  transition: border-color .18s, box-shadow .18s, background-color .18s;
+}
+
+.ecosystem-workspace input:focus,
+.ecosystem-workspace select:focus,
+.ecosystem-workspace textarea:focus {
+  box-shadow: 0 0 0 4px hsl(var(--primary) / .09);
+}
+
+@keyframes route-enter {
+  from { opacity: 0; transform: translateY(10px); filter: blur(3px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@media (max-width: 1023px) {
+  [data-testid="app-mobile-topbar"] {
+    color: white;
+    border-color: hsl(151 55% 60% / .16) !important;
+    background: hsl(155 54% 7% / .92) !important;
+    backdrop-filter: blur(18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-stage { animation: none; }
+  .ecosystem-command-rail nav > * { transform: none !important; }
+}
+
+/* Public routes use the same family geometry as the product and app surfaces. */
+.brand-auth-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: hsl(155 45% 6%) !important;
+}
+
+.brand-auth-shell::after {
+  content: "";
+  position: absolute;
+  width: 42rem;
+  height: 42rem;
+  right: -14rem;
+  top: -19rem;
+  border: 1px solid hsl(151 74% 55% / .16);
+  border-radius: 50%;
+  box-shadow: 0 0 100px hsl(151 74% 45% / .16), inset 0 0 90px hsl(151 74% 45% / .08);
+  animation: auth-orbit 16s linear infinite;
+  pointer-events: none;
+}
+
+.brand-auth-shell > div:first-child {
+  color: white;
+  background:
+    linear-gradient(hsl(151 74% 52% / .035) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(151 74% 52% / .035) 1px, transparent 1px),
+    radial-gradient(circle at 30% 30%, hsl(151 74% 48% / .18), transparent 28rem),
+    hsl(155 48% 7%) !important;
+  background-size: 34px 34px, 34px 34px, auto, auto !important;
+}
+
+.brand-auth-shell > div:last-child {
+  position: relative;
+  z-index: 2;
+  background: hsl(150 32% 98% / .96) !important;
+  box-shadow: -30px 0 80px hsl(155 75% 3% / .28);
+  animation: auth-panel-enter .62s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.ecosystem-pricing {
+  background:
+    radial-gradient(circle at 50% 4%, hsl(151 74% 45% / .1), transparent 28rem),
+    linear-gradient(180deg, hsl(155 45% 6%) 0 24rem, hsl(150 32% 98%) 24rem) !important;
+}
+
+.ecosystem-pricing [data-testid="pricing-hero"] { color: white; }
+.ecosystem-pricing [data-testid="pricing-hero"] p { color: hsl(145 17% 73%) !important; }
+.ecosystem-pricing [data-testid="billing-toggle"] { box-shadow: 0 16px 40px hsl(155 65% 4% / .24); }
+
+.ecosystem-pricing [data-testid^="pricing-card-"] {
+  border-radius: 10px !important;
+  box-shadow: 0 20px 60px hsl(155 38% 20% / .1) !important;
+  transition: transform .24s, box-shadow .24s;
+}
+
+.ecosystem-pricing [data-testid^="pricing-card-"]:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 28px 70px hsl(155 38% 20% / .15) !important;
+}
+
+.ecosystem-pricing [data-testid^="addon-"],
+.ecosystem-pricing [data-testid^="faq-"] {
+  border-radius: 8px !important;
+}
+
+@keyframes auth-orbit { to { transform: rotate(360deg); } }
+@keyframes auth-panel-enter {
+  from { opacity: 0; transform: translateX(22px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 767px) {
+  .brand-auth-shell { background: hsl(150 32% 98%) !important; }
+  .brand-auth-shell > div:last-child { box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-auth-shell::after,
+  .brand-auth-shell > div:last-child { animation: none; }
 }
