@@ -305,7 +305,7 @@ export default function Landing() {
 
         <section className="neo-cta-panel"><div><h2>Mulai kelola operasional retail Anda.</h2><p>Buat akun Geraina POS atau tinjau paket yang tersedia.</p></div><div className="neo-cta"><Link to="/geraina/register" className="neo-button neo-primary">Mulai Gratis</Link><Link to="/geraina/pricing" className="neo-button">Lihat Harga</Link></div></section>
       </main>
-      <footer className="neo-footer"><div className="neo-footer-inner"><div className="neo-footer-brand"><img src="/assets/brand/geraina-icon.png" alt="" /><span>© 2026 Geraina POS · PT DagangOS Digital Indonesia</span></div><div className="neo-footer-links"><Link to="/geraina/pricing">Harga</Link><a href={WA} target="_blank" rel="noopener noreferrer">Kontak</a><a href="/">DagangOS</a></div></div></footer>
+      <footer className="neo-footer"><div className="neo-footer-inner"><div className="neo-footer-brand"><img src="/assets/brand/geraina-icon.png" alt="" /><span>© 2026 Geraina POS · PT DagangOS Digital Indonesia</span></div><div className="neo-footer-links"><Link to="/geraina/pricing">Harga</Link><a href="mailto:contact@dagangos.com">contact@dagangos.com</a><a href={WA} target="_blank" rel="noopener noreferrer">+62 899 9155 182</a><span>Subang, West Java, Indonesia</span><a href="/">DagangOS</a></div></div></footer>
     </div>
   );
 }

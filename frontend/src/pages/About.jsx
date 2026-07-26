@@ -85,8 +85,8 @@ export default function About() {
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-[hsl(var(--muted))]">Kontak Dukungan</p>
-                <a href="mailto:support@dagangos.com" className="text-sm font-semibold text-[hsl(var(--accent))] hover:underline" data-testid="about-support">
-                  support@dagangos.com
+                <a href="mailto:contact@dagangos.com" className="text-sm font-semibold text-[hsl(var(--accent))] hover:underline" data-testid="about-support">
+                  contact@dagangos.com
                 </a>
               </div>
             </div>
