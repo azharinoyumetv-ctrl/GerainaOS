@@ -28,8 +28,6 @@ const LINE = "rgba(86,224,143,.17)";
 const TEXT = "#f5fff8";
 const MUTED = "#92aa9c";
 const JK = "'Plus Jakarta Sans', 'Figtree', sans-serif";
-const WA = "https://wa.me/628999155182?text=Halo%20Geraina%20POS%2C%20saya%20tertarik%20dengan%20layanan%20kasir%20digital%20Anda.";
-
 const FEATURES = [
   { icon: ShoppingCart, title: "POS & Kasir", text: "Transaksi penjualan, pencarian produk, keranjang, diskon, dan metode pembayaran dalam satu layar." },
   { icon: Boxes, title: "Inventori", text: "Kelola stok, mutasi, penyesuaian, stok minimum, dan riwayat pergerakan barang." },
@@ -63,7 +61,7 @@ function Nav() {
           <a href="#solusi">Solusi</a>
           <Link to="/geraina/pricing">Harga</Link>
           <a href="/">Ekosistem</a>
-          <a href={WA} target="_blank" rel="noopener noreferrer">Kontak</a>
+          <a href="/sumber-daya">Kontak</a>
         </nav>
         <div className="neo-actions">
           {user ? (
@@ -82,7 +80,7 @@ function Nav() {
         <a href="#solusi" onClick={() => setOpen(false)}>Solusi</a>
         <Link to="/geraina/pricing" onClick={() => setOpen(false)}>Harga</Link>
         <a href="/">Ekosistem DagangOS</a>
-        <a href={WA} target="_blank" rel="noopener noreferrer">Kontak</a>
+        <a href="/sumber-daya" onClick={() => setOpen(false)}>Kontak</a>
       </div>
     </header>
   );

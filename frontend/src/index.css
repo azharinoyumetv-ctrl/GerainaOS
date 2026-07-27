@@ -451,3 +451,25 @@
 .product-public.ecosystem-pricing > header span { color: var(--ink) !important; }
 .product-public.ecosystem-pricing > header span:last-child { color: var(--muted) !important; }
 .product-public.ecosystem-pricing > header a:not([data-testid="pricing-nav-register"]):not([data-testid="pricing-nav-dashboard"]) { color: var(--ink) !important; }
+
+/* Keep the floating pricing header inside the product canvas. Without a new
+   block formatting context its top margin collapses through #root and exposes
+   the legacy light body background as a white strip. */
+.product-public.ecosystem-pricing {
+  display: flow-root;
+}
+
+html:has(.public-geraina),
+body:has(.public-geraina) {
+  background: #050b09;
+  scrollbar-color: rgba(76, 139, 105, .72) #050b09;
+}
+
+html:has(.public-geraina)::-webkit-scrollbar-track {
+  background: #050b09;
+}
+
+html:has(.public-geraina)::-webkit-scrollbar-thumb {
+  border: 2px solid #050b09;
+  background: rgba(76, 139, 105, .72);
+}
