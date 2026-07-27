@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
-import { Check, ArrowRight, ChevronDown, ShoppingBag } from "lucide-react";
+import { Check, ArrowRight, ChevronDown } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 import { toast } from "@/components/ui/sonner";
 
@@ -127,7 +127,7 @@ export default function Pricing() {
       <header className="sticky top-0 z-50 backdrop-blur border-b" style={{ background: "rgba(247,251,250,.85)", borderColor: LINE }}>
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           <Link to="/geraina" className="flex items-center gap-2.5" data-testid="pricing-nav-logo">
-            <span className="w-8 h-8 rounded-xl flex items-center justify-center text-white" style={{ background: TEAL }}><ShoppingBag size={17} /></span>
+            <img src="/assets/brand/geraina-icon.png" alt="" className="w-9 h-9 object-contain" />
             <span className="font-bold text-lg" style={{ fontFamily: JK, color: INK }}>Geraina POS</span>
             <span className="text-xs font-medium" style={{ color: MUTED }}>by DagangOS</span>
           </Link>
