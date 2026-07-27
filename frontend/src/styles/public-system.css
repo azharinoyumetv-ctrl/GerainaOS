@@ -293,3 +293,76 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-device,.auth-device:after,.auth-node { animation: none; }
 }
+
+/* Shared cinematic public surfaces */
+.product-public {
+  --ink: #f7fbff;
+  --copy: #b0bdca;
+  --muted: #7f90a2;
+  --line: rgba(132, 171, 199, .16);
+  --wash: #091712;
+  --paper: #050b0a;
+  background:
+    radial-gradient(circle at 78% 4%, color-mix(in srgb, var(--brand) 16%, transparent), transparent 32rem),
+    radial-gradient(circle at 8% 46%, rgba(29, 108, 194, .09), transparent 29rem),
+    linear-gradient(rgba(112, 173, 150, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(112, 173, 150, .025) 1px, transparent 1px),
+    var(--paper);
+  background-size: auto, auto, 46px 46px, 46px 46px, auto;
+}
+.product-public.public-dapuros {
+  --ink: #fff9f4;
+  --copy: #baa99c;
+  --muted: #927f72;
+  --line: rgba(255, 161, 92, .16);
+  --wash: #17100b;
+  --paper: #080706;
+}
+.ecosystem-pricing > header {
+  border-color: var(--line) !important;
+  background: rgba(5, 12, 11, .84) !important;
+  box-shadow: 0 18px 55px rgba(0,0,0,.32);
+}
+.public-dapuros.ecosystem-pricing > header { background: rgba(10,8,6,.86) !important; }
+.ecosystem-pricing [data-testid="pricing-hero"] h1,
+.ecosystem-pricing [data-testid^="pricing-card-"] h3,
+.ecosystem-pricing [data-testid^="pricing-card-"] p[class*="text-3xl"] { color: var(--ink) !important; }
+.ecosystem-pricing [data-testid="billing-toggle"] {
+  border-color: var(--line) !important;
+  color: var(--copy) !important;
+  background: rgba(12,25,22,.86) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.24);
+}
+.public-dapuros.ecosystem-pricing [data-testid="billing-toggle"] { background: rgba(27,17,11,.9) !important; }
+.ecosystem-pricing [data-testid="pricing-page"] > section:nth-of-type(2) > div:first-child,
+.ecosystem-pricing > section:nth-of-type(2) > div:first-child {
+  border-color: var(--line);
+  background: rgba(8,18,16,.84);
+  box-shadow: 0 34px 86px rgba(0,0,0,.32);
+}
+.public-dapuros.ecosystem-pricing > section:nth-of-type(2) > div:first-child { background: rgba(20,13,9,.88); }
+.ecosystem-pricing [data-testid^="pricing-card-"]:hover { background: color-mix(in srgb,var(--brand) 8%,#0b1714) !important; }
+.public-dapuros.ecosystem-pricing [data-testid^="pricing-card-"]:hover { background: color-mix(in srgb,var(--brand) 8%,#17100b) !important; }
+.ecosystem-pricing [data-testid="addons-section"] { background: var(--wash) !important; }
+.ecosystem-pricing [data-testid^="pricing-card-"],
+.ecosystem-pricing [data-testid^="addon-"],
+.ecosystem-pricing [data-testid^="faq-"] { color: var(--copy) !important; }
+.ecosystem-pricing [data-testid^="pricing-cta-"],
+.ecosystem-pricing [data-testid^="addon-cta-"] { color: var(--ink) !important; background: rgba(255,255,255,.035) !important; }
+.ecosystem-pricing a[href^="mailto:"][data-testid^="pricing-cta-"] { color:#fff !important; background:linear-gradient(135deg,var(--brand),var(--brand-deep)) !important; }
+.auth-header { border-color: var(--line); }
+.auth-story h2,.auth-form h1,.auth-field label,.auth-brand,.auth-header nav a { color: var(--ink); }
+.auth-story > p,.auth-form > p { color: var(--copy); }
+.auth-kicker,.auth-switch a { color: var(--brand-2); }
+.auth-device {
+  border-color: color-mix(in srgb,var(--brand) 34%,transparent);
+  background: linear-gradient(145deg,#10231d,#07110e);
+  box-shadow: 0 34px 70px rgba(0,0,0,.35),0 0 38px color-mix(in srgb,var(--brand) 13%,transparent);
+}
+.public-dapuros .auth-device { background: linear-gradient(145deg,#26150b,#100a06); }
+.auth-device__catalog i,.auth-device__tickets i { background: rgba(255,255,255,.035); border-color: var(--line); }
+.auth-node { background: radial-gradient(circle,#10251e 0 35%,color-mix(in srgb,var(--brand) 18%,transparent) 36% 58%,transparent 60%); color: var(--brand-2); }
+.public-dapuros .auth-node { background: radial-gradient(circle,#241409 0 35%,color-mix(in srgb,var(--brand) 18%,transparent) 36% 58%,transparent 60%); }
+.auth-field input { color: var(--ink); background: rgba(255,255,255,.045); }
+.auth-field input::placeholder { color: color-mix(in srgb,var(--muted) 75%,transparent); }
+.public-contact-footer a { color: var(--ink); }

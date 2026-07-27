@@ -258,9 +258,32 @@ export default function Landing() {
         @keyframes sim-rise{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}@keyframes scan-y{0%,100%{top:15%}50%{top:85%}}@keyframes fill-stock{from{height:0}to{height:var(--level)}}@keyframes stock-move{from{left:5%}to{left:93%}}@keyframes path-run{from{left:0}to{left:100%}}@keyframes point-in{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}@keyframes chart-sweep{from{left:-30%}to{left:110%}}@keyframes outlet-spin{to{transform:rotate(360deg)}}@keyframes permit{from{transform:scale(.65)}to{transform:none}}
         @media(max-width:720px){.neo-workbench{border-radius:22px}.neo-feature-stage{padding:28px 20px}.feature-sim{height:265px}.sim-supply{padding:18px;grid-template-columns:1fr 20px 1fr 20px 1fr}.supply-node{padding:11px}.supply-node b{font-size:10px}.sim-report{grid-template-columns:1fr}.report-metric{display:none}.access-row{grid-template-columns:1fr repeat(4,30px);gap:4px}.access-row i{transform:scale(.8)}}
       `}</style>
+      <style>{`
+        .neo-page{background:#040a08;color:#f6fff9}.neo-page:before{background:radial-gradient(circle at 78% 8%,rgba(39,223,117,.15),transparent 34rem),radial-gradient(circle at 12% 46%,rgba(29,105,202,.08),transparent 30rem),linear-gradient(rgba(80,205,129,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(80,205,129,.025) 1px,transparent 1px);background-size:auto,auto,46px 46px,46px 46px}
+        .neo-nav{background:rgba(4,10,8,.86);border-color:rgba(74,222,132,.16);box-shadow:0 14px 46px rgba(0,0,0,.28)}.neo-links,.neo-mobile a{color:#a3b7aa}.neo-links a:hover{color:#fff}.neo-button{color:#f2fff7;background:rgba(8,23,16,.72);border-color:rgba(74,222,132,.2)}.neo-primary{color:#00170b}.neo-menu{color:#fff;background:#08160f}
+        .neo-kicker{background:rgba(8,36,24,.72);color:#c9f7d9;border-color:rgba(39,223,117,.3)}.neo-lead,.neo-section-head p,.neo-stage-copy p,.neo-solution-copy p{color:#9eb2a5}.neo-check{color:#82968a}.neo-check b{color:#f4fff8}
+        .neo-hero-cinematic{grid-template-columns:.82fr 1.18fr;gap:30px}
+        .hero-scene-image{height:570px;position:relative;overflow:hidden;border:1px solid rgba(77,227,137,.2);border-radius:30px;background:#020807;isolation:isolate;box-shadow:0 40px 90px rgba(0,0,0,.4),inset 0 1px rgba(255,255,255,.04)}
+        .hero-scene-image:before{content:"";position:absolute;inset:-10px;background:url("/geraina/assets/scenes/geraina-retail.png") 76% center/cover no-repeat;animation:retail-camera 13s ease-in-out infinite alternate;z-index:-3}
+        .hero-scene-image:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(2,10,8,.5),transparent 38%),linear-gradient(180deg,transparent 62%,rgba(2,10,8,.64));z-index:-2}
+        .scene-sweep{position:absolute;left:-30%;top:0;width:24%;height:100%;transform:skewX(-12deg);background:linear-gradient(90deg,transparent,rgba(72,255,150,.12),transparent);animation:retail-sweep 6.5s ease-in-out infinite}
+        .scene-sigil{position:absolute;right:28px;bottom:28px;width:94px;height:94px;display:grid;place-items:center;border:1px solid rgba(65,231,132,.35);border-radius:28px;background:rgba(2,16,10,.72);box-shadow:0 22px 50px rgba(0,0,0,.35),0 0 35px rgba(39,223,117,.16);backdrop-filter:blur(14px);animation:sigil-float 5s ease-in-out infinite}
+        .scene-sigil:before,.scene-sigil:after{content:"";position:absolute;inset:-13px;border:1px solid rgba(39,223,117,.18);border-radius:36px;animation:sigil-pulse 3.6s ease-out infinite}.scene-sigil:after{animation-delay:-1.8s}
+        .scene-sigil img{width:62px;height:62px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(39,223,117,.46))}
+        .scene-particle{position:absolute;width:8px;height:8px;border-radius:50%;background:${ACCENT};box-shadow:0 0 16px ${ACCENT};animation:retail-particle 8s ease-in-out infinite}.scene-particle.p1{left:14%;top:24%}.scene-particle.p2{left:48%;top:14%;animation-delay:-2.7s}.scene-particle.p3{left:38%;bottom:12%;animation-delay:-5.1s}
+        .neo-strip{background:rgba(7,19,13,.78);border-color:rgba(70,220,128,.14)}.neo-strip-item{color:#93a99a;border-color:rgba(70,220,128,.13)}
+        .neo-workbench{border-color:rgba(70,220,128,.14);background:#07130d;box-shadow:0 34px 90px rgba(0,0,0,.32)}.neo-feature-rail{background:#050d09;border-color:rgba(70,220,128,.13)}.neo-feature-tab{color:#82978a;border-color:rgba(70,220,128,.1)}.neo-feature-tab:hover,.neo-feature-tab.is-active{color:#f5fff9;background:linear-gradient(90deg,rgba(39,223,117,.15),transparent)}
+        .neo-feature-stage{background:radial-gradient(circle at 84% 16%,rgba(39,223,117,.12),transparent 25rem),linear-gradient(145deg,#0b1a12,#07100b)}.neo-stage-icon{background:#0b2416}.neo-stage-copy h3{color:#f4fff8}
+        .feature-sim{border-color:rgba(70,220,128,.13);background:linear-gradient(145deg,#0c1b12,#07100b);box-shadow:inset 0 1px rgba(255,255,255,.03)}
+        .sim-pos-products,.sim-pos-cart,.supply-node,.outlet-core,.outlet-node,.ops-stream span{color:#f5fff8;background:#0c1d14;border-color:rgba(70,220,128,.14);box-shadow:0 15px 28px rgba(0,0,0,.24)}.stock-status,.report-metric,.access-head,.access-row{color:#d7e8dd}.neo-solution{border-color:rgba(70,220,128,.14)}.neo-flow>div{border-color:rgba(70,220,128,.13)}.neo-flow b{color:#f4fff8}.neo-flow span{color:#90a698}.neo-footer{background:#07100b;border-color:rgba(70,220,128,.14)}.neo-footer-inner{color:#8ea295}.neo-footer a:hover{color:#fff}
+        @keyframes retail-camera{0%{transform:scale(1.03) translate3d(-3px,0,0)}100%{transform:scale(1.09) translate3d(11px,-8px,0)}}@keyframes retail-sweep{0%,18%{left:-30%;opacity:0}42%{opacity:1}70%,100%{left:115%;opacity:0}}@keyframes sigil-float{50%{transform:translateY(-11px) rotate(1.5deg)}}@keyframes sigil-pulse{0%{transform:scale(.84);opacity:.8}100%{transform:scale(1.3);opacity:0}}@keyframes retail-particle{0%,100%{transform:translate3d(0,0,0);opacity:.35}35%{transform:translate3d(35px,-22px,0);opacity:1}70%{transform:translate3d(70px,18px,0);opacity:.55}}
+        @media(max-width:1050px){.neo-hero-cinematic{grid-template-columns:1fr}.hero-scene-image{width:min(900px,100%);height:520px;margin:auto}}
+        @media(max-width:720px){.hero-scene-image{height:430px;margin-top:14px;border-radius:23px}.hero-scene-image:before{background-position:72% center}.scene-sigil{right:18px;bottom:18px;width:76px;height:76px}.scene-sigil img{width:50px;height:50px}}
+        @media(prefers-reduced-motion:reduce){.hero-scene-image:before,.scene-sweep,.scene-sigil,.scene-sigil:before,.scene-sigil:after,.scene-particle{animation:none}}
+      `}</style>
       <Nav />
       <main>
-        <section className="neo-hero">
+        <section className="neo-hero neo-hero-cinematic">
           <div className="neo-copy">
             <span className="neo-kicker">Sistem POS Retail &amp; Inventory</span>
             <h1 className="neo-title" data-testid="hero-title">Kelola Toko &amp; Stok Lebih <span>Mudah, Jualan Makin Cuan.</span></h1>
@@ -275,7 +298,11 @@ export default function Landing() {
               <div className="neo-check"><b><CheckCircle2 size={15} />Bagian dari DagangOS</b>Identitas produk tetap terhubung dengan parent ecosystem.</div>
             </div>
           </div>
-          <TiltWrap><PosVisual /></TiltWrap>
+          <div className="hero-scene-image geraina-scene" aria-label="Lingkungan operasional retail Geraina POS">
+            <i className="scene-sweep" aria-hidden="true" />
+            <i className="scene-particle p1" aria-hidden="true" /><i className="scene-particle p2" aria-hidden="true" /><i className="scene-particle p3" aria-hidden="true" />
+            <div className="scene-sigil" aria-hidden="true"><img src="/assets/brand/geraina-icon.png" alt="" /></div>
+          </div>
         </section>
 
         <section className="neo-strip">

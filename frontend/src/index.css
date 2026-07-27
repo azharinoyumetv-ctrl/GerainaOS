@@ -432,3 +432,22 @@
     background: hsl(150 42% 97% / .94) !important;
   }
 }
+
+/* Final public-route theme: keep landing, pricing, and auth in one cinematic family. */
+.product-public.ecosystem-pricing {
+  color: var(--copy) !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(24,187,105,.16), transparent 31rem),
+    linear-gradient(180deg,#030907,#07130e 28rem,#050b09) !important;
+}
+.product-public.ecosystem-pricing [data-testid="pricing-hero"] { color: var(--ink) !important; }
+.product-public.ecosystem-pricing [data-testid="pricing-hero"] h1 { color: var(--ink) !important; }
+.product-public.ecosystem-pricing [data-testid="pricing-hero"] p { color: var(--copy) !important; }
+.product-public.ecosystem-pricing h1,
+.product-public.ecosystem-pricing h2,
+.product-public.ecosystem-pricing h3,
+.product-public.ecosystem-pricing h4 { color: var(--ink) !important; }
+.product-public.ecosystem-pricing p { color: var(--copy) !important; }
+.product-public.ecosystem-pricing > header span { color: var(--ink) !important; }
+.product-public.ecosystem-pricing > header span:last-child { color: var(--muted) !important; }
+.product-public.ecosystem-pricing > header a:not([data-testid="pricing-nav-register"]):not([data-testid="pricing-nav-dashboard"]) { color: var(--ink) !important; }
