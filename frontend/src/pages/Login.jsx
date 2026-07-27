@@ -88,11 +88,7 @@ export default function Login() {
 
       <footer className="public-contact-footer">
         <span>© 2026 Geraina POS · PT DagangOS Digital Indonesia</span>
-        <nav aria-label="Kontak DagangOS">
-          <a href="mailto:contact@dagangos.com">contact@dagangos.com</a>
-          <a href="https://wa.me/628999155182">+62 899 9155 182</a>
-          <span>Subang, West Java, Indonesia</span>
-        </nav>
+        <nav aria-label="Tautan perusahaan"><a href="/sumber-daya">Kontak</a><a href="/">DagangOS</a></nav>
       </footer>
     </div>
   );

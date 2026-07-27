@@ -265,6 +265,13 @@
 .auth-submit:disabled { opacity: .65; cursor: wait; }
 .auth-switch { margin-top: 22px !important; text-align: center; }
 .auth-switch a { color: var(--brand-deep); font-weight: 800; }
+.auth-main--register { padding-top: 42px; padding-bottom: 58px; }
+.auth-main--register .auth-story h2 { font-size: clamp(42px,4.8vw,66px); }
+.auth-main--register .auth-scene { height: 225px; margin-top: 28px; }
+.auth-main--register .auth-form > p { margin-bottom: 24px; }
+.auth-main--register .auth-field { margin-bottom: 14px; }
+.auth-main--register .auth-submit { margin-top: 18px; }
+.auth-main--register .auth-switch { margin-top: 18px !important; }
 @keyframes auth-device { 50% { transform: rotateX(2deg) rotateY(8deg) translate3d(14px,-12px,30px); } }
 @keyframes auth-scan { 0%,100% { top: 28%; } 50% { top: 78%; } }
 @keyframes auth-node { 50% { transform: translate3d(10px,-18px,25px) scale(1.09); } }
