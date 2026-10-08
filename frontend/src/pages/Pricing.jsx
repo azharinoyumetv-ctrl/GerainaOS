@@ -186,7 +186,7 @@ export default function Pricing() {
                 ))}
               </ul>
               {t.id !== "trial" ? (
-                <a href="mailto:contact@dagangos.com" className="mt-auto w-full text-center py-2.5 rounded-xl border font-semibold text-sm" style={{ borderColor: LINE, color: INK }} data-testid={`pricing-cta-${t.id}`}>Hubungi DagangOS →</a>
+                <a href={`/geraina/checkout?plan=${t.id}&period=${billing}`} className="mt-auto w-full text-center py-2.5 rounded-xl border font-semibold text-sm" style={{ borderColor: LINE, color: INK }} data-testid={`pricing-cta-${t.id}`}>Beli {t.name} →</a>
               ) : user ? (
                 user.plan === t.id ? (
                   <button disabled className="mt-auto w-full py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed" style={{ background: "#eef2f0", color: MUTED }} data-testid={`pricing-cta-${t.id}`}>Paket Aktif</button>

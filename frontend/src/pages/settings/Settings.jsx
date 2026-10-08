@@ -342,7 +342,7 @@ export default function Settings() {
             </div>
 
             <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-xs leading-relaxed">
-              Upgrade ke paket berbayar dilakukan lewat halaman Harga. Aktivasi otomatis akan tersedia setelah gateway pembayaran (Xendit/Midtrans) siap — sementara ini silakan hubungi sales untuk aktivasi manual.
+              Beli paket melalui halaman Harga dan selesaikan pembayaran di Midtrans. Membuka checkout atau pembayaran yang gagal tidak mengubah paket Anda. Aktivasi dikonfirmasi oleh tim DagangOS setelah pembayaran terverifikasi.
             </div>
 
             <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-between items-center">
