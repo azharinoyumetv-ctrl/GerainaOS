@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { checkoutReturn } from "@/auth/checkoutReturn";
 import { Store, ArrowRight, LogOut } from "lucide-react";
 import api from "@/api/client";
 
@@ -18,7 +19,7 @@ export default function Activate() {
     setErr("");
     try {
       await api.post("/auth/stores", { module: MODULE, store_name: name.trim() });
-      window.location.href = HOME;
+      window.location.href = checkoutReturn(MODULE) || HOME;
     } catch (e2) {
       setErr(e2?.response?.data?.detail || "Gagal membuat toko. Coba lagi.");
       setBusy(false);

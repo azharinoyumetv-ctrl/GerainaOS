@@ -57,6 +57,25 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
+  // Refresh account entitlements after returning from payment in this or another tab.
+  useEffect(() => {
+    const currentToken = () => localStorage.getItem("geraina_token") || localStorage.getItem("dagangos_token") || localStorage.getItem("dapuros_token");
+    const sync = () => {
+      const token = currentToken();
+      if (!token || document.visibilityState === "hidden") return;
+      api.get("/auth/me").then(r => {
+        if (currentToken() === token) setUser(enrichUser(r.data));
+      }).catch(() => {});
+    };
+    window.addEventListener("focus", sync);
+    window.addEventListener("pageshow", sync);
+    document.addEventListener("visibilitychange", sync);
+    return () => {
+      window.removeEventListener("focus", sync);
+      window.removeEventListener("pageshow", sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, []);
   const login = async (email, password) => {
     // Clear any existing stale session tokens first
     localStorage.removeItem("geraina_token");

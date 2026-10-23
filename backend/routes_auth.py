@@ -14,6 +14,8 @@ from pydantic import BaseModel
 
 from database import get_db, utcnow, trial_end_iso
 from models import UserRegister, UserLogin, Token
+from subscription_state import apply_subscription
+from billing_subscriptions import reconcile_pending
 from auth import (
     hash_password, verify_password, create_access_token,
     get_current_user, get_identity,
@@ -36,6 +38,7 @@ def _norm_module(m: str) -> str:
 
 
 def _user_public(user: dict) -> dict:
+    user = apply_subscription(user, user.get("current_module", DEFAULT_MODULE))
     return {
         "id": user["id"],
         "email": user["email"],
@@ -46,6 +49,7 @@ def _user_public(user: dict) -> dict:
         "trial_ends_at": user.get("trial_ends_at"),
         "trial_expired_at": user.get("trial_expired_at"),
         "plan": user.get("plan", "trial"),
+        "subscription": user.get("subscription"),
     }
 
 
@@ -147,7 +151,9 @@ async def me(user: dict = Depends(get_identity)):
     """Identitas akun + daftar toko (per modul) yang dimiliki. Suite switcher render dari sini."""
     db = get_db()
     stores = await db.stores.find({"owner_user_id": user["id"]}, {"_id": 0}).to_list(length=100)
-    pub = _user_public(user)
+    await reconcile_pending(user, user["current_module"])
+    fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password_hash": 0})
+    pub = _user_public({**fresh, "current_module": user["current_module"], "subscriptions": {**user.get("subscriptions", {}), **fresh.get("subscriptions", {})}})
     pub["stores"] = [
         {"store_id": s["id"], "name": s.get("name"), "module": s.get("module")} for s in stores
     ]

@@ -12,6 +12,7 @@ from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordBearer
 
 from database import get_db, utcnow
+from subscription_state import apply_store_subscription
 
 JWT_SECRET = os.environ.get("JWT_SECRET_KEY", "change-me")
 if JWT_SECRET == "change-me" and os.environ.get("ENV") == "production":
@@ -118,12 +119,14 @@ async def _decode_identity(token: str) -> dict:
     return user
 
 
-async def get_identity(token: str = Depends(oauth2_scheme)) -> dict:
+async def get_identity(token: str = Depends(oauth2_scheme), x_dagangos_module: str = Header(default="geraina", alias="X-DagangOS-Module")) -> dict:
     """Akun (owner) saja, tanpa resolusi toko. Untuk endpoint yang tidak butuh toko aktif
     (mis. /auth/me, /auth/stores). Deliberately NOT gated on plan=="expired" -- /auth/me must
     keep working even when the account is locked out, otherwise the frontend could never
     detect the expired state or show the paywall in the first place."""
-    return await _decode_identity(token)
+    user = await _decode_identity(token)
+    module = x_dagangos_module.lower()
+    return apply_store_subscription(user, await _resolve_store(user, module), module)
 
 
 async def _resolve_store(user: dict, module: str) -> Optional[dict]:
@@ -154,7 +157,7 @@ async def _resolve_current(token: str, module: str) -> dict:
     user["store_id"] = store["id"]
     user["store_name"] = store.get("name")
     user["current_module"] = module
-    return user
+    return apply_store_subscription(user, store, module)
 
 
 async def get_current_user(

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { checkoutReturn, checkoutAuthLink } from "@/auth/checkoutReturn";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { ArrowRight } from "lucide-react";
@@ -9,8 +10,11 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
+  const next = checkoutReturn("geraina");
   const { user, login } = useAuth();
 
+  useEffect(() => { if (user && next) window.location.replace(next); }, [user, next]);
+  if (user && next) return <p role="status">Melanjutkan ke pembayaran…</p>;
   if (user) return <Navigate to="/geraina/app/dashboard" replace />;
 
   const submit = async (event) => {
@@ -19,7 +23,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      nav("/geraina/app/dashboard");
+      if (!next) nav("/geraina/app/dashboard");
     } catch (requestError) {
       setError(requestError?.response?.data?.detail || "Email atau kata sandi tidak valid.");
     } finally {
@@ -37,7 +41,7 @@ export default function Login() {
         </Link>
         <nav aria-label="Navigasi akun Geraina">
           <Link to="/geraina/pricing">Lihat harga</Link>
-          <Link to="/geraina/register">Mulai gratis</Link>
+          <Link to={checkoutAuthLink("geraina", "register")}>Mulai gratis</Link>
         </nav>
       </header>
 
@@ -78,10 +82,10 @@ export default function Login() {
             {error && <p className="auth-error" role="alert" data-testid="login-error">{error}</p>}
 
             <button type="submit" disabled={loading} data-testid="login-submit-btn" className="auth-submit">
-              {loading ? "Memproses…" : "Masuk"} {!loading && <ArrowRight size={17} />}
+              {loading ? "Memproses…" : next ? "Masuk & Lanjut Bayar" : "Masuk"} {!loading && <ArrowRight size={17} />}
             </button>
 
-            <p className="auth-switch">Belum punya toko? <Link to="/geraina/register" data-testid="login-to-register-link">Daftar gratis</Link></p>
+            <p className="auth-switch">Belum punya toko? <Link to={checkoutAuthLink("geraina", "register")} data-testid="login-to-register-link">Daftar gratis</Link></p>
           </form>
         </section>
       </main>
