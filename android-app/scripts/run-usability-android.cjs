@@ -16,7 +16,17 @@ const adbPath=join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-t
 let devices=[],page;
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function adb(args,binary=false){const result=spawnSync(adbPath,['-s',serial,...args],{windowsHide:true,encoding:binary?undefined:'utf8',maxBuffer:20000000,timeout:90000});assert.equal(result.status,0,String(result.stderr));return result.stdout;}
-async function attach(){for(const device of devices)await device.close();devices=await _android.devices({omitDriverInstall:true});const device=devices.find(item=>item.serial()===serial);assert.ok(device);page=await(await device.webView({pkg:app},{timeout:45000})).page();page.setDefaultTimeout(30000);await checks.localFrontend(page);await checks.readOnly(page);}
+async function attach(){
+ let lastError,connected=false;
+ for(let attempt=0;attempt<3;attempt++){
+  for(const device of devices)await device.close();
+  devices=await _android.devices({omitDriverInstall:true});const device=devices.find(item=>item.serial()===serial);assert.ok(device);
+  try{page=await(await device.webView({pkg:app},{timeout:15000})).page();connected=true;if(attempt>0){report.connectionRediscoveries=(report.connectionRediscoveries||0)+1;console.log('Test connection rediscovered after Android activity recreation.');}break;}
+  catch(error){lastError=error;if(!/Timeout .*event "webview"/.test(error.message))throw error;await wait(250);}
+ }
+ if(!connected)throw lastError;
+ page.setDefaultTimeout(30000);await checks.localFrontend(page);await checks.readOnly(page);
+}
 async function screenshot(name){writeFileSync(join(out,`${name}.png`),adb(['exec-out','screencap','-p'],true));}
 async function step(name,fn){await fn();report.checks.push({name,status:'passed'});writeFileSync(join(out,'verification.json'),JSON.stringify(report,null,2));console.log(`PASS: ${name}`);}
 (async()=>{try{
