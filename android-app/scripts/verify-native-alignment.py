@@ -6,7 +6,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 libraries = []
-with zipfile.ZipFile(root / "releases/Geraina-POS-1.2.0.apk") as package:
+with zipfile.ZipFile(root / "releases/Geraina-POS-1.2.1.apk") as package:
     for name in package.namelist():
         if not name.endswith(".so"):
             continue

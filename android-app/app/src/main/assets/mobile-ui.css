@@ -24,6 +24,10 @@ html[data-ga-ui] .ecosystem-command-rail {
 }
 html[data-ga-ui] .ecosystem-command-rail[class~="-translate-x-full"] { transform:translateX(-110%)!important; }
 html[data-ga-ui] .ecosystem-command-rail[class~="translate-x-0"] { transform:translateX(0)!important; }
+/* The native top bar already shows the app identity and store name. */
+html[data-ga-ui] [data-testid="app-sidebar"] [data-testid="app-logo"],
+html[data-ga-ui] [data-testid="app-sidebar"] > div:first-child > p { display:none!important; }
+html[data-ga-ui] [data-testid="app-sidebar"] > div:first-child > .flex > div { width:100%; justify-content:space-between; }
 html[data-ga-ui] [data-testid="mobile-sidebar-backdrop"] { display:block!important; z-index:60!important; background:#152e2066!important; backdrop-filter:blur(2px); }
 html[data-ga-ui] [data-testid="mobile-menu-close-btn"] { display:block!important; min-width:40px; min-height:40px; }
 html[data-ga-ui] .ecosystem-command-rail nav { padding:12px; }
