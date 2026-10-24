@@ -43,7 +43,7 @@ async function waitXml(pattern){for(let attempt=0;attempt<12;attempt++){const va
 (async()=>{try{
  adb(['install','-r',apk]);adb(['shell','am','force-stop',app]);adb(['logcat','-b','crash','-c']);adb(['shell','pm','revoke',app,'android.permission.CAMERA']);adb(['shell','pm','clear-permission-flags',app,'android.permission.CAMERA','user-set','user-fixed']);adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);launch();await attach();
  await page.goto('https://dagangos.com/geraina/login');await page.evaluate(value=>{localStorage.setItem('geraina_token','offline-isolated-fixture-token');localStorage.setItem('dagangos_token','offline-isolated-fixture-token');localStorage.setItem('geraina_user',JSON.stringify(value));localStorage.setItem('dagangos_user',JSON.stringify(value));},user);
- await page.goto('https://dagangos.com/geraina/app/pos');await page.getByTestId('pos-product-offline-coffee').waitFor();
+ await page.goto('https://dagangos.com/geraina/app/pos',{waitUntil:'domcontentloaded'});await page.getByTestId('pos-product-offline-coffee').waitFor();
  await step('Bundled POS opens and stores the catalogue for offline use',async()=>{await page.waitForFunction(()=>!document.querySelector('[data-testid="offline-status"]')?.textContent.includes('Buka kasir saat terhubung'));assert.equal(await page.evaluate(()=>window.GerainaDevice.offline),true);await capture('online-catalogue-ready');});
  let reference,id;
  await step('Cash checkout succeeds with Android Wi-Fi and mobile data disabled',async()=>{
@@ -62,7 +62,7 @@ async function waitXml(pattern){for(let attempt=0;attempt<12;attempt++){const va
  await step('Receipt printer selection is native and available offline',async()=>{
   await page.goto('https://dagangos.com/geraina/app/settings/printer');await page.getByTestId('android-printer-settings').waitFor();assert.equal(await page.getByRole('button',{name:'Simpan Pengaturan',exact:true}).count(),0);
   await page.getByTestId('configure-android-printer').click();await waitXml(/Hubungkan printer struk/);adb(['shell','input','keyevent','KEYCODE_BACK']);
-  await page.goto('https://dagangos.com/geraina/app/pos');await page.locator('[data-testid="offline-status"] summary').click();
+  await page.goto('https://dagangos.com/geraina/app/pos',{waitUntil:'domcontentloaded'});await page.locator('[data-testid="offline-status"] summary').click();
   await page.locator('[data-testid^="local-sale-"]').click();await page.getByTestId('receipt-bluetooth-print').click();await waitXml(/Hubungkan printer struk/);const tree=xml();assert.match(tree,/Bluetooth/);assert.match(tree,/USB \/ OTG/);await capture('offline-printer-selection');adb(['shell','input','keyevent','KEYCODE_BACK']);await page.getByTestId('receipt-done-btn').click();
  });
  await step('Connectivity restoration retains a failed replay and retries the same sale ID',async()=>{
@@ -70,7 +70,7 @@ async function waitXml(pattern){for(let attempt=0;attempt<12;attempt++){const va
   await page.getByTestId('dashboard-page').waitFor();
   disconnected=false;adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);
   for(let attempt=0;attempt<60&&!submissions.length;attempt++)await wait(100);assert.ok(submissions.length>0,'Synchronization also runs from the dashboard');
-  await page.goto('https://dagangos.com/geraina/app/pos');await page.waitForFunction(()=>document.querySelector('[data-testid="offline-status"]')?.textContent.includes('Fixture: temporary synchronization failure'));assert.equal(submissions[0].client_order_id,id);
+  await page.goto('https://dagangos.com/geraina/app/pos',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.querySelector('[data-testid="offline-status"]')?.textContent.includes('Fixture: temporary synchronization failure'));assert.equal(submissions[0].client_order_id,id);
   await page.locator('[data-testid="offline-status"] summary').click();await page.locator('[data-testid^="local-sale-"]').click();await page.getByTestId('receipt-pending-sync').waitFor();failSync=false;
   adb(['shell','svc','wifi','disable']);adb(['shell','svc','data','disable']);await page.waitForFunction(()=>!navigator.onLine);adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);
   await page.getByTestId('receipt-pending-sync').waitFor({state:'hidden'});assert.equal(await page.getByTestId('receipt-order-no').innerText(),'GR-ISOLATED-0001');await capture('open-receipt-syncs');await page.getByTestId('receipt-done-btn').click();
