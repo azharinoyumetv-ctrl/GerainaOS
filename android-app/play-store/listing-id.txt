@@ -1,0 +1,31 @@
+NAMA APLIKASI
+Geraina POS
+
+DESKRIPSI SINGKAT
+Kasir, produk, stok, dan laporan toko dalam satu aplikasi retail.
+
+DESKRIPSI LENGKAP
+Geraina POS membantu Anda menjalankan operasional toko dari perangkat Android. Akses kasir, katalog produk, inventori, pembelian, pelanggan, serta laporan melalui layanan Geraina yang terhubung.
+
+KASIR DAN PRODUK
+Cari produk, susun keranjang, hitung total transaksi, dan akses bukti penjualan dari ruang kerja Geraina Anda.
+
+STOK DAN OPERASIONAL
+Kelola katalog produk dan pantau inventori. Akses pembelian, supplier, pelanggan, dan fitur operasional sesuai hak akses serta paket akun Anda.
+
+LAPORAN DAN TIM
+Tinjau data toko dan gunakan akses staf sesuai peran. Fitur cabang dan laporan mengikuti paket akun yang aktif.
+
+FITUR ANDROID
+Impor file dengan pemilih file Android, simpan ekspor atau PDF ke lokasi pilihan Anda, dan gunakan layanan cetak Android yang tersedia pada perangkat.
+
+PERSYARATAN
+Memerlukan koneksi internet, akun Geraina POS, serta Android System WebView atau Chrome yang diperbarui. Fitur yang tersedia bergantung pada paket dan peran akun. Pembelian atau perubahan paket tidak tersedia di aplikasi Android ini.
+
+Mode transaksi offline, pemindai kamera, serta koneksi langsung printer Bluetooth/USB belum tersedia. Untuk mencetak, gunakan layanan cetak Android yang kompatibel atau simpan bukti transaksi sebagai PDF.
+
+Geraina POS disediakan oleh PT DagangOS Digital Indonesia.
+Bantuan: contact@dagangos.com
+
+CATATAN RILIS 1.0.0
+Rilis awal Geraina POS untuk Android. Akses operasional toko, impor file, simpan PDF dan ekspor, serta cetak melalui layanan cetak Android. Memerlukan koneksi internet.

@@ -1,0 +1,10 @@
+{
+  "phone": { "avd": "Geraina_API_36", "port": 5556, "width": 1080, "height": 2400, "density": 420, "xdpi": 420, "label": "Phone", "kind": "phone" },
+  "android14": { "avd": "Geraina_API_34", "port": 5570, "api": "34", "width": 1080, "height": 2400, "density": 420, "xdpi": 420, "label": "Android 14 phone", "kind": "phone" },
+  "android17": { "avd": "Geraina_API_37", "port": 5572, "api": "37.0", "width": 1080, "height": 2400, "density": 420, "xdpi": 420, "label": "Android 17 phone", "kind": "phone" },
+  "tablet7": { "avd": "Geraina_Tablet7_API_36", "port": 5560, "width": 1200, "height": 1920, "density": 320, "xdpi": 323, "label": "7-inch tablet", "kind": "tablet" },
+  "tablet10": { "avd": "Geraina_Tablet10_API_36", "port": 5562, "width": 1200, "height": 1920, "density": 240, "xdpi": 224, "label": "10-inch tablet", "kind": "tablet" },
+  "tablet13": { "avd": "Geraina_Tablet13_API_36", "port": 5564, "width": 1800, "height": 2880, "density": 320, "xdpi": 261, "label": "13-inch tablet", "kind": "tablet" },
+  "tablet146": { "avd": "Geraina_Tablet146_API_36", "port": 5566, "width": 1848, "height": 2960, "density": 240, "xdpi": 239, "label": "Samsung Ultra screen profile (14.6-inch)", "kind": "tablet" },
+  "xiaomi12": { "avd": "Geraina_XiaomiPad6S_API_36", "port": 5568, "width": 2032, "height": 3048, "density": 320, "xdpi": 294, "label": "Xiaomi Pad 6S Pro screen profile (12.4-inch)", "kind": "tablet" }
+}

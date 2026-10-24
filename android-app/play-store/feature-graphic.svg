@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024" height="500" viewBox="0 0 1024 500">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0b1729"/><stop offset="1" stop-color="#0b3735"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#34d399"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>
+  </defs>
+  <rect width="1024" height="500" fill="url(#background)"/>
+  <circle cx="965" cy="50" r="255" fill="#10b981" opacity=".06"/>
+  <circle cx="755" cy="515" r="235" fill="#06b6d4" opacity=".07"/>
+  <path d="M0,460 H1024" stroke="#ffffff" opacity=".1"/>
+  <rect x="58" y="62" width="8" height="30" rx="4" fill="url(#accent)"/>
+  <text x="82" y="84" fill="#a7f3d0" font-family="Arial,sans-serif" font-size="16" font-weight="700" letter-spacing="2">RETAIL ANDA, TERHUBUNG</text>
+  <text x="58" y="176" fill="#ffffff" font-family="Arial,sans-serif" font-size="65" font-weight="700" letter-spacing="-2">Geraina POS</text>
+  <text x="61" y="235" fill="#dbeafe" font-family="Arial,sans-serif" font-size="25">Satu ruang kerja untuk</text>
+  <text x="61" y="271" fill="#dbeafe" font-family="Arial,sans-serif" font-size="25">operasional toko Anda.</text>
+  <rect x="60" y="320" width="92" height="40" rx="20" fill="#ffffff" opacity=".08"/>
+  <rect x="162" y="320" width="100" height="40" rx="20" fill="#ffffff" opacity=".08"/>
+  <rect x="272" y="320" width="85" height="40" rx="20" fill="#ffffff" opacity=".08"/>
+  <rect x="367" y="320" width="115" height="40" rx="20" fill="#ffffff" opacity=".08"/>
+  <g fill="#e2e8f0" font-family="Arial,sans-serif" font-size="16" text-anchor="middle"><text x="106" y="346">Kasir</text><text x="212" y="346">Produk</text><text x="315" y="346">Stok</text><text x="424" y="346">Laporan</text></g>
+  <rect x="641" y="101" width="302" height="302" rx="62" fill="#ffffff" opacity=".06" transform="rotate(6 792 252)"/>
+  <rect x="631" y="89" width="302" height="302" rx="54" fill="#ffffff"/>
+  <image href="icon-512.png" x="650" y="108" width="264" height="264"/>
+  <text x="61" y="428" fill="#94a3b8" font-family="Arial,sans-serif" font-size="15">PT DagangOS Digital Indonesia</text>
+</svg>

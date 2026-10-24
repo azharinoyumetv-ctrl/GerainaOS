@@ -1,0 +1,251 @@
+.dagangos-support {
+  --support-ink: #10233f;
+  --support-muted: #607089;
+  --support-line: rgba(26, 55, 98, .14);
+  --support-blue: #326cff;
+  --support-green: #28c979;
+  position: fixed;
+  right: clamp(16px, 2.2vw, 30px);
+  bottom: clamp(16px, 2.2vw, 30px);
+  z-index: 2147483000;
+  color: var(--support-ink);
+  font-family: "Manrope", "Plus Jakarta Sans", system-ui, sans-serif;
+}
+.dagangos-support--geraina {
+  --support-blue: #20bd73;
+  --support-green: #62e798;
+}
+.dagangos-support--dapuros {
+  --support-blue: #ed6a16;
+  --support-green: #ffab62;
+}
+
+.dagangos-support * { box-sizing: border-box; }
+
+.dagangos-support__launcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 7px 15px 7px 8px;
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 18px;
+  color: #fff;
+  background: linear-gradient(135deg, #10233f, #1c3760);
+  box-shadow: 0 18px 48px rgba(16,35,63,.28);
+  cursor: pointer;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.dagangos-support__launcher:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 24px 56px rgba(16,35,63,.34);
+}
+
+.dagangos-support__launcher img {
+  width: 39px;
+  height: 39px;
+  padding: 6px;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #eef5ff, #d9e7ff);
+  box-shadow: inset 0 1px #fff;
+}
+
+.dagangos-support__launcher span { font-size: 13px; font-weight: 800; }
+.dagangos-support__launcher i { color: #75e5aa; font-style: normal; }
+
+.dagangos-support__panel {
+  position: absolute;
+  right: 0;
+  bottom: 68px;
+  display: grid;
+  grid-template-rows: auto minmax(220px, 340px) auto;
+  width: min(390px, calc(100vw - 28px));
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 26px;
+  background: rgba(250,252,255,.96);
+  box-shadow: 0 30px 90px rgba(16,35,63,.26);
+  backdrop-filter: blur(24px);
+  transform-origin: right bottom;
+  animation: support-open .28s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.dagangos-support__panel[hidden] { display: none; }
+
+.dagangos-support__head {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 86% 5%, rgba(69,130,255,.7), transparent 38%),
+    linear-gradient(135deg, #10233f, #193c69);
+}
+.dagangos-support--geraina .dagangos-support__head {
+  background:
+    radial-gradient(circle at 86% 5%, rgba(58,220,135,.48), transparent 38%),
+    linear-gradient(135deg, #071d17, #0c4935);
+}
+.dagangos-support--dapuros .dagangos-support__head {
+  background:
+    radial-gradient(circle at 86% 5%, rgba(255,129,47,.5), transparent 38%),
+    linear-gradient(135deg, #1d0d05, #633016);
+}
+.dagangos-support__identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.dagangos-support__identity > img {
+  width: 34px;
+  height: 34px;
+  padding: 5px;
+  border-radius: 11px;
+  object-fit: contain;
+  background: rgba(255,255,255,.1);
+}
+
+.dagangos-support__head:after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  bottom: 0;
+  width: 70px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--support-green), #55b9ff);
+}
+
+.dagangos-support__head b { display: block; font-size: 16px; }
+.dagangos-support__head small {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+  color: #cfe0f4;
+  font-size: 11px;
+}
+
+.dagangos-support__head small:before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #57e49b;
+  box-shadow: 0 0 12px #57e49b;
+}
+
+.dagangos-support__close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 11px;
+  color: #fff;
+  background: rgba(255,255,255,.08);
+  cursor: pointer;
+}
+
+.dagangos-support__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 18px;
+  background:
+    linear-gradient(rgba(49,89,145,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(49,89,145,.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.dagangos-support__message {
+  max-width: 88%;
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.dagangos-support__message--assistant {
+  align-self: flex-start;
+  border: 1px solid var(--support-line);
+  border-bottom-left-radius: 5px;
+  background: rgba(255,255,255,.88);
+}
+
+.dagangos-support__message--visitor {
+  align-self: flex-end;
+  border-bottom-right-radius: 5px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--support-blue), #6757f5);
+}
+
+.dagangos-support__message--status { color: var(--support-muted); font-style: italic; }
+.dagangos-support__message a {
+  color: var(--support-blue);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dagangos-support__form {
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+  padding: 12px;
+  border-top: 1px solid var(--support-line);
+  background: #fff;
+}
+
+.dagangos-support__form textarea {
+  min-height: 44px;
+  max-height: 112px;
+  flex: 1;
+  resize: vertical;
+  padding: 11px 12px;
+  border: 1px solid var(--support-line);
+  border-radius: 14px;
+  color: var(--support-ink);
+  background: #f7f9fd;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.dagangos-support__form textarea:focus {
+  border-color: rgba(50,108,255,.62);
+  box-shadow: 0 0 0 3px rgba(50,108,255,.11);
+}
+
+.dagangos-support__send {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--support-blue), #6757f5);
+  cursor: pointer;
+}
+
+.dagangos-support__send:disabled { opacity: .45; cursor: not-allowed; }
+
+@keyframes support-open {
+  from { opacity: 0; transform: translateY(12px) scale(.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 580px) {
+  .dagangos-support__launcher { min-width: 54px; padding-right: 8px; }
+  .dagangos-support__launcher > span,
+  .dagangos-support__launcher > i { display: none; }
+  .dagangos-support__panel { bottom: 64px; grid-template-rows: auto minmax(190px, 48vh) auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dagangos-support__panel { animation: none; }
+  .dagangos-support__launcher { transition: none; }
+}
