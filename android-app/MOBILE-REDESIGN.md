@@ -1,5 +1,7 @@
 # Geraina Android redesign
 
+Version 1.2 bundles the actual frontend for cold offline startup and adds durable offline cash checkout, safe synchronization, native camera scanning and receipt-printer integration. See `OFFLINE-AND-HARDWARE.md`. The UI and test descriptions below preserve earlier release history.
+
 ## Current usability update, 1.1.2
 
 Android 14 is now the minimum supported version. Native navigation has four bottom shortcuts on narrow windows and a top-left drawer button. Wide tablets show a persistent left sidebar and hide the bottom shortcuts. Android navigation groups expand without changing routes, so their links remain available.

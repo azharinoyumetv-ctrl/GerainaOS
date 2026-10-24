@@ -71,11 +71,19 @@ class MainActivity : ComponentActivity() {
     private var failedPageUrl: String? = null
     private var exportInProgress = false
     private var nativeFeaturesReady = false
+    private lateinit var receiptPrinter: ThermalPrinterController
+    private val bundledFrontend by lazy { BundledFrontend(assets) }
     private val pendingExport get() = File(cacheDir, "pending-export")
 
     private val selectFile = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         fileCallback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data))
         fileCallback = null
+    }
+    private val scanBarcode = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val value = result.data?.getStringExtra("barcode")
+        if (result.resultCode == RESULT_OK && !value.isNullOrBlank() && value.length <= 256 && authenticatedScreen && lastPage.contains("/app/pos")) {
+            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('geraina-barcode',{detail:{value:${JSONObject.quote(value)}}}))", null)
+        }
     }
     private val saveFile = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         exportInProgress = false
@@ -95,6 +103,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        receiptPrinter = ThermalPrinterController(this, ::notice)
         // A force-stopped app cannot receive the old document-picker result.
         // Retain the file across rotation, but discard it on a fresh launch.
         if (savedInstanceState == null) pendingExport.delete()
@@ -315,6 +324,9 @@ class MainActivity : ComponentActivity() {
         }
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false)
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                return if (request.method == "GET") bundledFrontend.intercept(request.url) else null
+            }
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 if (!request.isForMainFrame) return false
                 return when (NavigationPolicy.classify(request.url.toString())) {
@@ -417,6 +429,8 @@ class MainActivity : ComponentActivity() {
         }
         val script = assets.open("android-bridge.js").bufferedReader().use { it.readText() }
         WebViewCompat.addDocumentStartJavaScript(webView, script, setOf(NavigationPolicy.ORIGIN))
+        val deviceScript = assets.open("device-features.js").bufferedReader().use { it.readText() }
+        WebViewCompat.addDocumentStartJavaScript(webView, deviceScript, setOf(NavigationPolicy.ORIGIN))
         val supportScript = assets.open("mobile-support.js").bufferedReader().use { it.readText() }
         WebViewCompat.addDocumentStartJavaScript(webView, supportScript, setOf(NavigationPolicy.ORIGIN))
         val css = assets.open("mobile-support.css").bufferedReader().use { it.readText() } + "\n" +
@@ -437,6 +451,10 @@ class MainActivity : ComponentActivity() {
             "subscription" -> showSubscriptionNotice()
             "navigation" -> webView.evaluateJavascript("window.GerainaMobile?.sync?.()", null)
             "interaction" -> exitBackAt = 0L
+            "scanBarcode" -> if (authenticatedScreen) scanBarcode.launch(Intent(this, BarcodeScannerActivity::class.java))
+            "configurePrinter" -> if (authenticatedScreen) receiptPrinter.configure()
+            "testPrinter" -> if (authenticatedScreen) receiptPrinter.sample()
+            "printReceipt" -> if (authenticatedScreen) message.optJSONObject("order")?.let { receiptPrinter.print(it, subtitle.text.toString()) }
             "shell" -> updateShell(message.optString("path"), message.optString("store"), message.optBoolean("authenticated"), message.optBoolean("wideNavigation"))
             "download" -> saveDownload(message.optString("name"), message.optString("data"))
             "downloadTooLarge" -> notice("File terlalu besar. Batas unduhan adalah 10 MB.")
@@ -497,11 +515,13 @@ class MainActivity : ComponentActivity() {
 
     private fun showMenu(anchor: View) {
         PopupMenu(this, anchor).apply {
-            listOf("Muat ulang", "Cetak halaman", "Chat bantuan", "Privasi", "Minta penghapusan akun", "Bantuan", "Tentang Geraina").forEach { menu.add(it) }
+            listOf("Muat ulang", "Printer struk", "Cetak contoh printer", "Cetak halaman", "Chat bantuan", "Privasi", "Minta penghapusan akun", "Bantuan", "Tentang Geraina").forEach { menu.add(it) }
             setOnMenuItemClickListener {
                 when (it.title.toString()) {
                     "Muat ulang" -> if (nativeFeaturesReady) { failedPageUrl = null; webView.reload() } else notice("Perbarui Android System WebView atau Chrome terlebih dahulu.")
                     "Cetak halaman" -> printPage()
+                    "Printer struk" -> if (authenticatedScreen) receiptPrinter.configure() else notice("Masuk ke toko terlebih dahulu.")
+                    "Cetak contoh printer" -> if (authenticatedScreen) receiptPrinter.sample() else notice("Masuk ke toko terlebih dahulu.")
                     "Chat bantuan" -> webView.evaluateJavascript("window.GerainaMobile?.openSupport?.() || false") { opened ->
                         if (opened != "true") notice("Chat belum tersedia. Gunakan Bantuan untuk menghubungi dukungan.")
                     }
@@ -509,7 +529,7 @@ class MainActivity : ComponentActivity() {
                     "Minta penghapusan akun" -> requestDeletion()
                     "Bantuan" -> navigate("mailto:contact@dagangos.com")
                     "Tentang Geraina" -> AlertDialog.Builder(this@MainActivity).setTitle("Geraina POS ${BuildConfig.VERSION_NAME}")
-                        .setMessage("Kasir, produk, inventori, dan laporan toko Anda.\n\nPT DagangOS Digital Indonesia\nMemerlukan koneksi internet.\n\nPrinter menggunakan layanan cetak Android; Bluetooth langsung dan mode offline belum tersedia.")
+                        .setMessage("Kasir, produk, inventori, dan laporan toko Anda.\n\nPT DagangOS Digital Indonesia\n\nSetelah masuk dan mengunduh katalog, pembayaran tunai dapat dicatat offline dan disinkronkan saat tersambung. Pembayaran elektronik memerlukan internet.\n\nPrinter struk ESC/POS: Bluetooth Classic atau USB printer-class. Dukungan perangkat mengikuti protokol printer.")
                         .setPositiveButton("Tutup", null).show()
                 }
                 true
@@ -558,6 +578,7 @@ class MainActivity : ComponentActivity() {
         if (::webView.isInitialized) webView.onResume()
     }
     override fun onDestroy() {
+        if (::receiptPrinter.isInitialized) receiptPrinter.close()
         fileCallback?.onReceiveValue(null); fileCallback = null
         if (::webView.isInitialized) {
             (webView.parent as? ViewGroup)?.removeView(webView)

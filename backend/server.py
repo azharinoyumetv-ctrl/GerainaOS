@@ -29,6 +29,7 @@ from routes_reports import router as reports_router
 from routes_printer import router as printer_router
 from routes_edc import router as edc_router
 from routes_devices import router as devices_router
+from routes_offline import router as offline_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger("geraina")
@@ -75,6 +76,7 @@ app.include_router(reports_router)
 app.include_router(printer_router)
 app.include_router(edc_router)
 app.include_router(devices_router)
+app.include_router(offline_router)
 
 cors_origins = os.environ.get("CORS_ORIGINS", "").split(",")
 cors_origins = [o.strip() for o in cors_origins if o.strip()]

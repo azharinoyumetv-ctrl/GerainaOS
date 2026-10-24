@@ -1,10 +1,11 @@
 const assert=require('node:assert/strict');
-const {readFileSync,writeFileSync,mkdirSync,readdirSync,copyFileSync}=require('node:fs');
+const {readFileSync,writeFileSync,mkdirSync,readdirSync,copyFileSync,existsSync,cpSync}=require('node:fs');
 const {resolve,join,dirname,sep}=require('node:path');
 const {createHash}=require('node:crypto');
 const root=resolve(__dirname,'..'),reports=join(root,'app/build/reports/android-usability'),out=join(root,'releases/android-usability-report');
-const version='1.1.2',hash=createHash('sha256').update(readFileSync(join(root,`releases/Geraina-POS-${version}.apk`))).digest('hex');
+const version='1.2.0',hash=createHash('sha256').update(readFileSync(join(root,`releases/Geraina-POS-${version}.apk`))).digest('hex');
 const profiles=process.argv.slice(2);assert.ok(profiles.length>=3,'Provide the completed Android and tablet profiles');
+if(existsSync(join(out,'matrix.json'))){const previous=JSON.parse(readFileSync(join(out,'matrix.json'),'utf8'));if(previous.version!==version){assert.match(previous.version,/^\d+\.\d+\.\d+$/);const backup=join(root,`releases/android-usability-report-${previous.version}`);if(!existsSync(backup))cpSync(out,backup,{recursive:true});}}
 const matrix=[];mkdirSync(out,{recursive:true});
 for(const profile of profiles){
  assert.match(profile,/^[a-z0-9]+$/);
@@ -17,7 +18,7 @@ for(const profile of profiles){
  for(const file of readdirSync(source))if(file==='verification.json'||file.endsWith('.png'))copyFileSync(join(source,file),join(destination,file));
  matrix.push({profile,status:report.status,version,apkSha256:hash,androidVersion:report.androidVersion,api:report.api,checks:report.checks.length,passed:report.checks.length,finishedAt:report.finishedAt,localFrontend:report.localFrontend,report:`${profile}/verification.json`});
 }
-const summary={status:'passed',version,apkSha256:hash,scope:'Installed signed APK on AOSP emulators. The prepared frontend is served at the production origin for this predeployment check. Real account sign-in; record changes are intercepted local fixtures. Vendor firmware and physical hardware are not tested.',profiles:matrix};
+const summary={status:'passed',version,apkSha256:hash,scope:'Installed signed APK with its bundled frontend on AOSP emulators. Real account sign-in; record changes are intercepted local fixtures. Vendor firmware and physical hardware are not tested.',profiles:matrix};
 writeFileSync(join(out,'matrix.json'),JSON.stringify(summary,null,2)+'\n');
 const labels={android14:'Android 14 phone',android17:'Android 17 phone',xiaomi12:'Xiaomi Pad 6S Pro screen profile',tablet146:'Samsung Ultra screen profile'};
 const cards=matrix.map(row=>`<article><h2>${labels[row.profile]||row.profile}</h2><p>${row.passed}/${row.checks} checks passed · Android ${row.androidVersion}, API ${row.api}</p><p><a href="${row.report}">Assertion results</a></p><div class="screens"><a href="${row.profile}/login-readable.png"><img src="${row.profile}/login-readable.png" alt="Readable login fields"></a><a href="${row.profile}/suite-menu-readable.png"><img src="${row.profile}/suite-menu-readable.png" alt="Readable Suite navigation"></a></div></article>`).join('');

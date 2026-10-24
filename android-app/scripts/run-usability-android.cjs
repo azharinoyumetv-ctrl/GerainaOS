@@ -9,9 +9,11 @@ const {keyboardBack}=require('./check-keyboard-back.cjs');
 const {loadTestConfig}=require('./test-config.cjs');
 const config=loadTestConfig(),root=join(__dirname,'..'),profiles=require('./android-device-profiles.json');
 const profileId=process.env.GERAINA_DEVICE_PROFILE||'xiaomi12',profile=profiles[profileId];assert.ok(profile);
-const serial=`emulator-${profile.port}`,app='com.dagangos.geraina',apk=join(root,'releases/Geraina-POS-1.1.2.apk');
+const version=process.env.GERAINA_RELEASE_VERSION||'1.2.0',versionCode=Number(process.env.GERAINA_RELEASE_CODE||5);
+assert.match(version,/^\d+\.\d+\.\d+$/);
+const serial=`emulator-${profile.port}`,app='com.dagangos.geraina',apk=join(root,`releases/Geraina-POS-${version}.apk`);
 const out=join(root,'app/build/reports/android-usability',`${profileId}-${new Date().toISOString().replace(/[:.]/g,'-')}`);mkdirSync(out,{recursive:true});
-const report={status:'running',version:'1.1.2',profile:profileId,serial,scope:'Installed signed APK; account sign-in plus intercepted metadata records. No merchant writes.',localFrontend:process.env.GERAINA_USE_LOCAL_FRONTEND==='1',checks:[],apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex')};
+const report={status:'running',version,profile:profileId,serial,scope:'Installed signed APK; account sign-in plus intercepted metadata records. No merchant writes.',localFrontend:process.env.GERAINA_USE_LOCAL_FRONTEND==='1',checks:[],apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex')};
 const adbPath=join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe');
 let devices=[],page;
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -19,8 +21,10 @@ function adb(args,binary=false){const result=spawnSync(adbPath,['-s',serial,...a
 async function attach(){
  let lastError,connected=false;
  for(let attempt=0;attempt<3;attempt++){
-  for(const device of devices)await device.close();
-  devices=await _android.devices({omitDriverInstall:true});const device=devices.find(item=>item.serial()===serial);assert.ok(device);
+  for(const device of devices)await device.close().catch(()=>{});
+  try { devices=await _android.devices({omitDriverInstall:true}); }
+  catch(error){lastError=error;if(!/android\.devices: FAIL/.test(error.message))throw error;await wait(500);continue;}
+  const device=devices.find(item=>item.serial()===serial);assert.ok(device);
   try{page=await(await device.webView({pkg:app},{timeout:15000})).page();connected=true;if(attempt>0){report.connectionRediscoveries=(report.connectionRediscoveries||0)+1;console.log('Test connection rediscovered after Android activity recreation.');}break;}
   catch(error){lastError=error;if(!/Timeout .*event "webview"/.test(error.message))throw error;await wait(250);}
  }
@@ -33,7 +37,7 @@ async function step(name,fn){await fn();report.checks.push({name,status:'passed'
  adb(['install','-r',apk]);adb(['shell','am','force-stop',app]);adb(['shell','settings','put','system','accelerometer_rotation','0']);adb(['shell','settings','put','system','user_rotation','0']);adb(['shell','cmd','uimode','night','no']);
  adb(['shell','am','start','-f','0x10008000','-n',`${app}/com.example.gerainapos.MainActivity`]);await attach();
  report.androidVersion=adb(['shell','getprop','ro.build.version.release']).trim();report.api=Number(adb(['shell','getprop','ro.build.version.sdk']).trim());
- const info=adb(['shell','dumpsys','package',app]);assert.match(info,/versionCode=4/);assert.match(info,/minSdk=34/);assert.doesNotMatch(info.match(/pkgFlags=\[([^\]]+)\]/)?.[1]||'',/DEBUGGABLE/);
+ const info=adb(['shell','dumpsys','package',app]);assert.match(info,new RegExp(`versionCode=${versionCode}\\b`));assert.match(info,/minSdk=34/);assert.doesNotMatch(info.match(/pkgFlags=\[([^\]]+)\]/)?.[1]||'',/DEBUGGABLE/);
  await step('Typed login text cursor and placeholders are readable',async()=>{report.login=await checks.loginContrast(page);await screenshot('login-readable');});
  await step('Dark system appearance retains readable login fields',async()=>{adb(['shell','cmd','uimode','night','yes']);await wait(1200);await attach();await checks.loginContrast(page);await screenshot('login-dark-system');adb(['shell','cmd','uimode','night','no']);await wait(1200);await attach();await checks.loginContrast(page);});
  await step('Real account signs in to the correct store',async()=>{await checks.signIn(page);await page.waitForFunction(()=>document.querySelector('[data-testid="mobile-revenue"]')?.textContent.includes('Rp'));await screenshot('dashboard-visible');});
@@ -68,11 +72,11 @@ async function step(name,fn){await fn();report.checks.push({name,status:'passed'
   await page.goto(`${config.base}/geraina/app/products/brands`);await page.getByTestId('brands-page').waitFor();adb(['shell','input','keyevent','KEYCODE_BACK']);await page.getByTestId('dashboard-page').waitFor();
  });
  await step('Back after the exit timeout leaves the app running',async()=>{
-  await wait(2200);adb(['shell','input','keyevent','KEYCODE_BACK']);await wait(300);assert.match(adb(['shell','dumpsys','activity','activities']),new RegExp(`(?:mResumedActivity|topResumedActivity).*${app.replaceAll('.','\\.')}`));
+  await wait(2200);adb(['shell','input','keyevent','KEYCODE_BACK']);await wait(300);assert.equal(new RegExp(`(?:mResumedActivity|topResumedActivity).*${app.replaceAll('.','\\.')}/`).test(adb(['shell','dumpsys','activity','activities'])),true,'The signed app remains resumed after the timeout');
  });
  await step('Two quick Back presses close the Android activity',async()=>{
   await wait(2200);adb(['shell','input','keyevent','KEYCODE_BACK']);await wait(250);adb(['shell','input','keyevent','KEYCODE_BACK']);await wait(700);
-  const activity=adb(['shell','dumpsys','activity','activities']);assert.doesNotMatch(activity,new RegExp(`(?:mResumedActivity|topResumedActivity).*${app.replaceAll('.','\\.')}`));await screenshot('double-back-exited');
+  const activity=adb(['shell','dumpsys','activity','activities']);assert.equal(new RegExp(`(?:mResumedActivity|topResumedActivity).*${app.replaceAll('.','\\.')}/`).test(activity),false,'The signed app must exit; a separate debug app is allowed underneath it');await screenshot('double-back-exited');
  });
  await step('Reopening after exit retains the session',async()=>{adb(['shell','am','start','-f','0x10008000','-n',`${app}/com.example.gerainapos.MainActivity`]);await attach();await page.getByTestId('dashboard-page').waitFor();});
  report.status='passed';

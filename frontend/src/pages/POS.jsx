@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@/auth/AuthContext";
+import OfflineStatus from "@/offline/OfflineStatus";
+import { offlineAvailable, scopeFor, cached, cache, recordCashSale, localSales, synchronize } from "@/offline/posStore";
 import { QRCodeSVG } from "qrcode.react";
 import api, { fmtIDR, downloadPdf } from "@/api/client";
 import { toast } from "@/components/ui/sonner";
@@ -19,6 +22,7 @@ const EWALLET_CHANNELS = [
 function ReceiptDialog({ order, onClose }) {
   const [poll, setPoll] = useState(order);
   const [edcProcessing, setEdcProcessing] = useState(false);
+  useEffect(() => { setPoll(order); }, [order]);
   useEffect(() => {
     if (poll?.payment_status === "paid" || poll?.payment_method === "cash") return;
     const t = setInterval(async () => {
@@ -71,6 +75,9 @@ function ReceiptDialog({ order, onClose }) {
         </div>
 
         <div className="text-center mb-4">
+          {o.sync_status === "pending" && <p className="text-xs text-[#754419] mb-2" data-testid="receipt-pending-sync">Pembayaran tunai dicatat di perangkat. Menunggu sinkronisasi; jangan hapus data aplikasi.</p>}
+          {o.offline_reference && <p className="text-xs mb-2">Referensi perangkat: {o.offline_reference}</p>}
+          {o.inventory_warnings?.length > 0 && <p className="text-xs text-[#8a3b17] mb-2" role="alert">Transaksi tersinkron. Periksa stok: ada produk yang berubah atau stok di bawah nol.</p>}
           {isPaid ? (
             <span className="pill pill-success" data-testid="receipt-status">
               <CheckCircle2 size={12} /> Lunas
@@ -149,10 +156,11 @@ function ReceiptDialog({ order, onClose }) {
         </div>
 
         <div className="grid grid-cols-2 gap-2 mt-5">
-          <button onClick={() => downloadPdf(`/pdf/receipt/${o.id}`, `receipt-${o.order_no}.pdf`)} className="btn-outline" data-testid="receipt-pdf-thermal-btn">
+          {window.GerainaDevice?.printReceipt && <button onClick={() => window.GerainaDevice.printReceipt(o)} className="btn-primary col-span-2" data-testid="receipt-bluetooth-print"><Printer size={15} /> Cetak struk ke printer</button>}
+          <button disabled={o.sync_status === "pending" || !navigator.onLine} title="PDF tersedia setelah sinkronisasi dan saat terhubung" onClick={() => downloadPdf(`/pdf/receipt/${o.id}`, `receipt-${o.order_no}.pdf`).catch(() => toast.error("PDF belum tersedia. Periksa koneksi dan sinkronisasi."))} className="btn-outline disabled:opacity-50" data-testid="receipt-pdf-thermal-btn">
             <Printer size={15} /> Struk PDF
           </button>
-          <button onClick={() => downloadPdf(`/pdf/invoice/${o.id}`, `invoice-${o.order_no}.pdf`)} className="btn-outline" data-testid="receipt-pdf-invoice-btn">
+          <button disabled={o.sync_status === "pending" || !navigator.onLine} title="PDF tersedia setelah sinkronisasi dan saat terhubung" onClick={() => downloadPdf(`/pdf/invoice/${o.id}`, `invoice-${o.order_no}.pdf`).catch(() => toast.error("PDF belum tersedia. Periksa koneksi dan sinkronisasi."))} className="btn-outline disabled:opacity-50" data-testid="receipt-pdf-invoice-btn">
             <Download size={15} /> Invoice A4
           </button>
         </div>
@@ -170,6 +178,11 @@ function ReceiptDialog({ order, onClose }) {
 }
 
 export default function POS() {
+  const { user } = useAuth();
+  const scope = scopeFor(user), offline = offlineAvailable() && Boolean(scope);
+  const checkoutInFlight = useRef(false);
+  const [snapshot, setSnapshot] = useState(null);
+  const [online, setOnline] = useState(navigator.onLine);
   const [products, setProducts] = useState([]);
   const [q, setQ] = useState("");
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -188,15 +201,48 @@ export default function POS() {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
 
   useEffect(() => {
-    api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
-    api.get("/products/category-names").then((r) => {
-      const names = (Array.isArray(r.data) ? r.data : [])
-        .map((c) => (typeof c === "string" ? c : c?.name))
-        .filter(Boolean);
-      setCategories(names);
-    }).catch(() => {});
-    api.get("/customers").then((r) => setCustomers(r.data)).catch(() => {});
-  }, []);
+    if (!offline || !receipt?.id) return;
+    let mounted = true;
+    const refreshReceipt = () => localSales(scope).then(rows => { const row = rows.find(item => item.order.id === receipt.id); if (mounted && row) setReceipt(row.order); }).catch(() => {});
+    refreshReceipt(); window.addEventListener("geraina-offline-changed", refreshReceipt);
+    return () => { mounted = false; window.removeEventListener("geraina-offline-changed", refreshReceipt); };
+  }, [scope, offline, receipt?.id]);
+
+  useEffect(() => {
+    let mounted = true;
+    const controller = new AbortController(), options = { timeout: 12000, signal: controller.signal };
+    setProducts([]); setCategories([]); setCustomers([]); setSnapshot(null);
+    (async () => {
+      if (offline) {
+        try { const value = await cached(scope, "products"); if (mounted && value) { setProducts(value.data); setSnapshot(value.savedAt); } } catch { if (mounted) toast.error("Katalog lokal tidak dapat dibaca."); }
+      }
+      if (!mounted) return;
+      api.get("/products", options).then(async r => { if (!mounted) return; setProducts(r.data); if (offline) { try { await cache(scope, "products", r.data); if (mounted) setSnapshot(new Date().toISOString()); } catch { if (mounted) toast.error("Katalog belum tersimpan untuk penggunaan offline."); } } }).catch(() => {});
+    })();
+    (async () => {
+      if (offline) { const value = await cached(scope, "categories").catch(() => null); if (mounted && value) setCategories(value.data); }
+      if (!mounted) return;
+      api.get("/products/category-names", options).then(r => { if (!mounted) return; const names = (Array.isArray(r.data) ? r.data : []).map(c => typeof c === "string" ? c : c?.name).filter(Boolean); setCategories(names); if (offline) cache(scope, "categories", names).catch(() => {}); }).catch(() => {});
+    })();
+    api.get("/customers", options).then(r => { if (mounted) setCustomers(r.data); }).catch(() => {});
+    if (offline) api.get("/settings", options).then(r => cache(scope, "settings", r.data)).catch(() => {});
+    const connection = () => { setOnline(navigator.onLine); if (!navigator.onLine) setPaymentMethod("cash"); };
+    window.addEventListener("online", connection); window.addEventListener("offline", connection);
+    return () => { mounted = false; controller.abort(); window.removeEventListener("online", connection); window.removeEventListener("offline", connection); };
+  }, [scope, offline]);
+
+  useEffect(() => {
+    if (!offline) return;
+    const scanned = event => {
+      const code = event.detail?.value;
+      if (typeof code !== "string") return;
+      const product = products.find(item => [item.sku, item.id].includes(code));
+      if (product) { addToCart(product); setScannedProduct(product); setTimeout(() => setScannedProduct(null), 3000); }
+      else toast.error("Barcode tidak ditemukan dalam katalog toko.");
+    };
+    window.addEventListener("geraina-barcode", scanned);
+    return () => window.removeEventListener("geraina-barcode", scanned);
+  }, [products, offline]);
 
   // Keyboard barcode scanner hardware listener
   useEffect(() => {
@@ -299,7 +345,9 @@ export default function POS() {
   };
 
   const checkout = async () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || checkoutInFlight.current) return;
+    if (offline && !online && paymentMethod !== "cash") { toast.error("Pembayaran elektronik memerlukan koneksi."); return; }
+    checkoutInFlight.current = true;
     setSubmitting(true);
     try {
       const payload = {
@@ -317,12 +365,20 @@ export default function POS() {
         payload.customer_phone = selCust.phone || undefined;
         payload.customer_email = selCust.email || undefined;
       }
-      const r = await api.post("/orders", payload);
-      setReceipt(r.data);
+      if (offline && paymentMethod === "cash") {
+        const saved = await recordCashSale(user, payload);
+        setReceipt(saved.order);
+        const stock = await cached(scope, "products").catch(() => null);
+        if (stock) setProducts(stock.data);
+        synchronize(scope, api).catch(() => {});
+      } else {
+        const r = await api.post("/orders", payload);
+        setReceipt(r.data);
+      }
       clearCart();
     } catch (e) {
       toast.error(e?.response?.data?.detail || "Gagal checkout");
-    } finally { setSubmitting(false); }
+    } finally { checkoutInFlight.current = false; setSubmitting(false); }
   };
 
   return (
@@ -353,6 +409,8 @@ export default function POS() {
           </div>
         </div>
 
+        {offline && <OfflineStatus scope={scope} snapshot={snapshot} onReceipt={setReceipt} onRefresh={() => { if (navigator.onLine) api.get("/products", { timeout: 12000 }).then(r => { setProducts(r.data); cache(scope, "products", r.data).catch(() => {}); }).catch(() => {}); }} />}
+        {window.GerainaDevice?.scanBarcode && <button type="button" className="btn-outline mb-4" onClick={() => window.GerainaDevice.scanBarcode()} data-testid="camera-scan"><Barcode size={16} /> Scan dengan kamera</button>}
         <div className="flex gap-2 mb-4 overflow-x-auto" data-testid="pos-categories">
           <button onClick={() => setActiveCat("all")}
                   className={`px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap ${activeCat === "all" ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface))] border border-[hsl(var(--border))]"}`}

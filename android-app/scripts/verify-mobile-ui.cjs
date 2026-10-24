@@ -18,7 +18,7 @@ const fixtures=[{id:'mobile-coffee',name:'LOCAL FIXTURE Kopi Susu',category:'Min
   try {
     const context=await browser.newContext({viewport:{width:393,height:760},deviceScaleFactor:2,serviceWorkers:'block'});
     await context.addInitScript({content:`window.GerainaNative={postMessage:raw=>{const message=JSON.parse(raw);if(message.type==='open')location.href=message.url;}};\n${bridge}\n${support}\n${mobile}`});
-    const page=await context.newPage();page.setDefaultTimeout(25000);page.on('pageerror',error=>errors.push(error.message));
+    const page=await context.newPage();await require('./usability-checks.cjs').localFrontend(page);page.setDefaultTimeout(25000);page.on('pageerror',error=>errors.push(error.message));
     await page.route('**/api/**',route=>['GET','HEAD','OPTIONS'].includes(route.request().method())||new URL(route.request().url()).pathname==='/api/auth/login'?route.continue():route.abort());
     await page.goto(`${config.base}/geraina/login`);
     await page.getByTestId('login-email-input').fill(config.email);await page.getByTestId('login-password-input').fill(config.password);await page.getByTestId('login-submit-btn').click();

@@ -193,6 +193,7 @@ export default function Settings() {
         );
 
       case "printer":
+        if (window.GerainaDevice?.configurePrinter) return <div className="card-surface p-5 space-y-4" data-testid="android-printer-settings"><h2 className="font-display text-xl">Printer struk Android</h2><p>Pilih printer Bluetooth yang sudah dipasangkan atau printer USB melalui OTG, lalu atur kertas 58 mm atau 80 mm. Printer tersimpan di perangkat ini dan dapat dipakai untuk struk tunai offline.</p><div className="flex gap-3 flex-wrap"><button type="button" className="btn-primary" onClick={() => window.GerainaDevice.configurePrinter()} data-testid="configure-android-printer"><Printer size={16} /> Pilih printer</button><button type="button" className="btn-outline" onClick={() => window.GerainaDevice.testPrinter()} data-testid="test-android-printer">Cetak contoh</button></div><p className="text-xs text-[#52674b]">Gunakan printer struk ESC/POS Bluetooth Classic atau USB printer-class. Printer BLE dan protokol khusus memerlukan dukungan model tersendiri.</p></div>;
         return (
           <div className="space-y-4">
             <div className="flex flex-col space-y-1">
@@ -400,7 +401,7 @@ export default function Settings() {
           
           {renderForm()}
 
-          {type !== "users" && type !== "license" && type !== "billing" && type !== "subscription" && (
+          {type !== "users" && type !== "license" && type !== "billing" && type !== "subscription" && !(type === "printer" && window.GerainaDevice?.configurePrinter) && (
             <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-end">
               <button type="submit" className="btn-primary py-2 px-6 flex items-center gap-2 text-sm font-semibold">
                 <Save size={16} /> Simpan Pengaturan

@@ -1,14 +1,14 @@
 # Geraina POS for Android
 
-The Android app connects to the production Geraina service at `https://dagangos.com/geraina/login`. It uses the existing responsive Geraina application in a hardened Android WebView, with native navigation, Android file selection, PDF/export saving, Android printing, privacy/help menus, and an account deletion request flow.
+The Android app connects to the production Geraina service at `https://dagangos.com/geraina/login`. It bundles the Geraina frontend for offline startup in a hardened Android WebView, with durable cash-sale storage and replay, native camera barcode scanning, Bluetooth/USB receipt printing, navigation, Android file selection and PDF/export saving.
 
-Application ID: `com.dagangos.geraina`. Current version: `1.1.2`, version code `4`. Android 14 (API 34) or newer; targets Android 16 (API 36). A recent Android System WebView/Chrome is required. The debug build uses a separate `.debug` app ID.
+Application ID: `com.dagangos.geraina`. Current source version: `1.2.0`, version code `5`. Android 14 (API 34) or newer; targets Android 16 (API 36). A recent Android System WebView/Chrome is required. The debug build uses a separate `.debug` app ID. The public download version is recorded separately in the portal manifest.
 
 Distribution is website-first at `https://dagangos.com/geraina/android`. Google Play publication is postponed at the owner's request while the organization's D-U-N-S is unavailable. The parent portal's `scripts/stage-geraina-android.mjs` stages only the verified signed APK, its public metadata and selected screenshots.
 
 The 1.1 redesign follows the approved preview in `design-preview/`: one light native header, five navigation tabs, forest-green sales summary, compact product lists, and a cashier cart sheet. Its Android-only styles are bundled in the APK; the hosted desktop application does not need deployment for this look. Dashboard figures come from the authenticated store, with explicit loading/error/empty states. See `MOBILE-REDESIGN.md` for implementation and verification details.
 
-Internet is required. This version does not provide offline sales, a camera barcode scanner, direct Bluetooth/USB thermal printer access, or native subscription purchases. A keyboard-style barcode scanner can use the existing web POS input. Printing uses Android Print Services or a saved receipt PDF. The desktop printer bridge at `127.0.0.1` is not available in this Android app.
+Initial login and catalog preparation require internet. Prepared devices can restart offline, record cash sales, retrieve receipts and use native camera scanning and supported receipt printers. Synchronization runs when the app is active and connected. QRIS, wallets, card processing, PDF generation and account/package changes require connectivity. Native receipt output targets standard ESC/POS Bluetooth Classic SPP and USB printer-class devices; proprietary, BLE-only and USB serial models need separate adapters and are not claimed as supported. No physical printer has been supplied to verify paper output. See `OFFLINE-AND-HARDWARE.md` for exact scope and tests.
 
 ## Build
 
@@ -22,7 +22,7 @@ Use JDK 17, Android SDK platform 36 and build tools 36.0.0. Set `sdk.dir` in the
 .\scripts\Build-Release.ps1
 
 # Future update: keep the same key and increase the version code.
-.\scripts\Build-Release.ps1 -VersionCode 5 -VersionName 1.1.3
+.\scripts\Build-Release.ps1 -VersionCode 6 -VersionName 1.2.1
 ```
 
 Outputs are in `releases/`. Distribute the signed `.apk` through the website. Retain the `.aab` for a future Play release; do not upload it yet. Files in `releases/` are ignored by Git.

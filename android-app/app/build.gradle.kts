@@ -17,9 +17,10 @@ android {
     defaultConfig {
         applicationId = "com.dagangos.geraina"
         minSdk = 34
+        ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
         targetSdk = 36
-        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("4").get().toInt()
-        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.1.2").get()
+        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("5").get().toInt()
+        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.0").get()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -54,8 +55,19 @@ android {
         compose = true
         buildConfig = true
     }
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/frontend-assets").get().asFile)
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
+
+val bundleFrontend by tasks.registering(Exec::class) {
+    inputs.dir(rootProject.file("../frontend/src"))
+    inputs.dir(rootProject.file("../frontend/public"))
+    inputs.file(rootProject.file("../frontend/package.json"))
+    inputs.file(rootProject.file("scripts/bundle-frontend.cjs"))
+    outputs.dir(layout.buildDirectory.dir("generated/frontend-assets"))
+    commandLine("node", rootProject.file("scripts/bundle-frontend.cjs").absolutePath)
+}
+tasks.named("preBuild").configure { dependsOn(bundleFrontend) }
 
 kotlin { jvmToolchain(17) }
 
@@ -72,6 +84,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation("androidx.webkit:webkit:1.14.0")
+    implementation("androidx.camera:camera-camera2:1.6.2")
+    implementation("androidx.camera:camera-lifecycle:1.6.2")
+    implementation("androidx.camera:camera-view:1.6.2")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
     debugImplementation(libs.androidx.compose.ui.tooling)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

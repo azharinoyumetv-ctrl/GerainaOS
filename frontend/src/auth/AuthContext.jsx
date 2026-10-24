@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import api from "@/api/client";
+import { offlineAvailable, scopeFor, synchronize } from "@/offline/posStore";
 
 const AuthCtx = createContext(null);
 
@@ -16,6 +17,17 @@ const getRoleFromEmail = (email) => {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Replay is tied to the authenticated app session, including dashboard/restart,
+  // rather than requiring the cashier screen to remain mounted.
+  useEffect(() => {
+    const scope = scopeFor(user);
+    if (!scope || !offlineAvailable()) return;
+    const sync = () => synchronize(scope, api).catch(() => {});
+    sync(); window.addEventListener("online", sync); window.addEventListener("focus", sync);
+    const timer = setInterval(sync, 30000);
+    return () => { clearInterval(timer); window.removeEventListener("online", sync); window.removeEventListener("focus", sync); };
+  }, [user?.id, user?.store_id]);
 
   const enrichUser = (usr) => {
     if (!usr) return null;
@@ -40,8 +52,9 @@ export function AuthProvider({ children }) {
       setLoading(false);
       return;
     }
-    api.get("/auth/me")
-      .then((r) => setUser(enrichUser(r.data)))
+    if (!navigator.onLine && savedUser) { setUser(enrichUser(savedUser)); setLoading(false); return; }
+    api.get("/auth/me", { timeout: 8000 })
+      .then((r) => { localStorage.setItem("geraina_user", JSON.stringify(r.data)); localStorage.setItem("dagangos_user", JSON.stringify(r.data)); setUser(enrichUser(r.data)); })
       .catch((err) => {
         // Token tidak valid / kedaluwarsa → wajib login ulang
         if (err?.response?.status === 401) {
@@ -108,6 +121,8 @@ export function AuthProvider({ children }) {
     localStorage.setItem("geraina_token", r.data.access_token);
     localStorage.setItem("dagangos_token", r.data.access_token);
     localStorage.setItem("geraina_selected_role", "Owner");
+    localStorage.setItem("geraina_user", JSON.stringify(r.data.user));
+    localStorage.setItem("dagangos_user", JSON.stringify(r.data.user));
     const enriched = enrichUser(r.data.user);
     setUser(enriched);
     return enriched;
@@ -117,6 +132,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("geraina_token");
     localStorage.removeItem("dagangos_token");
     localStorage.removeItem("dagangos_user");
+    localStorage.removeItem("geraina_user");
     localStorage.removeItem("geraina_selected_role");
     setUser(null);
   };
