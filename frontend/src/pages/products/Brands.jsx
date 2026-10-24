@@ -7,36 +7,40 @@ export default function Brands() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const fetchBrands = () => {
-    api.get("/products/brands").then((r) => setBrands(r.data)).catch(() => {});
+    return api.get("/products/brands").then((r) => setBrands(r.data)).catch(() => setError("Daftar brand belum dapat dimuat. Coba muat ulang."));
   };
 
   useEffect(() => {
     fetchBrands();
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
-
-    if (editingId) {
-      api.put(`/products/brands/${editingId}`, { name, description: desc }).then(() => {
-        setEditingId(null);
-        setName("");
-        setDesc("");
-        fetchBrands();
-      });
-    } else {
-      api.post("/products/brands", { name, description: desc }).then(() => {
-        setName("");
-        setDesc("");
-        fetchBrands();
-      });
+    if (saving) return;
+    setError(""); setNotice("");
+    if (!name.trim()) { setError("Isi nama brand terlebih dahulu."); return; }
+    setSaving(true);
+    try {
+      const payload = { name: name.trim(), description: desc.trim() };
+      if (editingId) await api.put(`/products/brands/${editingId}`, payload);
+      else await api.post("/products/brands", payload);
+      setEditingId(null); setName(""); setDesc("");
+      setNotice("Brand berhasil disimpan.");
+      await fetchBrands();
+    } catch (err) {
+      setError(typeof err.response?.data?.detail === "string" ? err.response.data.detail : "Brand belum tersimpan. Periksa koneksi lalu coba lagi.");
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEdit = (b) => {
+    setError(""); setNotice("");
     setEditingId(b.id);
     setName(b.name);
     setDesc(b.description || "");
@@ -56,12 +60,13 @@ export default function Brands() {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        <form onSubmit={handleSubmit} className="col-span-12 lg:col-span-4 card-surface p-6 space-y-4" data-testid="brand-form">
+        <form onSubmit={handleSubmit} onInvalid={() => { setError("Isi nama brand terlebih dahulu."); setNotice(""); }} className="col-span-12 lg:col-span-4 card-surface p-6 space-y-4" data-testid="brand-form">
           <h2 className="font-display font-bold text-lg">{editingId ? "Edit Brand" : "Tambah Brand"}</h2>
           <div className="flex flex-col space-y-1">
             <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Nama Brand</label>
             <input
               type="text"
+              required disabled={saving}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Nestle, Unilever"
@@ -72,6 +77,7 @@ export default function Brands() {
           <div className="flex flex-col space-y-1">
             <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Deskripsi</label>
             <textarea
+              disabled={saving}
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               placeholder="Deskripsi singkat brand..."
@@ -79,8 +85,10 @@ export default function Brands() {
               data-testid="brand-desc-input"
             />
           </div>
-          <button type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="brand-submit">
-            {editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Brand</>}
+          {error && <p role="alert" className="text-sm text-red-700" data-testid="brand-error">{error}</p>}
+          {notice && <p role="status" className="text-sm text-green-800" data-testid="brand-success">{notice}</p>}
+          <button type="submit" disabled={saving} className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="brand-submit">
+            {saving ? "Menyimpan…" : editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Brand</>}
           </button>
           {editingId && (
             <button

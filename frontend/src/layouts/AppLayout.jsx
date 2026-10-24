@@ -286,7 +286,7 @@ export default function AppLayout() {
               </div>
 
               {(() => {
-                const activated = new Set((user?.stores || []).map((s) => s.module));
+                const activated = new Set(["geraina", ...(user?.stores || []).map((s) => s.module)]);
                 const tiles = [
                   { mod: "dapuros", label: "DapurOS", desc: "F&B & Restoran OS", img: "/assets/brand/dapuros-icon.png", tone: "orange", home: "/dapuros/app/dashboard", activate: "/dapuros/activate" },
                   { mod: "geraina", label: "Geraina POS", desc: "Retail & Toko OS", img: "/assets/brand/geraina-icon.png", tone: "blue", home: "/geraina/app/dashboard", activate: "/geraina/activate" },
@@ -362,8 +362,10 @@ export default function AppLayout() {
                   <button
                     onClick={() => {
                       toggleMenu(item.key);
-                      nav(`/geraina/app/${item.key}`);
+                      // Android drawers must stay open until a destination is chosen.
+                      if (!window.__gerainaAndroid) nav(`/geraina/app/${item.key}`);
                     }}
+                    aria-expanded={!!isOpen}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors text-left"
                     data-testid={`menu-parent-${item.key}`}
                   >

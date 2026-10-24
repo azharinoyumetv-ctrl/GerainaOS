@@ -7,36 +7,40 @@ export default function Categories() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const fetchCategories = () => {
-    api.get("/products/categories").then((r) => setCategories(r.data)).catch(() => {});
+    return api.get("/products/categories").then((r) => setCategories(r.data)).catch(() => setError("Daftar kategori belum dapat dimuat. Coba muat ulang."));
   };
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
-
-    if (editingId) {
-      api.put(`/products/categories/${editingId}`, { name, description: desc }).then(() => {
-        setEditingId(null);
-        setName("");
-        setDesc("");
-        fetchCategories();
-      });
-    } else {
-      api.post("/products/categories", { name, description: desc }).then(() => {
-        setName("");
-        setDesc("");
-        fetchCategories();
-      });
+    if (saving) return;
+    setError(""); setNotice("");
+    if (!name.trim()) { setError("Isi nama kategori terlebih dahulu."); return; }
+    setSaving(true);
+    try {
+      const payload = { name: name.trim(), description: desc.trim() };
+      if (editingId) await api.put(`/products/categories/${editingId}`, payload);
+      else await api.post("/products/categories", payload);
+      setEditingId(null); setName(""); setDesc("");
+      setNotice("Kategori berhasil disimpan.");
+      await fetchCategories();
+    } catch (err) {
+      setError(typeof err.response?.data?.detail === "string" ? err.response.data.detail : "Kategori belum tersimpan. Periksa koneksi lalu coba lagi.");
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEdit = (c) => {
+    setError(""); setNotice("");
     setEditingId(c.id);
     setName(c.name);
     setDesc(c.description || "");
@@ -56,12 +60,13 @@ export default function Categories() {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        <form onSubmit={handleSubmit} className="col-span-12 lg:col-span-4 card-surface p-6 space-y-4" data-testid="category-form">
+        <form onSubmit={handleSubmit} onInvalid={() => { setError("Isi nama kategori terlebih dahulu."); setNotice(""); }} className="col-span-12 lg:col-span-4 card-surface p-6 space-y-4" data-testid="category-form">
           <h2 className="font-display font-bold text-lg">{editingId ? "Edit Kategori" : "Tambah Kategori"}</h2>
           <div className="flex flex-col space-y-1">
             <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Nama Kategori</label>
             <input
               type="text"
+              required disabled={saving}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Kopi, Makanan Ringan"
@@ -72,6 +77,7 @@ export default function Categories() {
           <div className="flex flex-col space-y-1">
             <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Deskripsi</label>
             <textarea
+              disabled={saving}
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               placeholder="Deskripsi singkat kategori..."
@@ -79,8 +85,10 @@ export default function Categories() {
               data-testid="category-desc-input"
             />
           </div>
-          <button type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="category-submit">
-            {editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Kategori</>}
+          {error && <p role="alert" className="text-sm text-red-700" data-testid="category-error">{error}</p>}
+          {notice && <p role="status" className="text-sm text-green-800" data-testid="category-success">{notice}</p>}
+          <button type="submit" disabled={saving} className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="category-submit">
+            {saving ? "Menyimpan…" : editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Kategori</>}
           </button>
           {editingId && (
             <button

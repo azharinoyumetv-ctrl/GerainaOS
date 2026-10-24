@@ -7,36 +7,40 @@ export default function Units() {
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const fetchUnits = () => {
-    api.get("/products/units").then((r) => setUnits(r.data)).catch(() => {});
+    return api.get("/products/units").then((r) => setUnits(r.data)).catch(() => setError("Daftar satuan belum dapat dimuat. Coba muat ulang."));
   };
 
   useEffect(() => {
     fetchUnits();
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !shortName.trim()) return;
-
-    if (editingId) {
-      api.put(`/products/units/${editingId}`, { name, short_name: shortName }).then(() => {
-        setEditingId(null);
-        setName("");
-        setShortName("");
-        fetchUnits();
-      });
-    } else {
-      api.post("/products/units", { name, short_name: shortName }).then(() => {
-        setName("");
-        setShortName("");
-        fetchUnits();
-      });
+    if (saving) return;
+    setError(""); setNotice("");
+    if (!name.trim() || !shortName.trim()) { setError("Isi nama dan simbol satuan terlebih dahulu."); return; }
+    setSaving(true);
+    try {
+      const payload = { name: name.trim(), short_name: shortName.trim() };
+      if (editingId) await api.put(`/products/units/${editingId}`, payload);
+      else await api.post("/products/units", payload);
+      setEditingId(null); setName(""); setShortName("");
+      setNotice("Satuan berhasil disimpan.");
+      await fetchUnits();
+    } catch (err) {
+      setError(typeof err.response?.data?.detail === "string" ? err.response.data.detail : "Satuan belum tersimpan. Periksa koneksi lalu coba lagi.");
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleEdit = (u) => {
+    setError(""); setNotice("");
     setEditingId(u.id);
     setName(u.name);
     setShortName(u.short_name);
@@ -56,12 +60,13 @@ export default function Units() {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        <form onSubmit={handleSubmit} className="col-span-12 lg:col-span-4 card-surface p-6 space-y-4" data-testid="unit-form">
+        <form onSubmit={handleSubmit} onInvalid={() => { setError("Isi nama dan simbol satuan terlebih dahulu."); setNotice(""); }} className="col-span-12 lg:col-span-4 card-surface p-6 space-y-4" data-testid="unit-form">
           <h2 className="font-display font-bold text-lg">{editingId ? "Edit Unit" : "Tambah Satuan Unit"}</h2>
           <div className="flex flex-col space-y-1">
             <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Nama Unit</label>
             <input
               type="text"
+              required disabled={saving}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Kilogram, Pieces"
@@ -73,6 +78,7 @@ export default function Units() {
             <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Nama Singkat (Simbol)</label>
             <input
               type="text"
+              required disabled={saving}
               value={shortName}
               onChange={(e) => setShortName(e.target.value)}
               placeholder="Contoh: kg, pcs, btl"
@@ -80,8 +86,10 @@ export default function Units() {
               data-testid="unit-symbol-input"
             />
           </div>
-          <button type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="unit-submit">
-            {editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Unit</>}
+          {error && <p role="alert" className="text-sm text-red-700" data-testid="unit-error">{error}</p>}
+          {notice && <p role="status" className="text-sm text-green-800" data-testid="unit-success">{notice}</p>}
+          <button type="submit" disabled={saving} className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="unit-submit">
+            {saving ? "Menyimpan…" : editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Unit</>}
           </button>
           {editingId && (
             <button
