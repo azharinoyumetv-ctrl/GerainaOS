@@ -6,6 +6,7 @@ from database import get_db, utcnow
 from models import Branch, BranchBase
 from auth import get_current_user, require_admin
 from plan_limits import require_plan, plan_rank
+from bank_qris import BankQrisSetup, inspect_static_qris, public_bank_qris
 
 router = APIRouter(tags=["settings"])
 
@@ -37,6 +38,30 @@ async def save_settings(payload: Dict[str, Any], user: dict = Depends(get_curren
     return res
 
 # ---------- Payments Config ----------
+@router.get("/api/payments/bank-qris")
+async def get_bank_qris(user: dict = Depends(get_current_user)):
+    # Cashiers can read the public payment code, never another provider's API secrets.
+    saved = await get_db().bank_qris_configs.find_one({"store_id": user["store_id"]}, {"_id": 0})
+    return public_bank_qris(saved)
+
+
+@router.post("/api/payments/bank-qris")
+async def save_bank_qris(payload: BankQrisSetup, user: dict = Depends(require_admin)):
+    name = payload.bank_name.strip()
+    if payload.is_active and (not name or payload.merchant_confirmed is not True):
+        raise HTTPException(status_code=400, detail="Isi nama bank dan pastikan QRIS milik merchant yang benar sebelum mengaktifkan.")
+    try:
+        details = inspect_static_qris(payload.qr_payload) if payload.qr_payload else {"qr_payload": "", "merchant_name": "", "merchant_city": ""}
+        if payload.is_active and not payload.qr_payload:
+            raise ValueError("Unggah QRIS statis dari bank terlebih dahulu.")
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    saved = {**details, "bank_name": name, "is_active": payload.is_active, "confirmation_mode": "manual_bank",
+             "updated_at": utcnow().isoformat(), "updated_by": user["id"]}
+    await get_db().bank_qris_configs.update_one({"_id": user["store_id"]}, {"$set": {**saved, "store_id": user["store_id"]}}, upsert=True)
+    return public_bank_qris(saved)
+
+
 @router.get("/api/payments/config")
 async def get_payments_config(user: dict = Depends(get_current_user)):
     db = get_db()

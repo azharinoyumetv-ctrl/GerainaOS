@@ -10,6 +10,8 @@ from auth import get_current_user, require_admin
 from plan_limits import require_plan
 from xendit_client import create_qris, create_ewallet_charge
 from doku_client import create_doku_checkout, DokuNotConfiguredError
+from bank_qris import BankQrisConfirmation, bank_qris_snapshot
+from decimal import Decimal
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
@@ -79,7 +81,13 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
     # match DOKU/EDC/WhatsApp's per-tenant pattern.)
     integ = await db.integrations.find_one({"store_id": user["store_id"]}, {"_id": 0}) if payload.payment_method in ("qris", "ewallet", "doku") else None
 
-    if payload.payment_method == "qris":
+    if payload.payment_method == "qris_bank":
+        saved_qris = await db.bank_qris_configs.find_one({"store_id": user["store_id"]}, {"_id": 0})
+        try:
+            doc["bank_qris"] = bank_qris_snapshot(saved_qris, calc["total"])
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error))
+    elif payload.payment_method == "qris":
         xendit_cfg = (integ or {}).get("xendit") or {}
         try:
             res = await create_qris(cfg=xendit_cfg, external_id=order_no, amount=int(round(calc["total"])))
@@ -194,7 +202,7 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
                 settings = await db.settings.find_one({"store_id": user["store_id"]}, {"_id": 0})
                 store_name = ((settings or {}).get("general") or {}).get("store_name") or user.get("store_name") or "Toko"
                 total_str = f"{int(round(calc['total'])):,}".replace(",", ".")
-                method_labels = {"cash": "Tunai", "qris": "QRIS", "ewallet": "E-Wallet", "card": "Kartu"}
+                method_labels = {"cash": "Tunai", "qris": "QRIS", "qris_bank": "QRIS bank", "ewallet": "E-Wallet", "card": "Kartu"}
                 payment_method_label = method_labels.get(payload.payment_method, payload.payment_method or "-")
                 template_name = wa.get("template_receipt") or TEMPLATE_RECEIPT_NAME_DEFAULT
                 template_lang = wa.get("template_receipt_lang") or TEMPLATE_RECEIPT_LANG_DEFAULT
@@ -296,11 +304,48 @@ async def get_order(order_id: str, user: dict = Depends(get_current_user)):
     return doc
 
 
+@router.post("/{order_id}/confirm-bank-qris")
+async def confirm_bank_qris(order_id: str, payload: BankQrisConfirmation, user: dict = Depends(get_current_user)):
+    if user.get("role") not in ("Owner", "admin", "Manager", "Cashier"):
+        raise HTTPException(status_code=403, detail="Peran kasir diperlukan untuk konfirmasi QRIS bank.")
+    db = get_db()
+    scope = {"id": order_id, "store_id": user["store_id"], "payment_method": "qris_bank"}
+    order = await db.orders.find_one(scope, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Transaksi QRIS bank tidak ditemukan.")
+    if user.get("role") == "Cashier" and order.get("cashier_id") != user["id"]:
+        raise HTTPException(status_code=403, detail="Kasir hanya dapat mengonfirmasi transaksi miliknya sendiri.")
+    if payload.checked_in_bank is not True or payload.received_amount != Decimal(str(order["total"])):
+        raise HTTPException(status_code=400, detail="Periksa penerimaan dan nominal yang sama di aplikasi bank merchant terlebih dahulu.")
+    if order.get("payment_status") == "paid":
+        return order
+    if order.get("payment_status") != "pending":
+        raise HTTPException(status_code=409, detail="Transaksi ini tidak lagi menunggu pembayaran.")
+    now = utcnow().isoformat()
+    result = await db.orders.find_one_and_update(
+        {**scope, "payment_status": "pending"},
+        {"$set": {"payment_status": "paid", "updated_at": now, "payment_confirmation": {
+            "type": "manual_bank", "bank_verified": False, "confirmed_by": user["id"], "confirmed_at": now,
+            "received_amount": float(payload.received_amount), "reference": payload.reference.strip(),
+        }}}, return_document=True, projection={"_id": 0},
+    )
+    if result:
+        return result
+    # Concurrent confirmations cannot replace the original audit record or change stock.
+    current = await db.orders.find_one(scope, {"_id": 0})
+    if current and current.get("payment_status") == "paid":
+        return current
+    raise HTTPException(status_code=409, detail="Status transaksi berubah. Muat ulang transaksi terlebih dahulu.")
+
+
 @router.post("/{order_id}/mark-paid")
 async def mark_paid(order_id: str, user: dict = Depends(require_admin)):
     """Owner-only manual settle: confirm a pending non-cash order was actually received
     (e.g. paid via the merchant's own external EDC/QRIS). Not a payment simulator."""
     db = get_db()
+    existing = await db.orders.find_one({"id": order_id, "store_id": user["store_id"]}, {"_id": 0})
+    if existing and existing.get("payment_method") == "qris_bank":
+        raise HTTPException(status_code=400, detail="Gunakan konfirmasi QRIS bank setelah memeriksa penerimaan di aplikasi bank.")
     res = await db.orders.find_one_and_update(
         {"id": order_id, "store_id": user["store_id"]},
         {"$set": {"payment_status": "paid", "updated_at": utcnow().isoformat()}},

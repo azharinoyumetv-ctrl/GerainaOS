@@ -100,7 +100,7 @@ class OrderLineItem(BaseModel):
 
 class OrderCreate(BaseModel):
     items: List[OrderLineItem]
-    payment_method: str  # cash | qris | ewallet
+    payment_method: str  # cash | qris_bank (static/manual) | qris (legacy gateway) | ewallet
     ewallet_channel: Optional[str] = None  # OVO | DANA | SHOPEEPAY | LINKAJA (Xendit v3, no ID_ prefix)
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
@@ -138,6 +138,8 @@ class Order(BaseModel):
     xendit_checkout_url: Optional[str] = None
     xendit_reference_id: Optional[str] = None
     xendit_raw: Optional[dict] = None
+    bank_qris: Optional[dict] = None
+    payment_confirmation: Optional[dict] = None
     created_at: str = Field(default_factory=utcnow_iso)
     updated_at: str = Field(default_factory=utcnow_iso)
 

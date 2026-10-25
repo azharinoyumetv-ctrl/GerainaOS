@@ -27,4 +27,15 @@ class ReceiptEncoderTest {
         val text = ReceiptEncoder.encode(receipt().copy(total=199.5,cash=200.0,change=0.5),32).toString(Charsets.US_ASCII)
         assertTrue(text.contains("Rp 199,5")); assertTrue(text.contains("Rp 0,5"))
     }
+    @Test fun pendingBankQrisIsNeverPrintedAsCashOrPaid() {
+        for (columns in listOf(32,48)) {
+            val text = ReceiptEncoder.encode(receipt().copy(pending=false,paymentMethod="qris_bank",paymentStatus="pending"),columns).toString(Charsets.US_ASCII)
+            assertTrue(text.contains("Pembayaran: QRIS bank")); assertTrue(text.contains("MENUNGGU PEMBAYARAN"))
+            assertFalse(text.contains("Tunai")); assertFalse(text.contains("Kembalian")); assertFalse(text.contains("LUNAS"))
+        }
+    }
+    @Test fun paidBankQrisIdentifiesManualStaffConfirmation() {
+        val text = ReceiptEncoder.encode(receipt().copy(pending=false,paymentMethod="qris_bank",paymentStatus="paid",manualBankConfirmed=true),32).toString(Charsets.US_ASCII)
+        assertTrue(text.contains("LUNAS - KONFIRMASI STAF")); assertFalse(text.contains("Tunai"))
+    }
 }

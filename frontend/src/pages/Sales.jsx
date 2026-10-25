@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import api, { fmtIDR, downloadPdf } from "@/api/client";
 import { Printer, FileDown, Search, RefreshCw, Ban } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { ReceiptDialog } from "./POS";
 
 export default function Sales() {
   const [items, setItems] = useState([]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [receipt, setReceipt] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -81,7 +83,7 @@ export default function Sales() {
                 <td className="px-5 py-3 text-xs text-[hsl(var(--muted))]">{o.created_at?.slice(0, 19).replace("T", " ")}</td>
                 <td className="px-5 py-3 text-xs">{o.items?.length || 0}</td>
                 <td className="px-5 py-3">
-                  <span className="pill pill-muted">{o.payment_method?.toUpperCase()}</span>
+                  <span className="pill pill-muted">{o.payment_method === "qris_bank" ? "QRIS bank" : o.payment_method?.toUpperCase()}</span>
                   {o.ewallet_channel && <span className="text-xs text-[hsl(var(--muted))] ml-1">{o.ewallet_channel}</span>}
                 </td>
                 <td className="px-5 py-3 text-right font-display font-bold num-display">{fmtIDR(o.total)}</td>
@@ -91,6 +93,7 @@ export default function Sales() {
                   </span>
                 </td>
                 <td className="px-5 py-3 text-right">
+                  {o.payment_method === "qris_bank" && <button className="btn-outline text-xs" onClick={async () => { try { const { data } = await api.get(`/orders/${o.id}`); setReceipt(data); } catch { toast.error("Pembayaran belum dapat dimuat. Coba lagi."); } }} data-testid={`sales-bank-qris-${o.id}`}>Buka QRIS</button>}
                   <button onClick={() => downloadPdf(`/pdf/receipt/${o.id}`, `receipt-${o.order_no}.pdf`)}
                           className="btn-ghost p-1.5" title="Struk thermal" data-testid={`sales-receipt-${o.id}`}>
                     <Printer size={15} />
@@ -111,6 +114,7 @@ export default function Sales() {
           </tbody>
         </table>
       </div>
+      {receipt && <ReceiptDialog order={receipt} onClose={() => { setReceipt(null); load(); }} onUpdated={updated => setReceipt(updated)} />}
     </div>
   );
 }

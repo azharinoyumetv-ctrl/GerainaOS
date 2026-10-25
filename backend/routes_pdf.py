@@ -117,7 +117,7 @@ def _thermal_pdf(order: dict, store: dict) -> bytes:
     c.setFillColor(INK)
     c.setFont("Helvetica", 8)
 
-    pm = (order.get("payment_method") or "").upper()
+    pm = "QRIS bank" if order.get("payment_method") == "qris_bank" else (order.get("payment_method") or "").upper()
     if order.get("ewallet_channel"):
         pm += f" ({order['ewallet_channel']})"
     c.drawString(4 * mm, y, f"Bayar: {pm}")
@@ -264,7 +264,7 @@ def _invoice_pdf(order: dict, store: dict) -> bytes:
     story.append(totals)
     story.append(Spacer(1, 14 * mm))
 
-    pm = (order.get("payment_method") or "").upper()
+    pm = "QRIS bank" if order.get("payment_method") == "qris_bank" else (order.get("payment_method") or "").upper()
     if order.get("ewallet_channel"):
         pm += f" via {order['ewallet_channel']}"
     story.append(Paragraph("Metode Pembayaran", p_label))

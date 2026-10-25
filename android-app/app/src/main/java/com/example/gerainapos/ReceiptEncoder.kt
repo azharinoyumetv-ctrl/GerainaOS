@@ -10,7 +10,8 @@ import java.util.Locale
 data class ReceiptLine(val name: String, val quantity: Int, val price: Double, val subtotal: Double)
 data class ThermalReceipt(val store: String, val reference: String, val date: String, val items: List<ReceiptLine>,
     val subtotal: Double, val discount: Double, val tax: Double, val total: Double, val cash: Double, val change: Double,
-    val pending: Boolean, val footer: String = "Terima kasih")
+    val pending: Boolean, val footer: String = "Terima kasih", val paymentMethod: String = "cash",
+    val paymentStatus: String = "paid", val manualBankConfirmed: Boolean = false)
 
 object ReceiptEncoder {
     private fun clean(value: String) = value.replace(Regex("[\\p{Cntrl}]"), " ").trim()
@@ -36,7 +37,19 @@ object ReceiptEncoder {
         if (receipt.discount > 0) amount("Diskon", receipt.discount)
         if (receipt.tax > 0) amount("Pajak", receipt.tax)
         command(27, 69, 1); amount("TOTAL", receipt.total); command(27, 69, 0)
-        amount("Tunai", receipt.cash); amount("Kembalian", receipt.change)
+        if (receipt.paymentMethod == "cash") {
+            amount("Tunai", receipt.cash); amount("Kembalian", receipt.change)
+        } else {
+            val method = when (receipt.paymentMethod) { "qris_bank" -> "QRIS bank"; "qris" -> "QRIS"; "ewallet" -> "E-Wallet"; "edc" -> "Kartu EDC"; "doku" -> "DOKU"; else -> "Non-tunai" }
+            wrapped("Pembayaran: $method")
+            wrapped(when (receipt.paymentStatus) {
+                "pending" -> "MENUNGGU PEMBAYARAN"
+                "paid" -> if (receipt.paymentMethod == "qris_bank") {
+                    if (receipt.manualBankConfirmed) "LUNAS - KONFIRMASI STAF" else "LUNAS - PERIKSA CATATAN"
+                } else "LUNAS"
+                else -> "STATUS: ${receipt.paymentStatus.uppercase(Locale.ROOT)}"
+            })
+        }
         line("-".repeat(columns)); command(27, 97, 1); wrapped(receipt.footer); command(27, 97, 0)
         line(); line(); line(); // No automatic cut/drawer commands: not all printers support them.
         return output.toByteArray()

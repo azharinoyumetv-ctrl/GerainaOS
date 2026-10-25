@@ -75,7 +75,7 @@
   function recentMarkup(orders) {
     if (!Array.isArray(orders)) return `<div class="ga-empty">Transaksi belum dapat dimuat.</div>`;
     if (!orders.length) return `<div class="ga-empty">${icon('receipt')}Belum ada transaksi.<br>Mulai penjualan pertama dari kasir.<br><a href="/geraina/app/pos">Buka kasir →</a></div>`;
-    const methods = {cash:'Tunai',qris:'QRIS',ewallet:'E-Wallet',edc:'Kartu',doku:'DOKU'};
+    const methods = {cash:'Tunai',qris:'QRIS',qris_bank:'QRIS bank',ewallet:'E-Wallet',edc:'Kartu',doku:'DOKU'};
     return orders.slice(0,3).map(order=>`<div class="ga-order"><span class="ga-order-icon">${icon('receipt')}</span><div class="ga-order-copy"><b>${esc(order.order_no || 'Penjualan')}</b><p>${esc(methods[order.payment_method] || order.payment_method || 'Pembayaran')} · ${esc(new Date(order.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short'}))}</p></div><div class="ga-order-amount">${money(order.total)}<small>${order.payment_status==='paid'?'Lunas':order.payment_status==='failed'?'Gagal':'Belum lunas'}</small></div></div>`).join('');
   }
   function dashboardMarkup(result) {

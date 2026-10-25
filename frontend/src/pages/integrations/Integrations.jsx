@@ -169,33 +169,11 @@ export default function Integrations() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
-  if (["stripe", "telegram", "email"].includes(type)) return <Navigate to="/geraina/app/integrations/qris" replace />;
+  if (["stripe", "telegram", "email", "qris"].includes(type)) return <Navigate to="/geraina/app/payments/qris" replace />;
   if (!integrations) return <div className="p-4 sm:p-6 lg:p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data integrasi...</div>;
 
   const renderForm = () => {
     switch (type) {
-      case "qris":
-        return (
-          <div className="space-y-4 text-sm" data-testid="qris-integration">
-            <p>Terima pembayaran <strong>QRIS dinamis melalui Xendit</strong>. Nominal mengikuti total transaksi kasir; pelanggan memindai QR menggunakan aplikasi pembayaran yang mendukung QRIS.</p>
-            <p className="rounded-xl bg-[hsl(var(--primary))]/5 p-4" data-testid="qris-byok">Gunakan akun dan API key Xendit milik toko Anda sendiri (BYOK). Pembayaran pelanggan diproses pada akun merchant Anda. Biaya transaksi penyedia menjadi tanggung jawab merchant sesuai perjanjian dengan Xendit. Akun pembayaran langganan DagangOS terpisah.</p>
-            <div className="rounded-xl border border-[hsl(var(--border))] p-4 space-y-2">
-              <p className="font-semibold" data-testid="qris-setup-status">
-                {integrations.xendit.is_active && integrations.xendit.secret_key && integrations.xendit.webhook_token
-                  ? "Konfigurasi Xendit tersimpan — transaksi belum diverifikasi"
-                  : "Lengkapi konfigurasi Xendit untuk menggunakan QRIS"}
-              </p>
-              <ol className="list-decimal pl-5 space-y-2 text-[hsl(var(--muted))]">
-                <li>Daftarkan usaha dan aktifkan kanal QRIS pada akun merchant Xendit milik toko Anda.</li>
-                <li>Isi Secret API Key dan token callback yang diberikan Xendit pada pengaturan Xendit. Gunakan mode test dahulu.</li>
-                <li>Daftarkan URL callback <span className="break-all font-mono text-xs">https://geraina-os.vercel.app/api/webhooks/xendit</span> di dashboard Xendit.</li>
-                <li>Di kasir, pilih QRIS dan selesaikan pembayaran uji. Pastikan status berubah menjadi Lunas setelah konfirmasi dari penyedia.</li>
-              </ol>
-            </div>
-            <p className="text-xs text-[hsl(var(--muted))]">QRIS memerlukan internet. Mengisi NMID atau menampilkan gambar QR saja tidak menghubungkan status pembayaran otomatis. Konfigurasi tersimpan belum membuktikan pembayaran berhasil.</p>
-            <Link to="/geraina/app/integrations/xendit" className="btn-primary inline-flex" data-testid="qris-configure-xendit">Atur QRIS melalui Xendit</Link>
-          </div>
-        );
       case "xendit":
         return (
           <div className="space-y-4">
@@ -582,7 +560,7 @@ export default function Integrations() {
     { id: "xendit", label: "Xendit", path: "/geraina/app/integrations/xendit" },
     { id: "doku", label: "DOKU", path: "/geraina/app/integrations/doku" },
     { id: "midtrans", label: "Midtrans", path: "/geraina/app/integrations/midtrans" },
-    { id: "qris", label: "QRIS", path: "/geraina/app/integrations/qris" },
+    { id: "qris", label: "QRIS bank", path: "/geraina/app/payments/qris" },
     { id: "whatsapp", label: "WhatsApp", path: "/geraina/app/integrations/whatsapp" },
   ];
 

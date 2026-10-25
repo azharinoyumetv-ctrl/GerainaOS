@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import BankQrisSettings from "./BankQrisSettings";
 import api from "@/api/client";
 import { Save, ShieldCheck } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
@@ -354,7 +355,7 @@ export default function PaymentConfig() {
     { id: "edc", label: "EDC", path: "/geraina/app/payments/edc" }
   ];
 
-  if (type === "qris") return <Navigate to="/geraina/app/integrations/qris" replace />;
+  if (type === "qris") return <BankQrisSettings />;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 text-left" data-testid="payment-config-page">

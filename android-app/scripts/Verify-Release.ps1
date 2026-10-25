@@ -1,4 +1,4 @@
-param([string]$VersionName = '1.2.4')
+param([string]$VersionName = '1.2.5')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $sdk = Join-Path $env:USERPROFILE 'AppData\Local\Android\Sdk'

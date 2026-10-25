@@ -22,10 +22,12 @@ Use JDK 17, Android SDK platform 36 and build tools 36.0.0. Set `sdk.dir` in the
 .\scripts\Build-Release.ps1
 
 # Future update: keep the same key and increase the version code.
-.\scripts\Build-Release.ps1 -VersionCode 9 -VersionName 1.2.4
+.\scripts\Build-Release.ps1 -VersionCode 10 -VersionName 1.2.5
 ```
 
 Outputs are in `releases/`. Distribute the signed `.apk` through the website. The current APK/AAB contains a website self-updater and is not ready for Google Play submission: remove that updater and `REQUEST_INSTALL_PACKAGES`, and use Play's update mechanism before submitting. Files in `releases/` are ignored by Git.
+
+Version 1.2.5 changes the QRIS checkout to the merchant's existing bank-issued static QRIS, uploaded in **Pembayaran > QRIS**. Staff check the bank's merchant app and explicitly confirm the matching amount; Geraina records who confirmed and when. No Xendit key is required for this flow. See [BANK-QRIS.md](BANK-QRIS.md) for setup, recovery and verification limits.
 
 ## Updates inside the app
 

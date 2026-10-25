@@ -6,8 +6,8 @@ const {join}=require('node:path');
 const {createHash,randomUUID}=require('node:crypto');
 const {_android}=require('../../frontend/node_modules/playwright');
 const root=join(__dirname,'..'),profileId=process.env.GERAINA_DEVICE_PROFILE||'phone',profile=require('./android-device-profiles.json')[profileId];
-const shipping=process.env.GERAINA_UPDATE_MODE==='shipping',upgrade=shipping||process.env.GERAINA_UPDATE_MODE==='upgrade',serial=`emulator-${profile.port}`,app='com.dagangos.geraina',fromCode=shipping?8:6;
-const apk=join(root,shipping?'releases/Geraina-POS-1.2.3.apk':upgrade?'build/update-tests/bootstrap.apk':'releases/Geraina-POS-1.2.4.apk');
+const shipping=process.env.GERAINA_UPDATE_MODE==='shipping',upgrade=shipping||process.env.GERAINA_UPDATE_MODE==='upgrade',serial=`emulator-${profile.port}`,app='com.dagangos.geraina',fromCode=shipping?9:6;
+const apk=join(root,shipping?'releases/Geraina-POS-1.2.4.apk':upgrade?'build/update-tests/bootstrap.apk':'releases/Geraina-POS-1.2.5.apk');
 const out=join(root,'app/build/reports/updater',shipping?'shipping':profileId);mkdirSync(out,{recursive:true});
 const report={status:'running',profile:profileId,mode:upgrade?'real-system-upgrade':'current-release',apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex'),checks:[],merchantWrites:0};
 const adbPath=join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe');
@@ -65,7 +65,16 @@ async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa p
    await page.evaluate(()=>new Promise(resolve=>{localStorage.removeItem('updater-preservation');const r=indexedDB.open('geraina-pos-offline-v1',1);r.onsuccess=()=>{const db=r.result,tx=db.transaction('sales','readwrite');tx.objectStore('sales').delete('updater-isolated:sentinel');tx.oncomplete=()=>{db.close();resolve();};};}));
   });
  }else{
-  await step('Manual update check is available before login and refuses a downgrade',async()=>{await manual();await tree(/Geraina sudah terbaru/);assert.match(xml(),/Versi terpasang: 1\.2\.4/);capture('current-release-check');tap(/text="Tutup"/);assert.equal((await page.evaluate(()=>GerainaDevice.appInfo)).versionCode,9);});
+  await step('Manual update check is available before login and refuses a downgrade',async()=>{
+   await manual();const first=await tree(/Geraina sudah terbaru|Pembaruan belum dapat diperiksa/);
+   if(first.includes('Pembaruan belum dapat diperiksa')){
+    // Link-up can precede working native DNS after this bench disables both radios.
+    // Exercise the real Retry control once, retaining the initial error as evidence.
+    assert.match(first,/COBA LAGI/);report.initialConnectionRecovery=true;capture('initial-connection-error');
+    await wait(12000);tap(/text="COBA LAGI"/);await tree(/Geraina sudah terbaru/);
+   }
+   assert.match(xml(),/Versi terpasang: 1\.2\.5/);capture('current-release-check');tap(/text="Tutup"/);assert.equal((await page.evaluate(()=>GerainaDevice.appInfo)).versionCode,10);
+  });
   await step('Offline update check has a readable dismissible error',async()=>{adb(['shell','svc','wifi','disable']);adb(['shell','svc','data','disable']);await page.waitForFunction(()=>!navigator.onLine);await manual();await tree(/Pembaruan belum dapat diperiksa/);capture('offline-update-check');tap(/text="Tutup"/);await page.getByTestId('login-form').waitFor();});
   await step('About provides the user-initiated native update check',async()=>{
    adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);

@@ -6,7 +6,7 @@ const routes=['dashboard','pos','products','products/categories','products/brand
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true}),results=[];try{
  const context=await browser.newContext({viewport:{width:1016,height:1200}});
  const css=['mobile-support.css','mobile-ui.css'].map(name=>fs.readFileSync(path.join(root,'app/src/main/assets',name),'utf8')).join('\n');const scripts=['android-bridge.js','device-features.js','mobile-ui.js'].map(name=>fs.readFileSync(path.join(root,'app/src/main/assets',name),'utf8').replace('__GERAINA_MOBILE_STYLE__',JSON.stringify(css))).join('\n');
- await context.addInitScript({content:`window.__gerainaAppInfo={versionName:'1.2.4',versionCode:9,androidVersion:'14',model:'Audit profile'};window.GerainaNative={postMessage:()=>{}};\n${scripts}`});
+ await context.addInitScript({content:`window.__gerainaAppInfo={versionName:'1.2.5',versionCode:10,androidVersion:'14',model:'Audit profile'};window.GerainaNative={postMessage:()=>{}};\n${scripts}`});
  const page=await context.newPage();page.setDefaultTimeout(15000);
  const bundle=path.join(root,'app/build/generated/frontend-assets/frontend');
  await page.route('https://dagangos.com/geraina/**',route=>{const pathname=new URL(route.request().url()).pathname;return route.fulfill({path:path.join(bundle,pathname.includes('/static/')?pathname.slice('/geraina/'.length):'index.html')});});

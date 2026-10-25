@@ -8,7 +8,7 @@ const root=resolve(__dirname,'..'),profileId=process.env.GERAINA_DEVICE_PROFILE|
 const serial=`emulator-${profile.port}`,app=process.env.GERAINA_TEST_APP_ID||'com.dagangos.geraina.debug';assert.ok(['com.dagangos.geraina.debug','com.dagangos.geraina'].includes(app));
 const apk=process.env.GERAINA_TEST_APK||join(root,'app/build/outputs/apk/debug/app-debug.apk');
 const out=join(root,'app/build/reports/offline-android',`${profileId}-${new Date().toISOString().replace(/[:.]/g,'-')}`);mkdirSync(out,{recursive:true});
-const report={status:'running',version:'1.2.4',profile:profileId,checks:[],apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex'),scope:'Installed APK, isolated account and sale fixtures. Emulator Wi-Fi/data are disabled for cold-start tests. No merchant writes; physical printer output is not tested.'};
+const report={status:'running',version:'1.2.5',profile:profileId,checks:[],apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex'),scope:'Installed APK, isolated account and sale fixtures. Emulator Wi-Fi/data are disabled for cold-start tests. No merchant writes; physical printer output is not tested.'};
 const user={id:`offline-test-${randomUUID()}`,store_id:'isolated-offline-store',email:'offline@example.invalid',role:'Owner',store_name:'Offline test store',plan:'pro'};
 const products=[{id:'offline-coffee',name:'Kopi Susu (contoh lokal)',sku:'5901234123457',price:12500,stock:10,unit:'pcs',category:'Minuman'}];
 const adbPath=join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe');
@@ -42,11 +42,15 @@ function xml(){adb(['shell','uiautomator','dump','/data/local/tmp/geraina-offlin
 function tapResource(id){const nodes=xml().match(/<node[^>]*>/g)||[];const node=nodes.find(value=>value.includes(`resource-id="${id}"`));assert.ok(node,`Native control ${id} is visible`);const b=node.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);assert.ok(b);adb(['shell','input','tap',String(Math.round((+b[1]+ +b[3])/2)),String(Math.round((+b[2]+ +b[4])/2))]);}
 async function waitXml(pattern){for(let attempt=0;attempt<12;attempt++){const value=xml();if(pattern.test(value))return value;await wait(500);}throw Error(`Native UI did not show ${pattern}`);}
 (async()=>{try{
- adb(['install','-r',apk]);adb(['shell','am','force-stop',app]);adb(['logcat','-b','crash','-c']);adb(['shell','pm','revoke',app,'android.permission.CAMERA']);adb(['shell','pm','clear-permission-flags',app,'android.permission.CAMERA','user-set','user-fixed']);adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);launch();await attach();
- await page.goto('https://dagangos.com/geraina/login');await page.evaluate(value=>{localStorage.setItem('geraina_token','offline-isolated-fixture-token');localStorage.setItem('dagangos_token','offline-isolated-fixture-token');localStorage.setItem('geraina_user',JSON.stringify(value));localStorage.setItem('dagangos_user',JSON.stringify(value));},user);
+ disconnected=true;
+ adb(['install','-r',apk]);adb(['shell','am','force-stop',app]);adb(['logcat','-b','crash','-c']);adb(['shell','pm','revoke',app,'android.permission.CAMERA']);adb(['shell','pm','clear-permission-flags',app,'android.permission.CAMERA','user-set','user-fixed']);adb(['shell','svc','wifi','disable']);adb(['shell','svc','data','disable']);launch();await attach();
+ // Keep a prior account's live auth redirect from racing test account preparation.
+ await page.waitForURL('https://dagangos.com/**',{waitUntil:'domcontentloaded'});
+ await page.evaluate(value=>{localStorage.setItem('geraina_token','offline-isolated-fixture-token');localStorage.setItem('dagangos_token','offline-isolated-fixture-token');localStorage.setItem('geraina_user',JSON.stringify(value));localStorage.setItem('dagangos_user',JSON.stringify(value));},user);
  // Native internal navigation retains the React document. Recreate it after changing the
  // isolated account, so the mounted AuthContext cannot keep the previous run's cashier.
  await page.reload({waitUntil:'domcontentloaded'});
+ disconnected=false;adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);
  await page.goto('https://dagangos.com/geraina/app/pos',{waitUntil:'domcontentloaded'});await page.getByTestId('pos-product-offline-coffee').waitFor();
  await step('Bundled POS opens and stores the catalogue for offline use',async()=>{await page.waitForFunction(()=>!document.querySelector('[data-testid="offline-status"]')?.textContent.includes('Buka kasir saat terhubung'));assert.equal(await page.evaluate(()=>window.GerainaDevice.offline),true);await capture('online-catalogue-ready');});
  let reference,id;
@@ -65,7 +69,7 @@ async function waitXml(pattern){for(let attempt=0;attempt<12;attempt++){const va
  });
  await step('About matches the installed version and native navigation retains the running document',async()=>{
   await page.evaluate(()=>{window.qualityDocument=crypto.randomUUID();window.qualityOriginal=qualityDocument;});const timing=[];
-  for(const [route,testid]of[['about','about-page'],['products','products-page'],['pos','pos-page']]){const started=Date.now();await page.evaluate(route=>GerainaMobile.navigate(`https://dagangos.com/geraina/app/${route}`),route);await page.getByTestId(testid).waitFor();assert.equal(await page.evaluate(()=>window.qualityDocument===window.qualityOriginal),true);timing.push({route,readyMs:Date.now()-started});if(route==='about'){assert.equal((await page.getByTestId('about-version').innerText()).toLowerCase(),'v1.2.4');const info=await page.evaluate(()=>GerainaDevice.appInfo);assert.equal(info.versionCode,9);assert.ok((await page.getByTestId('about-device').innerText()).includes(info.model));await capture('actual-installed-system-info');}}
+  for(const [route,testid]of[['about','about-page'],['products','products-page'],['pos','pos-page']]){const started=Date.now();await page.evaluate(route=>GerainaMobile.navigate(`https://dagangos.com/geraina/app/${route}`),route);await page.getByTestId(testid).waitFor();assert.equal(await page.evaluate(()=>window.qualityDocument===window.qualityOriginal),true);timing.push({route,readyMs:Date.now()-started});if(route==='about'){assert.equal((await page.getByTestId('about-version').innerText()).toLowerCase(),'v1.2.5');const info=await page.evaluate(()=>GerainaDevice.appInfo);assert.equal(info.versionCode,10);assert.ok((await page.getByTestId('about-device').innerText()).includes(info.model));await capture('actual-installed-system-info');}}
   report.navigationTiming=timing;
  });
  await step('Product camera opens offline and the decoded-result contract preserves and saves the draft',async()=>{

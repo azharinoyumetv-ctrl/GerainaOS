@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import OfflineStatus from "@/offline/OfflineStatus";
 import { offlineAvailable, scopeFor, cached, cache, recordCashSale, localSales, synchronize } from "@/offline/posStore";
 import { QRCodeSVG } from "qrcode.react";
+import BankQrisPayment from "@/payments/BankQrisPayment";
+import { bankQrisError, pendingBankKey, rememberBankPayment } from "@/payments/bankQris";
 import api, { fmtIDR, downloadPdf } from "@/api/client";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -19,12 +22,12 @@ const EWALLET_CHANNELS = [
   { code: "LINKAJA", label: "LinkAja" },
 ];
 
-function ReceiptDialog({ order, onClose }) {
+export function ReceiptDialog({ order, onClose, onUpdated }) {
   const [poll, setPoll] = useState(order);
   const [edcProcessing, setEdcProcessing] = useState(false);
   useEffect(() => { setPoll(order); }, [order]);
   useEffect(() => {
-    if (poll?.payment_status === "paid" || poll?.payment_method === "cash") return;
+    if (poll?.payment_status !== "pending" || ["cash", "qris_bank"].includes(poll?.payment_method)) return;
     const t = setInterval(async () => {
       try {
         const r = await api.get(`/orders/${poll.id}`);
@@ -65,7 +68,7 @@ function ReceiptDialog({ order, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 grid place-items-center z-50 p-4" data-testid="receipt-dialog">
-      <div className="card-surface bg-white w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="card-surface bg-white w-full max-w-md p-6 max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <span className="label-tiny">Struk</span>
@@ -83,7 +86,7 @@ function ReceiptDialog({ order, onClose }) {
               <CheckCircle2 size={12} /> Lunas
             </span>
           ) : (
-            <span className="pill pill-warning" data-testid="receipt-status">Menunggu pembayaran…</span>
+            <span className="pill pill-warning" data-testid="receipt-status">{o.payment_status === "pending" ? "Menunggu pembayaran…" : o.payment_status}</span>
           )}
         </div>
 
@@ -95,6 +98,8 @@ function ReceiptDialog({ order, onClose }) {
             <p className="text-xs text-[hsl(var(--muted))] mt-2">Scan QRIS untuk membayar</p>
           </div>
         )}
+
+        {o.payment_method === "qris_bank" && <BankQrisPayment key={o.id} order={o} onConfirmed={updated => { setPoll(updated); onUpdated?.(updated); }} />}
 
         {o.payment_method === "ewallet" && o.xendit_checkout_url && !isPaid && (
           <div className="text-center mb-4" data-testid="ewallet-display">
@@ -165,7 +170,7 @@ function ReceiptDialog({ order, onClose }) {
           </button>
         </div>
 
-        {!isPaid && o.payment_method !== "cash" && (
+        {o.payment_status === "pending" && !["cash", "qris_bank"].includes(o.payment_method) && (
           <button onClick={simulatePaid} className="btn-ghost w-full mt-2 text-xs" data-testid="receipt-mark-paid">
             <RefreshCw size={13} /> Tandai sudah dibayar
           </button>
@@ -194,11 +199,30 @@ export default function POS() {
   const [discount, setDiscount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [receipt, setReceipt] = useState(null);
+  const [pendingBankId, setPendingBankId] = useState(null);
+  const [resumingBank, setResumingBank] = useState(false);
   const [categories, setCategories] = useState([]);
   const [activeCat, setActiveCat] = useState("all");
   const [scannedProduct, setScannedProduct] = useState(null);
   const [customers, setCustomers] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
+
+  useEffect(() => {
+    setReceipt(null);
+    try { setPendingBankId(scope ? localStorage.getItem(pendingBankKey(scope)) : null); } catch { setPendingBankId(null); }
+  }, [scope]);
+  const updateBankPayment = order => {
+    rememberBankPayment(scope, order);
+    if (order.payment_method === "qris_bank") setPendingBankId(order.payment_status === "pending" ? order.id : null);
+  };
+  const resumeBankPayment = async () => {
+    setResumingBank(true);
+    try { const { data } = await api.get(`/orders/${pendingBankId}`); setReceipt(data); updateBankPayment(data); }
+    catch (e) {
+      if (e?.response?.status === 404) { try { localStorage.removeItem(pendingBankKey(scope)); } catch {} setPendingBankId(null); }
+      toast.error(bankQrisError(e, "Transaksi belum dapat dimuat. Periksa koneksi lalu coba lagi."));
+    } finally { setResumingBank(false); }
+  };
 
   useEffect(() => {
     if (!offline || !receipt?.id) return;
@@ -375,6 +399,7 @@ export default function POS() {
       } else {
         const r = await api.post("/orders", payload);
         setReceipt(r.data);
+        updateBankPayment(r.data);
       }
       clearCart();
     } catch (e) {
@@ -410,6 +435,7 @@ export default function POS() {
           </div>
         </div>
 
+      {pendingBankId && !receipt && <div className="mb-4 rounded-xl p-3 flex flex-wrap gap-3 items-center bg-amber-50 text-amber-950 text-sm" data-testid="bank-qris-pending-banner"><span>Ada QRIS bank yang belum dikonfirmasi. Periksa pembayaran sebelum membuat transaksi ulang.</span><button className="btn-outline" disabled={resumingBank} onClick={resumeBankPayment} data-testid="bank-qris-resume">{resumingBank ? "Memuat…" : "Buka pembayaran"}</button><Link className="underline" to="/geraina/app/sales">Riwayat pembayaran</Link></div>}
         {offline && <OfflineStatus scope={scope} snapshot={snapshot} onReceipt={setReceipt} onRefresh={() => { if (navigator.onLine) api.get("/products", { timeout: 12000 }).then(r => { setProducts(r.data); cache(scope, "products", r.data).catch(() => {}); }).catch(() => {}); }} />}
         {window.GerainaDevice?.scanBarcode && <button type="button" className="btn-outline mb-4" onClick={() => window.GerainaDevice.scanBarcode()} data-testid="camera-scan"><Barcode size={16} /> Scan dengan kamera</button>}
         <div className="flex gap-2 mb-4 overflow-x-auto" data-testid="pos-categories">
@@ -537,8 +563,8 @@ export default function POS() {
               <button onClick={() => setPaymentMethod("cash")}
                       className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "cash" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
                       data-testid="pm-cash"><Banknote size={14} className="mx-auto mb-1" />Tunai</button>
-              <button onClick={() => setPaymentMethod("qris")}
-                      className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "qris" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
+              <button onClick={() => setPaymentMethod("qris_bank")}
+                      className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "qris_bank" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
                       data-testid="pm-qris"><QrCode size={14} className="mx-auto mb-1" />QRIS</button>
               <button onClick={() => setPaymentMethod("ewallet")}
                       className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "ewallet" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
@@ -609,7 +635,7 @@ export default function POS() {
         </div>
       </aside>
 
-      {receipt && <ReceiptDialog order={receipt} onClose={() => setReceipt(null)} />}
+      {receipt && <ReceiptDialog order={receipt} onUpdated={updateBankPayment} onClose={() => setReceipt(null)} />}
 
       {/* Floating Scanned Barcode Overlay */}
       {scannedProduct && (

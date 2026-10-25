@@ -3,7 +3,7 @@ const {readFileSync,writeFileSync,mkdirSync,readdirSync,copyFileSync,existsSync,
 const {resolve,join,dirname,sep}=require('node:path');
 const {createHash}=require('node:crypto');
 const root=resolve(__dirname,'..'),reports=join(root,'app/build/reports/android-usability'),out=join(root,'releases/android-usability-report');
-const version='1.2.4',hash=createHash('sha256').update(readFileSync(join(root,`releases/Geraina-POS-${version}.apk`))).digest('hex');
+const version='1.2.5',hash=createHash('sha256').update(readFileSync(join(root,`releases/Geraina-POS-${version}.apk`))).digest('hex');
 const profiles=process.argv.slice(2);assert.ok(profiles.length>=3,'Provide the completed Android and tablet profiles');
 if(existsSync(join(out,'matrix.json'))){const previous=JSON.parse(readFileSync(join(out,'matrix.json'),'utf8'));if(previous.version!==version){assert.match(previous.version,/^\d+\.\d+\.\d+$/);const backup=join(root,`releases/android-usability-report-${previous.version}`);if(!existsSync(backup))cpSync(out,backup,{recursive:true});}}
 const matrix=[];mkdirSync(out,{recursive:true});
