@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api, { fmtIDR, API_BASE } from "@/api/client";
-import { Plus, Upload, Search, Edit3, Trash2, X, Download, FileSpreadsheet, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Upload, Search, Edit3, Trash2, X, Download, FileSpreadsheet, CheckCircle2, AlertCircle, ScanBarcode } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
 
 function ProductForm({ product, onClose, onSaved }) {
   const isEdit = !!product?.id;
@@ -18,6 +19,17 @@ function ProductForm({ product, onClose, onSaved }) {
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const saveInFlight = useRef(false);
+  useEffect(() => {
+    const scanned = event => {
+      const { value, target } = event.detail || {};
+      if (target !== "product" || typeof value !== "string" || !value.trim()) return;
+      if (value.length > 200) { setErr("Barcode terlalu panjang untuk SKU produk. Masukkan kode produk secara manual."); return; }
+      setForm(current => ({ ...current, sku: value }));
+    };
+    window.addEventListener("geraina-barcode", scanned);
+    return () => window.removeEventListener("geraina-barcode", scanned);
+  }, []);
 
   const handleImage = (file) => {
     if (!file) return;
@@ -42,20 +54,29 @@ function ProductForm({ product, onClose, onSaved }) {
 
   const save = async (e) => {
     e.preventDefault();
+    if (saveInFlight.current) return;
+    const cost = String(form.cost).trim() === "" ? 0 : Number(form.cost);
+    const stock = String(form.stock).trim() === "" ? 0 : Number(form.stock);
+    if (!form.name.trim() || String(form.price).trim() === "" || ![Number(form.price), cost, stock].every(value => Number.isFinite(value) && value >= 0) || !Number.isInteger(stock)) {
+      setErr("Isi nama produk serta harga, HPP dan stok yang valid. Stok harus berupa bilangan bulat."); return;
+    }
+    saveInFlight.current = true;
     setSaving(true); setErr("");
     try {
       const payload = {
         ...form,
-        price: parseFloat(form.price),
-        cost: parseFloat(form.cost),
-        stock: parseInt(form.stock, 10) || 0,
+        name: form.name.trim(),
+        price: Number(form.price),
+        cost,
+        stock,
       };
       if (isEdit) await api.put(`/products/${product.id}`, payload);
       else await api.post("/products", payload);
       onSaved();
     } catch (e) {
-      setErr(e?.response?.data?.detail || "Gagal menyimpan");
-    } finally { setSaving(false); }
+      const detail = e?.response?.data?.detail;
+      setErr(typeof detail === "string" ? detail : "Produk belum tersimpan. Periksa data produk lalu coba lagi.");
+    } finally { saveInFlight.current = false; setSaving(false); }
   };
 
   return (
@@ -72,9 +93,10 @@ function ProductForm({ product, onClose, onSaved }) {
                    onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="pf-name" />
           </div>
           <div>
-            <label className="label-tiny">SKU</label>
-            <input className="input-field mt-1.5" value={form.sku}
+            <label className="label-tiny" htmlFor="product-sku">SKU / Barcode</label>
+            <input id="product-sku" className="input-field mt-1.5" value={form.sku} maxLength={200}
                    onChange={(e) => setForm({ ...form, sku: e.target.value })} data-testid="pf-sku" />
+            {window.GerainaDevice?.scanBarcode && <button type="button" className="btn-outline mt-2 w-full" data-testid="pf-scan-barcode" onClick={() => window.GerainaDevice.scanBarcode("product")}><ScanBarcode size={17} /> Scan barcode</button>}
           </div>
           <div>
             <label className="label-tiny">Kategori</label>
@@ -119,7 +141,7 @@ function ProductForm({ product, onClose, onSaved }) {
             <input id="pf-image-input" type="file" accept="image/*" className="hidden" onChange={(e) => handleImage(e.target.files?.[0])} data-testid="pf-image-input" />
           </div>
         </div>
-        {err && <p className="text-sm text-[hsl(var(--destructive))] mt-3">{err}</p>}
+        {err && <p role="alert" data-testid="pf-error" className="text-sm text-[hsl(var(--destructive))] mt-3">{err}</p>}
         <div className="flex gap-2 mt-5">
           <button type="button" onClick={onClose} className="btn-outline flex-1" data-testid="pf-cancel">Batal</button>
           <button type="submit" disabled={saving} className="btn-primary flex-1" data-testid="pf-save">{saving ? "Menyimpan…" : "Simpan"}</button>
@@ -275,6 +297,7 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [filterCat, setFilterCat] = useState("all");
+  const [loadError, setLoadError] = useState("");
   // Monotonic request id: search-as-you-type + category filter can both fire load()
   // in quick succession (each keystroke debounces its own call, but the debounce only
   // cancels the pending *timeout*, not a request already in flight). Two overlapping
@@ -288,10 +311,14 @@ export default function Products() {
 
   const load = async () => {
     setLoading(true);
+    setLoadError("");
     const reqId = ++loadReqIdRef.current;
     try {
       const r = await api.get("/products", { params: { q: q || undefined, category: filterCat !== "all" ? filterCat : undefined } });
+      if (!Array.isArray(r.data)) throw new Error("Jawaban katalog tidak valid.");
       if (reqId === loadReqIdRef.current) setItems(r.data);
+    } catch {
+      if (reqId === loadReqIdRef.current) setLoadError("Produk belum dapat dimuat. Periksa koneksi lalu coba lagi.");
     } finally {
       if (reqId === loadReqIdRef.current) setLoading(false);
     }
@@ -306,14 +333,13 @@ export default function Products() {
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); loadCategories(); }, []);
+  useEffect(() => { loadCategories(); return () => { loadReqIdRef.current++; }; }, []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t); }, [q, filterCat]);
+  useEffect(() => { const t = setTimeout(load, q ? 200 : 0); return () => clearTimeout(t); }, [q, filterCat]);
 
   const remove = async (p) => {
     if (!window.confirm(`Hapus "${p.name}"?`)) return;
-    await api.delete(`/products/${p.id}`);
-    load();
+    try { await api.delete(`/products/${p.id}`); load(); } catch { toast.error("Produk belum dapat dihapus. Periksa koneksi lalu coba lagi."); }
   };
 
   return (
@@ -360,6 +386,7 @@ export default function Products() {
         </div>
       </div>
 
+      {loadError && <div role="alert" data-testid="products-error" className="card-surface p-4"><p>{loadError}</p><button className="btn-outline mt-2" data-testid="products-retry" onClick={load}>Coba lagi</button></div>}
       <div className="card-surface overflow-x-auto">
         <table className="w-full text-sm" data-testid="products-table">
           <thead className="bg-[hsl(var(--background))] border-b border-[hsl(var(--border))]">
@@ -376,7 +403,7 @@ export default function Products() {
             {loading && (
               <tr><td colSpan={6} className="px-5 py-10 text-center text-[hsl(var(--muted))]" data-testid="products-loading">Memuat…</td></tr>
             )}
-            {!loading && items.length === 0 && (
+            {!loading && !loadError && items.length === 0 && (
               <tr><td colSpan={6} className="px-5 py-10 text-center text-[hsl(var(--muted))]" data-testid="products-empty">Belum ada produk.</td></tr>
             )}
             {items.map((p) => (

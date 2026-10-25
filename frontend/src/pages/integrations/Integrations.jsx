@@ -1,3 +1,4 @@
+import PasswordInput from "@/components/PasswordInput";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/api/client";
@@ -167,8 +168,8 @@ export default function Integrations() {
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Xendit Secret API Key</label>
-              <input
-                type="password"
+              <PasswordInput
+
                 value={integrations.xendit.secret_key}
                 placeholder="xnd_production_..."
                 onChange={(e) => setIntegrations({ ...integrations, xendit: { ...integrations.xendit, secret_key: e.target.value } })}
@@ -253,8 +254,8 @@ export default function Integrations() {
               </div>
               <div className="flex flex-col space-y-1">
                 <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Shared Key (Secret Key)</label>
-                <input
-                  type="password"
+                <PasswordInput
+
                   value={integrations.doku.shared_key}
                   placeholder="SK-..."
                   onChange={(e) => setIntegrations({ ...integrations, doku: { ...integrations.doku, shared_key: e.target.value } })}
@@ -351,8 +352,8 @@ export default function Integrations() {
               </div>
               <div className="flex flex-col space-y-1">
                 <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Server Key</label>
-                <input
-                  type="password"
+                <PasswordInput
+
                   value={integrations.midtrans.server_key}
                   onChange={(e) => setIntegrations({ ...integrations, midtrans: { ...integrations.midtrans, server_key: e.target.value } })}
                   className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
@@ -387,8 +388,8 @@ export default function Integrations() {
               </div>
               <div className="flex flex-col space-y-1">
                 <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Stripe Secret Key</label>
-                <input
-                  type="password"
+                <PasswordInput
+
                   value={integrations.stripe.secret_key}
                   onChange={(e) => setIntegrations({ ...integrations, stripe: { ...integrations.stripe, secret_key: e.target.value } })}
                   className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
@@ -425,8 +426,8 @@ export default function Integrations() {
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Access Token (system user, permanen)</label>
-              <input
-                type="password"
+              <PasswordInput
+
                 value={integrations.whatsapp.access_token}
                 onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, access_token: e.target.value } })}
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
@@ -447,8 +448,8 @@ export default function Integrations() {
             </div>
             <div className="flex flex-col space-y-1">
               <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">App Secret</label>
-              <input
-                type="password"
+              <PasswordInput
+
                 value={integrations.whatsapp.app_secret}
                 onChange={(e) => setIntegrations({ ...integrations, whatsapp: { ...integrations.whatsapp, app_secret: e.target.value } })}
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
@@ -581,8 +582,8 @@ export default function Integrations() {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1">
                 <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Bot API Token</label>
-                <input
-                  type="password"
+                <PasswordInput
+
                   value={integrations.telegram.bot_token}
                   onChange={(e) => setIntegrations({ ...integrations, telegram: { ...integrations.telegram, bot_token: e.target.value } })}
                   className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"

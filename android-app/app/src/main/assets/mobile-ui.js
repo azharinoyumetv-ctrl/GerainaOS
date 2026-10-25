@@ -36,6 +36,7 @@
     if(support){$('.dagangos-support__close')?.click();return true;}
     if ($('[data-testid="receipt-dialog"]')) { $('[data-testid="receipt-done-btn"]')?.click(); return true; }
     if ($('[data-testid="product-form"]')) { $('[data-testid="product-form-close"]')?.click(); return true; }
+    if ($('[data-testid="import-dialog"]')) { $('[data-testid="import-close"]')?.click(); return true; }
     if ($('[data-testid="odoo-ecosystem-menu"]')) { $('[data-testid="odoo-ecosystem-switcher-btn"]')?.click(); return true; }
     if (document.documentElement.hasAttribute('data-ga-cart')) { closeCart(); return true; }
     if (document.documentElement.classList.contains('ga-barcode-open')) { document.documentElement.classList.remove('ga-barcode-open'); return true; }

@@ -3,6 +3,8 @@ import { Leaf, ShieldCheck, Cpu, Building2, Mail, HelpCircle } from "lucide-reac
 
 export default function About() {
   const { user } = useAuth();
+  const appInfo = window.GerainaDevice?.appInfo;
+  const plan = { trial: "Trial", starter: "Starter", pro: "Pro", business: "Business", expired: "Berakhir" }[user?.plan] || "Belum diketahui";
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="about-page">
@@ -28,7 +30,7 @@ export default function About() {
                 Modul POS Grosir & Ritel di dalam platform bisnis DagangOS.
               </p>
             </div>
-            <span className="pill pill-success">v1.0.0</span>
+            <span className="pill pill-success" data-testid="about-version">{appInfo?.versionName ? `v${appInfo.versionName}` : "Web"}</span>
           </div>
           <div className="mt-6 pt-4 border-t border-[hsl(var(--border))] flex flex-col sm:flex-row justify-between gap-2 text-xs text-[hsl(var(--muted))] relative z-10">
             <span>Platform Induk: <strong>DagangOS</strong></span>
@@ -62,7 +64,7 @@ export default function About() {
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-[hsl(var(--muted))]">Status Lisensi</p>
                 <p className="text-sm font-semibold text-[hsl(var(--success))]" data-testid="about-license-status">
-                  Aktif & Tervalidasi
+                  {plan}
                 </p>
               </div>
             </div>
@@ -74,7 +76,7 @@ export default function About() {
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-[hsl(var(--muted))]">Perangkat Aktif</p>
                 <p className="text-sm font-semibold text-[hsl(var(--foreground))]" data-testid="about-device">
-                  Main Terminal (Tablet)
+                  {appInfo ? `Android ${appInfo.androidVersion} · ${appInfo.model}` : "Browser web"}
                 </p>
               </div>
             </div>

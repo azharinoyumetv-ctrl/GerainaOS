@@ -3,6 +3,7 @@ import { checkoutReturn, checkoutAuthLink } from "@/auth/checkoutReturn";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { ArrowRight } from "lucide-react";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function Register() {
   const [storeName, setStoreName] = useState("");
@@ -79,7 +80,7 @@ export default function Register() {
 
             <div className="auth-field">
               <label htmlFor="geraina-register-password" data-testid="register-password-label">Kata sandi</label>
-              <input id="geraina-register-password" type="password" name="new-password" autoComplete="new-password" required minLength={6} data-testid="register-password-input" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimal 6 karakter" />
+              <PasswordInput id="geraina-register-password" toggleTestId="register-password-toggle" name="new-password" autoComplete="new-password" required minLength={6} data-testid="register-password-input" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimal 6 karakter" />
             </div>
 
             {error && <p className="auth-error" role="alert" data-testid="register-error">{error}</p>}

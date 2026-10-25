@@ -4,11 +4,13 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
 import android.os.SystemClock
 import android.print.PrintManager
 import android.util.Base64
@@ -71,6 +73,9 @@ class MainActivity : ComponentActivity() {
     private var failedPageUrl: String? = null
     private var exportInProgress = false
     private var nativeFeaturesReady = false
+    private var barcodeTarget = "pos"
+    private var barcodeOriginPath = ""
+    private var scannerOpen = false
     private lateinit var receiptPrinter: ThermalPrinterController
     private val bundledFrontend by lazy { BundledFrontend(assets) }
     private val pendingExport get() = File(cacheDir, "pending-export")
@@ -80,9 +85,11 @@ class MainActivity : ComponentActivity() {
         fileCallback = null
     }
     private val scanBarcode = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        scannerOpen = false
         val value = result.data?.getStringExtra("barcode")
-        if (result.resultCode == RESULT_OK && !value.isNullOrBlank() && value.length <= 256 && authenticatedScreen && lastPage.contains("/app/pos")) {
-            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('geraina-barcode',{detail:{value:${JSONObject.quote(value)}}}))", null)
+        if (result.resultCode == RESULT_OK && authenticatedScreen && BarcodeScanPolicy.canDeliver(barcodeTarget, barcodeOriginPath, Uri.parse(lastPage).path.orEmpty(), value)) {
+            val detail = JSONObject().put("value", value).put("target", barcodeTarget)
+            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('geraina-barcode',{detail:$detail}))", null)
         }
     }
     private val saveFile = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -103,6 +110,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        barcodeTarget = savedInstanceState?.getString("barcodeTarget") ?: "pos"
+        barcodeOriginPath = savedInstanceState?.getString("barcodeOriginPath") ?: ""
+        scannerOpen = savedInstanceState?.getBoolean("scannerOpen") ?: false
         receiptPrinter = ThermalPrinterController(this, ::notice)
         // A force-stopped app cannot receive the old document-picker result.
         // Retain the file across rotation, but discard it on a fresh launch.
@@ -230,7 +240,7 @@ class MainActivity : ComponentActivity() {
             addView(Button(this@MainActivity).apply {
                 text = "Coba lagi"; isAllCaps = false; textSize = 15f
                 setTextColor(Color.WHITE); background = rounded(Color.rgb(36, 82, 56), 16)
-                setOnClickListener { navigate(lastPage) }
+                setOnClickListener { navigate(lastPage, forceReload = true) }
             }, LinearLayout.LayoutParams(dp(180), dp(50)))
         }
         content.addView(errorPanel, FrameLayout.LayoutParams(-1, -1))
@@ -429,7 +439,9 @@ class MainActivity : ComponentActivity() {
         }
         val script = assets.open("android-bridge.js").bufferedReader().use { it.readText() }
         WebViewCompat.addDocumentStartJavaScript(webView, script, setOf(NavigationPolicy.ORIGIN))
-        val deviceScript = assets.open("device-features.js").bufferedReader().use { it.readText() }
+        val appInfo = JSONObject().put("versionName", BuildConfig.VERSION_NAME).put("versionCode", BuildConfig.VERSION_CODE)
+            .put("androidVersion", Build.VERSION.RELEASE).put("model", "${Build.MANUFACTURER} ${Build.MODEL}".take(100))
+        val deviceScript = "window.__gerainaAppInfo=$appInfo;\n" + assets.open("device-features.js").bufferedReader().use { it.readText() }
         WebViewCompat.addDocumentStartJavaScript(webView, deviceScript, setOf(NavigationPolicy.ORIGIN))
         val supportScript = assets.open("mobile-support.js").bufferedReader().use { it.readText() }
         WebViewCompat.addDocumentStartJavaScript(webView, supportScript, setOf(NavigationPolicy.ORIGIN))
@@ -451,7 +463,14 @@ class MainActivity : ComponentActivity() {
             "subscription" -> showSubscriptionNotice()
             "navigation" -> webView.evaluateJavascript("window.GerainaMobile?.sync?.()", null)
             "interaction" -> exitBackAt = 0L
-            "scanBarcode" -> if (authenticatedScreen) scanBarcode.launch(Intent(this, BarcodeScannerActivity::class.java))
+            "scanBarcode" -> {
+                val target = message.optString("target", "pos")
+                val path = Uri.parse(lastPage).path.orEmpty()
+                if (authenticatedScreen && !scannerOpen && BarcodeScanPolicy.allows(target, path)) {
+                    barcodeTarget = target; barcodeOriginPath = path; scannerOpen = true
+                    scanBarcode.launch(Intent(this, BarcodeScannerActivity::class.java))
+                }
+            }
             "configurePrinter" -> if (authenticatedScreen) receiptPrinter.configure()
             "testPrinter" -> if (authenticatedScreen) receiptPrinter.sample()
             "printReceipt" -> if (authenticatedScreen) message.optJSONObject("order")?.let { receiptPrinter.print(it, subtitle.text.toString()) }
@@ -487,7 +506,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun navigate(url: String) {
+    private fun navigate(url: String, forceReload: Boolean = false) {
         when (NavigationPolicy.classify(url)) {
             NavigationPolicy.Destination.INTERNAL -> {
                 if (!nativeFeaturesReady) {
@@ -495,7 +514,12 @@ class MainActivity : ComponentActivity() {
                     return
                 }
                 failedPageUrl = null
-                errorPanel.visibility = View.GONE; webView.loadUrl(url)
+                errorPanel.visibility = View.GONE
+                if (!forceReload && authenticatedScreen && Uri.parse(url).path.orEmpty().startsWith("/geraina/app/")) {
+                    webView.evaluateJavascript("window.GerainaRouter?.navigate(${JSONObject.quote(url)}) === true") { handled ->
+                        if (handled != "true" && !isFinishing && !isDestroyed) webView.loadUrl(url)
+                    }
+                } else webView.loadUrl(url)
             }
             NavigationPolicy.Destination.EXTERNAL -> {
                 try {
@@ -566,8 +590,15 @@ class MainActivity : ComponentActivity() {
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
     override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("barcodeTarget", barcodeTarget)
+        outState.putString("barcodeOriginPath", barcodeOriginPath)
+        outState.putBoolean("scannerOpen", scannerOpen)
         if (::webView.isInitialized) outState.putBundle("webState", Bundle().also { webView.saveState(it) })
         super.onSaveInstanceState(outState)
+    }
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (::webView.isInitialized) webView.invalidate()
     }
     override fun onPause() {
         if (::webView.isInitialized) webView.onPause()

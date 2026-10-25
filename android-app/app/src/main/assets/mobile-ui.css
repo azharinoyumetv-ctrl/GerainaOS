@@ -228,6 +228,7 @@ html[data-ga-cart="open"] .ga-cart-dock { display:none; }
 html[data-ga-ui] [data-testid="product-form"], html[data-ga-ui] [data-testid="receipt-dialog"] { border-radius:22px!important; max-width:calc(100vw - 24px); }
 html[data-ga-ui] [data-testid="receipt-dialog"] { max-height:calc(100dvh - 24px); overflow:auto; }
 html[data-ga-ui] [data-testid="product-form"] { max-height:calc(100dvh - 24px); overflow:auto; }
+html[data-ga-ui] [data-testid="import-dialog"] > div { max-height:calc(100dvh - 24px); overflow:auto; }
 @media(min-width:720px) {
   .ga-dashboard { display:grid; grid-template-columns:1fr 1fr; gap:18px; padding:20px 24px; }
   .ga-head { grid-column:1/-1; margin:0; }

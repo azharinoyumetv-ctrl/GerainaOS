@@ -3,6 +3,7 @@ import { checkoutReturn, checkoutAuthLink } from "@/auth/checkoutReturn";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { ArrowRight } from "lucide-react";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -25,7 +26,7 @@ export default function Login() {
       await login(email, password);
       if (!next) nav("/geraina/app/dashboard");
     } catch (requestError) {
-      setError(requestError?.response?.data?.detail || "Email atau kata sandi tidak valid.");
+      setError(requestError?.response?.data?.detail || requestError.message || "Email atau kata sandi tidak valid.");
     } finally {
       setLoading(false);
     }
@@ -76,7 +77,7 @@ export default function Login() {
 
             <div className="auth-field">
               <label htmlFor="geraina-login-password" data-testid="login-password-label">Kata sandi</label>
-              <input id="geraina-login-password" type="password" name="password" autoComplete="current-password" required data-testid="login-password-input" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••" />
+              <PasswordInput id="geraina-login-password" toggleTestId="login-password-toggle" name="password" autoComplete="current-password" required data-testid="login-password-input" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••" />
             </div>
 
             {error && <p className="auth-error" role="alert" data-testid="login-error">{error}</p>}

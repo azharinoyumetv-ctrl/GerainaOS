@@ -2,7 +2,7 @@
 
 The Android app connects to the production Geraina service at `https://dagangos.com/geraina/login`. It bundles the Geraina frontend for offline startup in a hardened Android WebView, with durable cash-sale storage and replay, native camera barcode scanning, Bluetooth/USB receipt printing, navigation, Android file selection and PDF/export saving.
 
-Application ID: `com.dagangos.geraina`. Current source version: `1.2.1`, version code `6`. Android 14 (API 34) or newer; targets Android 16 (API 36). A recent Android System WebView/Chrome is required. The debug build uses a separate `.debug` app ID. The public download version is recorded separately in the portal manifest.
+Application ID: `com.dagangos.geraina`. Current source version: `1.2.2`, version code `7`. Android 14 (API 34) or newer; targets Android 16 (API 36). A recent Android System WebView/Chrome is required. The debug build uses a separate `.debug` app ID. The public download version is recorded separately in the portal manifest.
 
 Distribution is website-first at `https://dagangos.com/geraina/android`. Google Play publication is postponed at the owner's request while the organization's D-U-N-S is unavailable. The parent portal's `scripts/stage-geraina-android.mjs` stages only the verified signed APK, its public metadata and selected screenshots.
 
@@ -22,7 +22,7 @@ Use JDK 17, Android SDK platform 36 and build tools 36.0.0. Set `sdk.dir` in the
 .\scripts\Build-Release.ps1
 
 # Future update: keep the same key and increase the version code.
-.\scripts\Build-Release.ps1 -VersionCode 6 -VersionName 1.2.1
+.\scripts\Build-Release.ps1 -VersionCode 6 -VersionName 1.2.2
 ```
 
 Outputs are in `releases/`. Distribute the signed `.apk` through the website. Retain the `.aab` for a future Play release; do not upload it yet. Files in `releases/` are ignored by Git.

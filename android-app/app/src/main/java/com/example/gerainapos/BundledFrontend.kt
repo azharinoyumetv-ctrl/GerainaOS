@@ -14,6 +14,8 @@ class BundledFrontend(private val assets: AssetManager) {
             path == "/geraina/login" || path == "/geraina/register" || path.startsWith("/geraina/app/") || path == "/geraina/app" -> "frontend/index.html"
             path.startsWith("/geraina/static/") -> "frontend/" + path.removePrefix("/geraina/")
             path in setOf("/geraina/icon-192.png", "/geraina/icon-512.png", "/geraina/favicon.ico") -> "frontend/" + path.removePrefix("/geraina/")
+            path in setOf("/assets/brand/geraina-icon.png", "/assets/brand/dapuros-icon.png") -> "frontend" + path
+            path in setOf("/favicon.ico", "/favicon-16x16.png", "/favicon-32x32.png", "/apple-touch-icon.png", "/site.webmanifest") -> "frontend" + path
             else -> return null
         }
         val mime = when (asset.substringAfterLast('.')) { "html" -> "text/html"; "js" -> "application/javascript"; "css" -> "text/css"; "png" -> "image/png"; "svg" -> "image/svg+xml"; "woff2" -> "font/woff2"; "ico" -> "image/x-icon"; else -> "application/octet-stream" }

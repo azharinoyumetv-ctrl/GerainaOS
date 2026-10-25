@@ -235,6 +235,7 @@ export default function POS() {
     if (!offline) return;
     const scanned = event => {
       const code = event.detail?.value;
+      if (event.detail?.target && event.detail.target !== "pos") return;
       if (typeof code !== "string") return;
       const product = products.find(item => [item.sku, item.id].includes(code));
       if (product) { addToCart(product); setScannedProduct(product); setTimeout(() => setScannedProduct(null), 3000); }

@@ -7,7 +7,8 @@
   };
   window.GerainaDevice = Object.freeze({
     offline: true,
-    scanBarcode: () => send('scanBarcode'),
+    appInfo: window.__gerainaAppInfo ? Object.freeze({ ...window.__gerainaAppInfo }) : null,
+    scanBarcode: (target = 'pos') => send('scanBarcode', { target }),
     configurePrinter: () => send('configurePrinter'),
     testPrinter: () => send('testPrinter'),
     printReceipt: order => send('printReceipt', { order })

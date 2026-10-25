@@ -1,5 +1,6 @@
 import "@/index.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -62,6 +63,23 @@ function Protected({ children }) {
   if (loading) return <div className="p-10 text-sm text-center text-[hsl(var(--muted))]" data-testid="auth-loading">Memuat sesi…</div>;
   if (!user) return <Navigate to="/geraina/login" replace />;
   return children;
+}
+
+function AndroidRouterBridge() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!window.__gerainaAndroid || !user) return;
+    const router = { navigate: href => {
+      const url = new URL(href, window.location.origin);
+      if (url.origin !== window.location.origin || !url.pathname.startsWith("/geraina/app/")) return false;
+      navigate(url.pathname + url.search + url.hash);
+      return true;
+    } };
+    window.GerainaRouter = router;
+    return () => { if (window.GerainaRouter === router) delete window.GerainaRouter; };
+  }, [navigate, user?.id, user?.store_id]);
+  return null;
 }
 
 function GerainaRootComponent() {
@@ -172,6 +190,7 @@ export default function App() {
           or this sonner one) was ever actually mounted anywhere before this. */}
       <Toaster position="top-center" richColors closeButton />
       <BrowserRouter>
+        <AndroidRouterBridge />
         <Routes>
           {/* Direct Auth Top-level & Full URL Mappings */}
           <Route path="/login" element={<Login />} />

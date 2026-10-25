@@ -5,8 +5,8 @@ import { Save, Printer, UserPlus } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 const DEFAULT_SETTINGS = {
-  general: { store_name: "Geraina POS Store", currency: "IDR", timezone: "Asia/Jakarta" },
-  store: { legal_name: "PT DagangOS Jaya Ritel", npwd: "31.740.123.4-015.000" },
+  general: { store_name: "", currency: "IDR", timezone: "Asia/Jakarta" },
+  store: { legal_name: "", npwd: "" },
   receipt: { header_text: "Selamat Datang di Geraina POS Store", footer_text: "Terima Kasih Atas Kunjungan Anda!", show_logo: true, show_cashier: true },
   printer: { mode: "local", default_printer: "Thermal 80mm Kasir", paper_size: "80mm", auto_print: true, printer_ip: "", printer_port: 9100, bridge_port: 9899 }
 };
@@ -19,12 +19,19 @@ export default function Settings() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [sub, setSub] = useState(null);
   const [testingPrint, setTestingPrint] = useState(false);
+  const [loaded, setLoaded] = useState(false), [loadError, setLoadError] = useState(""), [retry, setRetry] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get("/settings").then((r) => {
-      if (r.data) setSettings(r.data);
-    }).catch(() => {});
-  }, [type]);
+    let active = true; setLoaded(false); setLoadError("");
+    api.get("/settings", { timeout: 12000 }).then((r) => {
+      if (!r.data || typeof r.data !== "object" || Array.isArray(r.data)) throw new Error("Invalid settings response");
+      const merged = { ...r.data };
+      for (const [section, defaults] of Object.entries(DEFAULT_SETTINGS)) merged[section] = { ...defaults, ...r.data[section] };
+      if (active) { setSettings(merged); setLoaded(true); }
+    }).catch(() => { if (active) setLoadError("Pengaturan belum dapat dimuat. Coba lagi sebelum menyimpan perubahan."); });
+    return () => { active = false; };
+  }, [type, retry]);
 
   useEffect(() => {
     if (["billing", "subscription", "license"].includes(type)) {
@@ -34,12 +41,14 @@ export default function Settings() {
 
   const handleSave = (e) => {
     e.preventDefault();
+    if (!loaded || saving) return;
+    setSaving(true);
     api.post("/settings", settings).then(() => {
       toast.success(`Pengaturan ${type.toUpperCase()} berhasil disimpan!`);
     }).catch((err) => {
       const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
-      toast.error(`Gagal menyimpan pengaturan ${type.toUpperCase()}: ${msg}`);
-    });
+      toast.error(`Gagal menyimpan pengaturan ${type.toUpperCase()}: ${typeof msg === "string" ? msg : "Periksa data pengaturan."}`);
+    }).finally(() => setSaving(false));
   };
 
   const handleTestPrint = async () => {
@@ -394,6 +403,7 @@ export default function Settings() {
       </div>
 
       <div className="max-w-3xl card-surface p-6">
+        {loadError && <div role="alert" data-testid="settings-error" className="mb-4"><p>{loadError}</p><button type="button" className="btn-outline mt-2" onClick={() => setRetry(value => value + 1)}>Coba lagi</button></div>}
         <form onSubmit={handleSave} className="space-y-6">
           <h2 className="font-display font-bold text-lg border-b border-[hsl(var(--border))] pb-3 capitalize">
             Pengaturan Parameter ({type})
@@ -403,8 +413,8 @@ export default function Settings() {
 
           {type !== "users" && type !== "license" && type !== "billing" && type !== "subscription" && !(type === "printer" && window.GerainaDevice?.configurePrinter) && (
             <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-end">
-              <button type="submit" className="btn-primary py-2 px-6 flex items-center gap-2 text-sm font-semibold">
-                <Save size={16} /> Simpan Pengaturan
+              <button type="submit" disabled={!loaded || saving} className="btn-primary py-2 px-6 flex items-center gap-2 text-sm font-semibold disabled:opacity-50">
+                <Save size={16} /> {saving ? "Menyimpan…" : "Simpan Pengaturan"}
               </button>
             </div>
           )}

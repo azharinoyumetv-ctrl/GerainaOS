@@ -8,11 +8,11 @@ const root=resolve(__dirname,'..'),profileId=process.env.GERAINA_DEVICE_PROFILE|
 const serial=`emulator-${profile.port}`,app=process.env.GERAINA_TEST_APP_ID||'com.dagangos.geraina.debug';assert.ok(['com.dagangos.geraina.debug','com.dagangos.geraina'].includes(app));
 const apk=process.env.GERAINA_TEST_APK||join(root,'app/build/outputs/apk/debug/app-debug.apk');
 const out=join(root,'app/build/reports/offline-android',`${profileId}-${new Date().toISOString().replace(/[:.]/g,'-')}`);mkdirSync(out,{recursive:true});
-const report={status:'running',version:'1.2.1',profile:profileId,checks:[],apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex'),scope:'Installed APK, isolated account and sale fixtures. Emulator Wi-Fi/data are disabled for cold-start tests. No merchant writes; physical printer output is not tested.'};
+const report={status:'running',version:'1.2.2',profile:profileId,checks:[],apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex'),scope:'Installed APK, isolated account and sale fixtures. Emulator Wi-Fi/data are disabled for cold-start tests. No merchant writes; physical printer output is not tested.'};
 const user={id:`offline-test-${randomUUID()}`,store_id:'isolated-offline-store',email:'offline@example.invalid',role:'Owner',store_name:'Offline test store',plan:'pro'};
 const products=[{id:'offline-coffee',name:'Kopi Susu (contoh lokal)',sku:'5901234123457',price:12500,stock:10,unit:'pcs',category:'Minuman'}];
 const adbPath=join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe');
-let devices=[],page,submissions=[],failSync=true,disconnected=false;const runtimeErrors=[];
+let devices=[],page,submissions=[],productWrites=[],failSync=true,disconnected=false;const runtimeErrors=[];
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function adb(args,binary=false){const result=spawnSync(adbPath,['-s',serial,...args],{windowsHide:true,encoding:binary?undefined:'utf8',maxBuffer:20000000,timeout:90000});assert.equal(result.status,0,String(result.stderr));return result.stdout;}
 async function capture(name){writeFileSync(join(out,`${name}.png`),adb(['exec-out','screencap','-p'],true));}
@@ -22,6 +22,7 @@ async function fixtures(){
   const request=route.request(),path=new URL(request.url()).pathname;
   if(path==='/api/auth/me')return route.fulfill({json:user});
   if(request.method()!=='GET'){
+   if(path==='/api/products'&&request.method()==='POST'){const body=request.postDataJSON();productWrites.push(body);return route.fulfill({json:{id:'local-scanned-product',...body}});}
    assert.equal(path,'/api/offline/orders','Only isolated cash-sale replay is allowed');const body=request.postDataJSON();assert.equal(body.expected_store_id,user.store_id);assert.equal(body.expected_cashier_id,user.id);submissions.push(body);
    if(failSync)return route.fulfill({status:503,json:{detail:'Fixture: temporary synchronization failure'}});
    return route.fulfill({json:{...body,id:body.client_order_id,store_id:user.store_id,order_no:'GR-ISOLATED-0001',subtotal:25000,total:25000,cash_received:30000,change:5000,payment_method:'cash',payment_status:'paid',created_at:body.sold_at}});
@@ -58,6 +59,21 @@ async function waitXml(pattern){for(let attempt=0;attempt<12;attempt++){const va
  await step('Camera denial has a readable fallback and scanning opens without internet',async()=>{
   await page.getByTestId('camera-scan').click();await waitXml(/permission_deny_button/);tapResource('com.android.permissioncontroller:id/permission_deny_button');await waitXml(/Izin kamera ditolak/);await capture('camera-permission-denied');adb(['shell','input','keyevent','KEYCODE_BACK']);await wait(500);
   adb(['shell','pm','grant',app,'android.permission.CAMERA']);await page.getByTestId('camera-scan').click();await waitXml(/Kamera siap/);await wait(3000);await waitXml(/Kamera siap/);await capture('camera-ready-offline');adb(['shell','input','keyevent','KEYCODE_BACK']);await wait(500);
+ });
+ await step('About matches the installed version and native navigation retains the running document',async()=>{
+  await page.evaluate(()=>{window.qualityDocument=crypto.randomUUID();window.qualityOriginal=qualityDocument;});const timing=[];
+  for(const [route,testid]of[['about','about-page'],['products','products-page'],['pos','pos-page']]){const started=Date.now();await page.evaluate(route=>GerainaMobile.navigate(`https://dagangos.com/geraina/app/${route}`),route);await page.getByTestId(testid).waitFor();assert.equal(await page.evaluate(()=>window.qualityDocument===window.qualityOriginal),true);timing.push({route,readyMs:Date.now()-started});if(route==='about'){assert.equal((await page.getByTestId('about-version').innerText()).toLowerCase(),'v1.2.2');const info=await page.evaluate(()=>GerainaDevice.appInfo);assert.equal(info.versionCode,7);assert.ok((await page.getByTestId('about-device').innerText()).includes(info.model));await capture('actual-installed-system-info');}}
+  report.navigationTiming=timing;
+ });
+ await step('Product camera opens offline and the decoded-result contract preserves and saves the draft',async()=>{
+  await page.evaluate(()=>GerainaMobile.navigate('https://dagangos.com/geraina/app/products'));await page.getByTestId('new-product-btn').click();await page.getByTestId('pf-name').fill('Local scanned fixture');await page.getByTestId('pf-price').fill('15000');
+  const rotation=adb(['shell','settings','get','system','user_rotation']).trim();await page.evaluate(()=>window.productDraftDocument='preserved');adb(['shell','settings','put','system','user_rotation',rotation==='1'?'0':'1']);await wait(900);assert.equal(await page.evaluate(()=>window.productDraftDocument),'preserved');assert.equal(await page.getByTestId('pf-name').inputValue(),'Local scanned fixture');adb(['shell','settings','put','system','user_rotation',rotation]);await wait(600);
+  await page.getByTestId('pf-scan-barcode').click();await waitXml(/Kamera siap/);await wait(1500);await capture('product-camera-preview');adb(['shell','input','keyevent','KEYCODE_BACK']);await page.getByTestId('product-form').waitFor();assert.equal(await page.getByTestId('pf-name').inputValue(),'Local scanned fixture');
+  // Native camera startup is real; the return value is an explicit isolated
+  // contract fixture. BarcodeScanPolicyTest checks native result routing.
+  await page.evaluate(()=>dispatchEvent(new CustomEvent('geraina-barcode',{detail:{target:'product',value:'8991234567890'}})));assert.equal(await page.getByTestId('pf-sku').inputValue(),'8991234567890');assert.equal(productWrites.length,0);await capture('product-barcode-draft');
+  disconnected=false;adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);await page.getByTestId('pf-save').click();await page.getByTestId('product-form').waitFor({state:'hidden'});assert.equal(productWrites.length,1);assert.equal(productWrites[0].sku,'8991234567890');
+  disconnected=true;adb(['shell','svc','wifi','disable']);adb(['shell','svc','data','disable']);await page.waitForFunction(()=>!navigator.onLine);await page.evaluate(()=>GerainaMobile.navigate('https://dagangos.com/geraina/app/pos'));await page.getByTestId('pos-page').waitFor();
  });
  await step('Receipt printer selection is native and available offline',async()=>{
   await page.goto('https://dagangos.com/geraina/app/settings/printer');await page.getByTestId('android-printer-settings').waitFor();assert.equal(await page.getByRole('button',{name:'Simpan Pengaturan',exact:true}).count(),0);
