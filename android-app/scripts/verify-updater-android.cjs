@@ -15,7 +15,7 @@ const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let devices=[],page;
 function adb(args,binary=false){const r=spawnSync(adbPath,['-s',serial,...args],{windowsHide:true,encoding:binary?undefined:'utf8',maxBuffer:20000000,timeout:90000});assert.equal(r.status,0,String(r.stderr));return r.stdout;}
 function xml(){adb(['shell','uiautomator','dump','/data/local/tmp/geraina-updater.xml']);return adb(['shell','cat','/data/local/tmp/geraina-updater.xml']);}
-async function tree(pattern){const match=new RegExp(pattern.source,'i');for(let n=0;n<30;n++){const value=xml();if(match.test(value))return value;await wait(400);}throw Error(`Android UI did not show ${pattern}`);}
+async function tree(pattern,attempts=30){const match=new RegExp(pattern.source,'i');for(let n=0;n<attempts;n++){const value=xml();if(match.test(value))return value;await wait(400);}throw Error(`Android UI did not show ${pattern}`);}
 function tap(pattern){const match=new RegExp(pattern.source,'i'),node=(xml().match(/<node[^>]*>/g)||[]).find(n=>match.test(n));assert.ok(node,`Visible native control ${pattern}`);const b=node.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);adb(['shell','input','tap',String(Math.round((+b[1]+ +b[3])/2)),String(Math.round((+b[2]+ +b[4])/2))]);}
 function capture(name){writeFileSync(join(out,`${name}.png`),adb(['exec-out','screencap','-p'],true));}
 function launch(){adb(['shell','am','start','-f','0x10008000','-n',`${app}/com.example.gerainapos.MainActivity`]);}
@@ -39,7 +39,7 @@ async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa p
  if(!upgrade){adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);}
  if(upgrade){
   const official=await(await fetch('https://dagangos.com/downloads/geraina/latest.json')).json();assert.ok(official.versionCode>fromCode);assert.match(official.version,/^\d+\.\d+\.\d+$/);report.targetVersion=official.version;report.targetVersionCode=official.versionCode;report.fromVersionCode=fromCode;
-  await step(shipping?'Published 1.2.3 checks for a newer official update without forcing installation':'Automatic check offers the newer official release without opening an installer',async()=>{if(shipping){await manual();await tree(/Unduh pembaruan/);tap(/text="Nanti"/);}await tree(new RegExp(`Geraina ${official.version.replaceAll('.','\\.')} tersedia`));assert.ok(!/packageinstaller|permissioncontroller:id\/permission/.test(xml()));capture('automatic-update-banner');});
+  await step(shipping?'Published 1.2.4 checks for a newer official update without forcing installation':'Automatic check offers the newer official release without opening an installer',async()=>{if(shipping){await manual();await tree(/Unduh pembaruan/);tap(/text="Nanti"/);}await tree(new RegExp(`Geraina ${official.version.replaceAll('.','\\.')} tersedia`));assert.ok(!/packageinstaller|permissioncontroller:id\/permission/.test(xml()));capture('automatic-update-banner');});
   await step('Postponing the update leaves the installed version unchanged',async()=>{tap(/content-desc="Perbarui Geraina"/);await tree(/Unduh pembaruan/);tap(/text="Nanti"/);assert.equal(installedCode(),fromCode);});
   const sentinel=randomUUID();report.sentinelId=sentinel;
   await page.evaluate(async value=>{
@@ -47,10 +47,10 @@ async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa p
    localStorage.setItem('updater-preservation',value);
    await new Promise((resolve,reject)=>{const request=indexedDB.open('geraina-pos-offline-v1',1);request.onupgradeneeded=()=>{const db=request.result;db.createObjectStore('cache',{keyPath:'key'});db.createObjectStore('sales',{keyPath:'key'}).createIndex('scope','scope');};request.onerror=()=>reject(Error('Fixture storage failed'));request.onsuccess=()=>{const db=request.result,tx=db.transaction('sales','readwrite',{durability:'strict'});tx.objectStore('sales').put({key:'updater-isolated:sentinel',scope:'updater-isolated',status:'pending',body:{client_order_id:value},createdAt:new Date().toISOString()});tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(Error('Fixture storage commit failed'));};});
   },sentinel);
-  await step('Official APK downloads and is verified before requesting installation permission',async()=>{tap(/content-desc="Perbarui Geraina"/);tap(/text="Unduh pembaruan"/);await tree(/Izinkan pembaruan Geraina/);capture('verified-update-permission-explanation');});
+  await step('Official APK downloads and is verified before requesting installation permission',async()=>{tap(/content-desc="Perbarui Geraina"/);tap(/text="Unduh pembaruan"/);await tree(/Izinkan pembaruan Geraina/,90);capture('verified-update-permission-explanation');});
   await step('Denying installation permission leaves the current app usable',async()=>{tap(/text="Buka pengaturan"/);await tree(/Allow from this source|Izinkan dari sumber ini/);capture('android-source-permission');adb(['shell','input','keyevent','KEYCODE_BACK']);await wait(700);assert.equal(installedCode(),fromCode);await page.getByTestId('login-form').waitFor();});
   await step('Permission settings return to the standard Android update confirmation',async()=>{
-   tap(/content-desc="Perbarui Geraina"/);tap(/text="Unduh pembaruan"/);await tree(/Izinkan pembaruan Geraina/);tap(/text="Buka pengaturan"/);await tree(/Allow from this source|Izinkan dari sumber ini/);
+   tap(/content-desc="Perbarui Geraina"/);tap(/text="Unduh pembaruan"/);await tree(/Izinkan pembaruan Geraina/,90);tap(/text="Buka pengaturan"/);await tree(/Allow from this source|Izinkan dari sumber ini/);
    tap(/text="Allow from this source"|text="Izinkan dari sumber ini"/);adb(['shell','input','keyevent','KEYCODE_BACK']);await tree(/text="Update"|text="Perbarui"/);capture('android-update-confirmation');
   });
   await step('Android installs the newer package over the existing app',async()=>{

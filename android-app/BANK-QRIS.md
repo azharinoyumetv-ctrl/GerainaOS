@@ -29,3 +29,5 @@ Creating and confirming bank QRIS orders requires internet in this version. Cash
 - `scripts/verify-bank-qris.cjs`: an actual synthetic PNG QR image through the file input, setup/reload/failure handling, pending checkout, exact amount, failed confirmation retry, POS restart recovery, sales history and reachable controls. Browser widths 393/1016/1524 and installed Android profiles 14/17, Xiaomi Pad 6S Pro 12.4-inch and Samsung Ultra 14.6-inch.
 
 No real bank transaction is initiated by these tests. Real bank settlement, merchant ownership and physical-device picker behavior are not certified by the fixture tests. Existing Android document-picker code handles selecting images; automated image tests supply a synthetic PNG through the file input.
+
+Release 1.2.5 was published with approval on 25 October 2026. Public download/metadata/QRIS access-control checks and TestSprite passed. The actual public 1.2.4 to 1.2.5 upgrade passed all seven installer/data-preservation checks. Real bank settlement and physical printer output remain outside the fixture/emulator verification.
