@@ -27,9 +27,15 @@ async function attach(){
 async function step(name,fn){await fn();report.checks.push({name,status:'passed'});console.log(`PASS: ${name}`);}
 async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa pembaruan"/);}
 (async()=>{try{
- adb(['install','-r',apk]);adb(['shell','am','force-stop',app]);adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);
+ adb(['install','-r',apk]);adb(['shell','am','force-stop',app]);
+ // Start current-release checks offline so an old fixture session cannot race the
+ // debugger with a production auth redirect before our isolated routes are installed.
+ adb(['shell','svc','wifi',upgrade?'enable':'disable']);adb(['shell','svc','data',upgrade?'enable':'disable']);
  if(upgrade)adb(['shell','appops','set',app,'REQUEST_INSTALL_PACKAGES','deny']);
- launch();await attach();await page.goto('https://dagangos.com/geraina/login');
+ launch();await attach();await page.goto('https://dagangos.com/geraina/login',{waitUntil:'domcontentloaded'});
+ await page.evaluate(()=>{for(const key of ['geraina_token','geraina_user','dagangos_token','dagangos_user'])localStorage.removeItem(key);});
+ await page.reload({waitUntil:'domcontentloaded'});await page.getByTestId('login-form').waitFor();
+ if(!upgrade){adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);}
  if(upgrade){
   const official=await(await fetch('https://dagangos.com/downloads/geraina/latest.json')).json();assert.equal(official.versionCode,7,'Run bootstrap upgrade before staging a newer public release');report.targetVersion=official.version;report.targetVersionCode=official.versionCode;
   await step('Automatic check offers the newer official release without opening an installer',async()=>{await tree(/Geraina 1\.2\.2 tersedia/);assert.ok(!/packageinstaller|permissioncontroller:id\/permission/.test(xml()));capture('automatic-update-banner');});

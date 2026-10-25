@@ -44,6 +44,9 @@ async function waitXml(pattern){for(let attempt=0;attempt<12;attempt++){const va
 (async()=>{try{
  adb(['install','-r',apk]);adb(['shell','am','force-stop',app]);adb(['logcat','-b','crash','-c']);adb(['shell','pm','revoke',app,'android.permission.CAMERA']);adb(['shell','pm','clear-permission-flags',app,'android.permission.CAMERA','user-set','user-fixed']);adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);launch();await attach();
  await page.goto('https://dagangos.com/geraina/login');await page.evaluate(value=>{localStorage.setItem('geraina_token','offline-isolated-fixture-token');localStorage.setItem('dagangos_token','offline-isolated-fixture-token');localStorage.setItem('geraina_user',JSON.stringify(value));localStorage.setItem('dagangos_user',JSON.stringify(value));},user);
+ // Native internal navigation retains the React document. Recreate it after changing the
+ // isolated account, so the mounted AuthContext cannot keep the previous run's cashier.
+ await page.reload({waitUntil:'domcontentloaded'});
  await page.goto('https://dagangos.com/geraina/app/pos',{waitUntil:'domcontentloaded'});await page.getByTestId('pos-product-offline-coffee').waitFor();
  await step('Bundled POS opens and stores the catalogue for offline use',async()=>{await page.waitForFunction(()=>!document.querySelector('[data-testid="offline-status"]')?.textContent.includes('Buka kasir saat terhubung'));assert.equal(await page.evaluate(()=>window.GerainaDevice.offline),true);await capture('online-catalogue-ready');});
  let reference,id;
