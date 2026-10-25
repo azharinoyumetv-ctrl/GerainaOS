@@ -22,10 +22,16 @@ Use JDK 17, Android SDK platform 36 and build tools 36.0.0. Set `sdk.dir` in the
 .\scripts\Build-Release.ps1
 
 # Future update: keep the same key and increase the version code.
-.\scripts\Build-Release.ps1 -VersionCode 6 -VersionName 1.2.2
+.\scripts\Build-Release.ps1 -VersionCode 9 -VersionName 1.2.4
 ```
 
-Outputs are in `releases/`. Distribute the signed `.apk` through the website. Retain the `.aab` for a future Play release; do not upload it yet. Files in `releases/` are ignored by Git.
+Outputs are in `releases/`. Distribute the signed `.apk` through the website. The current APK/AAB contains a website self-updater and is not ready for Google Play submission: remove that updater and `REQUEST_INSTALL_PACKAGES`, and use Play's update mechanism before submitting. Files in `releases/` are ignored by Git.
+
+## Updates inside the app
+
+Version 1.2.3 adds a background update check at most once per day while the app is open (failed checks retry after 15 minutes). A small banner offers a newer release; it never automatically downloads or opens the installer. Users can also select **Periksa pembaruan** from the native menu before login or from About after login. Downloading requires confirmation and supports cancellation. The official HTTPS metadata, download size/SHA-256, package identity/version, OS/ABI compatibility and original signing certificate are checked before Android's normal installation confirmation. Android may first ask the user to allow Geraina as an installation source. Device restrictions are respected.
+
+Versions through 1.2.2 require one website installation of 1.2.3 to acquire the updater. Install over the existing app, finish/save active work beforehand, and never uninstall or clear data to update. Stored offline sales, settings and the account remain in app storage. Only a foreground availability check is scheduled; no background service or forced update is added. See [IN-APP-UPDATES.md](IN-APP-UPDATES.md) for release and verification details.
 
 The AndroidX message listener only grants native features to the production origin and main frame. File and content URL access, cleartext traffic, mixed content, third-party cookies, and release WebView debugging are disabled. Session backup is disabled. Native exports use Android's Save As picker and are limited to 10 MB. App code never receives arbitrary filesystem paths from web content.
 

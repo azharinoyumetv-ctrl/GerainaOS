@@ -9,7 +9,7 @@ const {keyboardBack}=require('./check-keyboard-back.cjs');
 const {loadTestConfig}=require('./test-config.cjs');
 const config=loadTestConfig(),root=join(__dirname,'..'),profiles=require('./android-device-profiles.json');
 const profileId=process.env.GERAINA_DEVICE_PROFILE||'xiaomi12',profile=profiles[profileId];assert.ok(profile);
-const version=process.env.GERAINA_RELEASE_VERSION||'1.2.2',versionCode=Number(process.env.GERAINA_RELEASE_CODE||7);
+const version=process.env.GERAINA_RELEASE_VERSION||'1.2.3',versionCode=Number(process.env.GERAINA_RELEASE_CODE||8);
 assert.match(version,/^\d+\.\d+\.\d+$/);
 const serial=`emulator-${profile.port}`,app='com.dagangos.geraina',apk=join(root,`releases/Geraina-POS-${version}.apk`);
 const out=join(root,'app/build/reports/android-usability',`${profileId}-${new Date().toISOString().replace(/[:.]/g,'-')}`);mkdirSync(out,{recursive:true});

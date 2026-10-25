@@ -128,12 +128,10 @@ const MENU_STRUCTURE = [
     key: "integrations",
     minPlan: "pro",
     sub: [
+      { to: "/geraina/app/integrations/qris", label: "QRIS" },
       { to: "/geraina/app/integrations/xendit", label: "Xendit" },
       { to: "/geraina/app/integrations/midtrans", label: "Midtrans" },
-      { to: "/geraina/app/integrations/stripe", label: "Stripe" },
       { to: "/geraina/app/integrations/whatsapp", label: "WhatsApp", minPlan: "business" },
-      { to: "/geraina/app/integrations/telegram", label: "Telegram", minPlan: "business" },
-      { to: "/geraina/app/integrations/email", label: "Email", minPlan: "business" }
     ]
   },
   {

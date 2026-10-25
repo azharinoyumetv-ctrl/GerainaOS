@@ -1,6 +1,6 @@
 import PasswordInput from "@/components/PasswordInput";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import api from "@/api/client";
 import { Save, Link2, FlaskConical } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
@@ -19,32 +19,51 @@ export default function Integrations() {
   const [integrations, setIntegrations] = useState({
     xendit: { is_active: false, secret_key: "", webhook_token: "" },
     midtrans: { is_active: false, client_key: "", server_key: "" },
-    stripe: { is_active: false, publishable_key: "", secret_key: "" },
     qris: { is_active: false, nmid: "", merchant_name: "" },
     whatsapp: { is_active: false, phone_number_id: "", access_token: "", app_secret: "", webhook_verify_token: "", template_receipt: "dagangos_order_receipt", template_receipt_lang: "id", template_po: "dagangos_po_notify", template_po_lang: "id" },
-    telegram: { is_active: false, bot_token: "", chat_id: "" },
-    email: { is_active: false, smtp_host: "", smtp_port: 587, smtp_user: "" },
     doku: { is_active: false, client_id: "", shared_key: "", environment: "sandbox", preferred_channel: "all" }
   });
   // Same unsequenced-GET race already fixed in Attendance.jsx/Products.jsx/SupplierList.jsx/
   // PaymentConfig.jsx: this effect re-fires on every subtab switch, so a slow GET from an
   // earlier tab could in principle resolve after a newer one. Guarded the same way.
   const reqIdRef = useRef(0);
+  const defaultsRef = useRef(integrations);
+  const saveRef = useRef(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const loadIntegrations = () => {
     const reqId = ++reqIdRef.current;
+    setLoading(true); setLoadError("");
     api.get("/integrations").then((r) => {
-      if (r.data && reqId === reqIdRef.current) setIntegrations(r.data);
-    }).catch(() => {});
+      if (reqId !== reqIdRef.current) return;
+      const data = r.data;
+      if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Invalid integration settings");
+      setIntegrations(Object.fromEntries(Object.entries(defaultsRef.current).map(([key, defaults]) => [key,
+        { ...defaults, ...(data[key] && typeof data[key] === "object" && !Array.isArray(data[key]) ? data[key] : {}) }
+      ])));
+    }).catch(error => {
+      if (reqId === reqIdRef.current) setLoadError(typeof error?.response?.data?.detail === "string" ? error.response.data.detail : "Konfigurasi belum dapat dimuat. Periksa koneksi dan coba lagi.");
+    }).finally(() => { if (reqId === reqIdRef.current) setLoading(false); });
+  };
+  useEffect(() => {
+    loadIntegrations();
+    return () => { reqIdRef.current++; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    api.post("/integrations", integrations).then(() => {
-      toast.success(`Konfigurasi integrasi ${(type || 'midtrans').toUpperCase()} berhasil disimpan!`);
-    }).catch(() => {
-      toast.error(`Gagal menyimpan konfigurasi ${(type || 'midtrans').toUpperCase()}.`);
-    });
+    if (loading || loadError || saveRef.current || !["xendit", "midtrans", "doku", "whatsapp"].includes(type)) return;
+    saveRef.current = true; setSaving(true);
+    try {
+      // The API merges provider keys. Never resubmit unrelated providers or retired credentials.
+      await api.post("/integrations", { [type]: integrations[type] });
+      toast.success(`Konfigurasi ${type.toUpperCase()} tersimpan. Lakukan uji transaksi/pesan untuk memastikan layanan bekerja.`);
+    } catch (error) {
+      toast.error(typeof error?.response?.data?.detail === "string" ? error.response.data.detail : `Gagal menyimpan konfigurasi ${type.toUpperCase()}.`);
+    } finally { saveRef.current = false; setSaving(false); }
   };
 
   const [waTestNum, setWaTestNum] = useState("");
@@ -150,10 +169,33 @@ export default function Integrations() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
+  if (["stripe", "telegram", "email"].includes(type)) return <Navigate to="/geraina/app/integrations/qris" replace />;
   if (!integrations) return <div className="p-4 sm:p-6 lg:p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data integrasi...</div>;
 
   const renderForm = () => {
     switch (type) {
+      case "qris":
+        return (
+          <div className="space-y-4 text-sm" data-testid="qris-integration">
+            <p>Terima pembayaran <strong>QRIS dinamis melalui Xendit</strong>. Nominal mengikuti total transaksi kasir; pelanggan memindai QR menggunakan aplikasi pembayaran yang mendukung QRIS.</p>
+            <p className="rounded-xl bg-[hsl(var(--primary))]/5 p-4" data-testid="qris-byok">Gunakan akun dan API key Xendit milik toko Anda sendiri (BYOK). Pembayaran pelanggan diproses pada akun merchant Anda. Biaya transaksi penyedia menjadi tanggung jawab merchant sesuai perjanjian dengan Xendit. Akun pembayaran langganan DagangOS terpisah.</p>
+            <div className="rounded-xl border border-[hsl(var(--border))] p-4 space-y-2">
+              <p className="font-semibold" data-testid="qris-setup-status">
+                {integrations.xendit.is_active && integrations.xendit.secret_key && integrations.xendit.webhook_token
+                  ? "Konfigurasi Xendit tersimpan — transaksi belum diverifikasi"
+                  : "Lengkapi konfigurasi Xendit untuk menggunakan QRIS"}
+              </p>
+              <ol className="list-decimal pl-5 space-y-2 text-[hsl(var(--muted))]">
+                <li>Daftarkan usaha dan aktifkan kanal QRIS pada akun merchant Xendit milik toko Anda.</li>
+                <li>Isi Secret API Key dan token callback yang diberikan Xendit pada pengaturan Xendit. Gunakan mode test dahulu.</li>
+                <li>Daftarkan URL callback <span className="break-all font-mono text-xs">https://api.dagangos.com/api/webhooks/xendit</span> di dashboard Xendit.</li>
+                <li>Di kasir, pilih QRIS dan selesaikan pembayaran uji. Pastikan status berubah menjadi Lunas setelah konfirmasi dari penyedia.</li>
+              </ol>
+            </div>
+            <p className="text-xs text-[hsl(var(--muted))]">QRIS memerlukan internet. Mengisi NMID atau menampilkan gambar QR saja tidak menghubungkan status pembayaran otomatis. Konfigurasi tersimpan belum membuktikan pembayaran berhasil.</p>
+            <Link to="/geraina/app/integrations/xendit" className="btn-primary inline-flex" data-testid="qris-configure-xendit">Atur QRIS melalui Xendit</Link>
+          </div>
+        );
       case "xendit":
         return (
           <div className="space-y-4">
@@ -182,14 +224,14 @@ export default function Integrations() {
                 type="text"
                 value={integrations.xendit.webhook_token}
                 onChange={(e) => setIntegrations({ ...integrations, xendit: { ...integrations.xendit, webhook_token: e.target.value } })}
-                placeholder="String bebas pilihan Anda sendiri — harus unik, tak boleh sama dengan toko lain"
+                placeholder="Token verifikasi dari pengaturan webhook Xendit"
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
               />
               <p className="text-[11px] text-[hsl(var(--muted))]">
-                Daftarkan callback URL <code className="font-mono">https://api.dagangos.com/api/webhooks/xendit</code> di Xendit Dashboard Anda dengan Verification Token yang sama persis dengan yang diisi di sini.
+                Salin Verification Token dari pengaturan webhook Xendit, lalu daftarkan callback URL <code className="font-mono break-all">https://api.dagangos.com/api/webhooks/xendit</code> di dashboard akun Xendit toko Anda. Token harus sama dan tidak dipakai toko lain.
               </p>
             </div>
-            <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan API key Xendit milik toko Anda sendiri. Transaksi pelanggan masuk langsung ke akun Xendit Anda.</p>
+            <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan API key Xendit milik toko Anda sendiri. Transaksi pelanggan diproses pada akun Xendit Anda; biaya penyedia menjadi tanggung jawab toko sesuai perjanjian Xendit. Akun ini terpisah dari akun pembayaran langganan DagangOS.</p>
 
             {/* Simulator webhook -- dev/testing only, lihat catatan di sendXenditSim */}
             <div className="border-t border-[hsl(var(--border))] pt-3">
@@ -364,42 +406,6 @@ export default function Integrations() {
           </div>
         );
 
-      case "stripe":
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold">Aktifkan Stripe Payments</label>
-              <input
-                type="checkbox"
-                checked={integrations.stripe.is_active}
-                onChange={(e) => setIntegrations({ ...integrations, stripe: { ...integrations.stripe, is_active: e.target.checked } })}
-                className="rounded border-[hsl(var(--border))]"
-              />
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Stripe Publishable Key</label>
-                <input
-                  type="text"
-                  value={integrations.stripe.publishable_key}
-                  onChange={(e) => setIntegrations({ ...integrations, stripe: { ...integrations.stripe, publishable_key: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Stripe Secret Key</label>
-                <PasswordInput
-
-                  value={integrations.stripe.secret_key}
-                  onChange={(e) => setIntegrations({ ...integrations, stripe: { ...integrations.stripe, secret_key: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
-                />
-              </div>
-            </div>
-            <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan kredensial Stripe milik toko Anda sendiri.</p>
-          </div>
-        );
-
       case "whatsapp":
         return (
           <div className="space-y-4">
@@ -567,85 +573,6 @@ export default function Integrations() {
           </div>
         );
 
-      case "telegram":
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold">Aktifkan Notifikasi Telegram</label>
-              <input
-                type="checkbox"
-                checked={integrations.telegram.is_active}
-                onChange={(e) => setIntegrations({ ...integrations, telegram: { ...integrations.telegram, is_active: e.target.checked } })}
-                className="rounded border-[hsl(var(--border))]"
-              />
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Bot API Token</label>
-                <PasswordInput
-
-                  value={integrations.telegram.bot_token}
-                  onChange={(e) => setIntegrations({ ...integrations, telegram: { ...integrations.telegram, bot_token: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Target Chat ID / Channel</label>
-                <input
-                  type="text"
-                  value={integrations.telegram.chat_id}
-                  onChange={(e) => setIntegrations({ ...integrations, telegram: { ...integrations.telegram, chat_id: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case "email":
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold">Kirim Struk/Invoice via Email</label>
-              <input
-                type="checkbox"
-                checked={integrations.email.is_active}
-                onChange={(e) => setIntegrations({ ...integrations, email: { ...integrations.email, is_active: e.target.checked } })}
-                className="rounded border-[hsl(var(--border))]"
-              />
-            </div>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">SMTP Host</label>
-                <input
-                  type="text"
-                  value={integrations.email.smtp_host}
-                  onChange={(e) => setIntegrations({ ...integrations, email: { ...integrations.email, smtp_host: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm"
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">SMTP Port</label>
-                <input
-                  type="number"
-                  value={integrations.email.smtp_port}
-                  onChange={(e) => setIntegrations({ ...integrations, email: { ...integrations.email, smtp_port: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">SMTP Username</label>
-                <input
-                  type="text"
-                  value={integrations.email.smtp_user}
-                  onChange={(e) => setIntegrations({ ...integrations, email: { ...integrations.email, smtp_user: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        );
-
       default:
         return <p className="text-sm text-[hsl(var(--muted))]">Kanal integrasi tidak ditemukan.</p>;
     }
@@ -655,11 +582,8 @@ export default function Integrations() {
     { id: "xendit", label: "Xendit", path: "/geraina/app/integrations/xendit" },
     { id: "doku", label: "DOKU", path: "/geraina/app/integrations/doku" },
     { id: "midtrans", label: "Midtrans", path: "/geraina/app/integrations/midtrans" },
-    { id: "stripe", label: "Stripe", path: "/geraina/app/integrations/stripe" },
     { id: "qris", label: "QRIS", path: "/geraina/app/integrations/qris" },
     { id: "whatsapp", label: "WhatsApp", path: "/geraina/app/integrations/whatsapp" },
-    { id: "telegram", label: "Telegram", path: "/geraina/app/integrations/telegram" },
-    { id: "email", label: "Email SMTP", path: "/geraina/app/integrations/email" }
   ];
 
   return (
@@ -670,7 +594,7 @@ export default function Integrations() {
           <h1 className="font-display text-3xl font-bold mt-1 capitalize">Kanal Integrasi ({type})</h1>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/8 px-3 py-1 rounded border border-[hsl(var(--primary))]/20">
-          <Link2 size={14} /> Terhubung Layanan Cloud
+          <Link2 size={14} /> Pengaturan layanan
         </div>
       </div>
 
@@ -696,13 +620,17 @@ export default function Integrations() {
             Integrasi Layanan {type}
           </h2>
 
-          {renderForm()}
+          {loading ? <p role="status">Memuat konfigurasi…</p> : loadError ? (
+            <div role="alert" className="space-y-3" data-testid="integrations-load-error">
+              <p>{loadError}</p><button type="button" className="btn-outline" onClick={loadIntegrations}>Coba lagi</button>
+            </div>
+          ) : <fieldset disabled={saving} className="space-y-4">{renderForm()}</fieldset>}
 
-          <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-end">
-            <button type="submit" className="btn-primary py-2 px-6 flex items-center gap-2 text-sm font-semibold">
-              <Save size={16} /> Simpan Integrasi
+          {type !== "qris" && <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-end">
+            <button type="submit" disabled={loading || !!loadError || saving} className="btn-primary py-2 px-6 flex items-center gap-2 text-sm font-semibold disabled:opacity-50">
+              <Save size={16} /> {saving ? "Menyimpan…" : "Simpan Integrasi"}
             </button>
-          </div>
+          </div>}
         </form>
       </div>
     </div>

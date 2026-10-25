@@ -95,6 +95,18 @@ export default function About() {
           </div>
         </div>
 
+        {typeof window.GerainaDevice?.checkForUpdates === "function" && (
+          <div className="card-surface p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="font-display font-bold">Pembaruan aplikasi</h2>
+              <p className="text-xs text-[hsl(var(--muted))] mt-1">Geraina memeriksa pembaruan saat aplikasi dibuka. Unduh dan pasang saat Anda siap.</p>
+            </div>
+            <button type="button" className="btn-primary shrink-0" data-testid="about-check-updates" onClick={() => window.GerainaDevice.checkForUpdates()}>
+              Periksa pembaruan
+            </button>
+          </div>
+        )}
+
         {/* Info/Help */}
         <div className="card-surface p-5 flex items-start gap-3 text-xs text-[hsl(var(--muted))]">
           <HelpCircle size={16} className="text-[hsl(var(--primary))] shrink-0 mt-0.5" />

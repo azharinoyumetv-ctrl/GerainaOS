@@ -84,6 +84,8 @@ def _first_action_value(res: Dict[str, Any], descriptor: str) -> Optional[str]:
 # ---------- QRIS (dynamic, single-use) ----------
 async def create_qris(cfg: Dict[str, Any], external_id: str, amount: int, currency: str = "IDR") -> Dict[str, Any]:
     """cfg = the store's integrations.xendit dict: {is_active, secret_key, webhook_token}."""
+    if type(amount) is not int or not 0 < amount <= 10_000_000 or currency != "IDR":
+        raise PaymentNotConfiguredError("Nominal QRIS harus dalam Rupiah, lebih dari nol dan maksimal Rp10.000.000.")
     if _is_mock_mode(cfg):
         # Mock for demo when no real key set
         mock_res = {
@@ -122,7 +124,11 @@ async def create_qris(cfg: Dict[str, Any], external_id: str, amount: int, curren
         },
     }
     res = await _create_payment_request(cfg, payload)
-    res.setdefault("qr_string", _first_action_value(res, "QR_STRING"))
+    qr = _first_action_value(res, "QR_STRING")
+    if (not isinstance(res, dict) or not res.get("payment_request_id") or
+            not isinstance(qr, str) or not qr.strip()):
+        raise PaymentNotConfiguredError("Xendit tidak mengembalikan kode QR pembayaran. Periksa aktivasi kanal QRIS.")
+    res["qr_string"] = qr
     return res
 
 

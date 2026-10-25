@@ -77,6 +77,7 @@ class MainActivity : ComponentActivity() {
     private var barcodeOriginPath = ""
     private var scannerOpen = false
     private lateinit var receiptPrinter: ThermalPrinterController
+    private lateinit var appUpdater: AppUpdater
     private val bundledFrontend by lazy { BundledFrontend(assets) }
     private val pendingExport get() = File(cacheDir, "pending-export")
 
@@ -114,6 +115,7 @@ class MainActivity : ComponentActivity() {
         barcodeOriginPath = savedInstanceState?.getString("barcodeOriginPath") ?: ""
         scannerOpen = savedInstanceState?.getBoolean("scannerOpen") ?: false
         receiptPrinter = ThermalPrinterController(this, ::notice)
+        appUpdater = AppUpdater(this, savedInstanceState != null, ::notice)
         // A force-stopped app cannot receive the old document-picker result.
         // Retain the file across rotation, but discard it on a fresh launch.
         if (savedInstanceState == null) pendingExport.delete()
@@ -222,6 +224,7 @@ class MainActivity : ComponentActivity() {
             max = 100; progressTintList = android.content.res.ColorStateList.valueOf(Color.rgb(77, 122, 65))
         }
         root.addView(progress, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(2)))
+        root.addView(appUpdater.banner, LinearLayout.LayoutParams(-1, -2))
         val content = FrameLayout(this).apply { setBackgroundColor(Color.rgb(246, 248, 245)) }
         webView = WebView(this).apply { setBackgroundColor(Color.rgb(246, 248, 245)) }
         content.addView(webView, FrameLayout.LayoutParams(-1, -1))
@@ -472,6 +475,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             "configurePrinter" -> if (authenticatedScreen) receiptPrinter.configure()
+            "checkForUpdates" -> appUpdater.check()
             "testPrinter" -> if (authenticatedScreen) receiptPrinter.sample()
             "printReceipt" -> if (authenticatedScreen) message.optJSONObject("order")?.let { receiptPrinter.print(it, subtitle.text.toString()) }
             "shell" -> updateShell(message.optString("path"), message.optString("store"), message.optBoolean("authenticated"), message.optBoolean("wideNavigation"))
@@ -539,11 +543,12 @@ class MainActivity : ComponentActivity() {
 
     private fun showMenu(anchor: View) {
         PopupMenu(this, anchor).apply {
-            listOf("Muat ulang", "Printer struk", "Cetak contoh printer", "Cetak halaman", "Chat bantuan", "Privasi", "Minta penghapusan akun", "Bantuan", "Tentang Geraina").forEach { menu.add(it) }
+            listOf("Muat ulang", "Periksa pembaruan", "Printer struk", "Cetak contoh printer", "Cetak halaman", "Chat bantuan", "Privasi", "Minta penghapusan akun", "Bantuan", "Tentang Geraina").forEach { menu.add(it) }
             setOnMenuItemClickListener {
                 when (it.title.toString()) {
                     "Muat ulang" -> if (nativeFeaturesReady) { failedPageUrl = null; webView.reload() } else notice("Perbarui Android System WebView atau Chrome terlebih dahulu.")
                     "Cetak halaman" -> printPage()
+                    "Periksa pembaruan" -> appUpdater.check()
                     "Printer struk" -> if (authenticatedScreen) receiptPrinter.configure() else notice("Masuk ke toko terlebih dahulu.")
                     "Cetak contoh printer" -> if (authenticatedScreen) receiptPrinter.sample() else notice("Masuk ke toko terlebih dahulu.")
                     "Chat bantuan" -> webView.evaluateJavascript("window.GerainaMobile?.openSupport?.() || false") { opened ->
@@ -607,8 +612,10 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (::webView.isInitialized) webView.onResume()
+        if (::appUpdater.isInitialized) appUpdater.onResume()
     }
     override fun onDestroy() {
+        if (::appUpdater.isInitialized) appUpdater.close()
         if (::receiptPrinter.isInitialized) receiptPrinter.close()
         fileCallback?.onReceiveValue(null); fileCallback = null
         if (::webView.isInitialized) {

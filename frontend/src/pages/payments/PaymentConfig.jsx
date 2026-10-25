@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import api from "@/api/client";
 import { Save, ShieldCheck } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
@@ -19,7 +19,7 @@ const DEFAULT_PAYMENT_CONFIG = {
     provider: "Midtrans",
     banks: { BCA: true, BNI: true, BRI: true, Mandiri: true, Permata: true, CIMB: true, Maybank: false, Danamon: false, Neo: false, BSI: true }
   },
-  credit_card: { is_active: true, provider: "Stripe", enable_3ds: true, installment_banks: ["Mandiri", "BCA", "CIMB"] },
+  credit_card: { is_active: false, provider: "", enable_3ds: true, installment_banks: [] },
   bank_transfer: { is_active: true, accounts: [{ bank: "Bank Central Asia", account_no: "8820987111", account_name: "DagangOS Geraina POS" }] },
   edc: { is_active: false, provider: "" }
 };
@@ -40,7 +40,6 @@ export default function PaymentConfig() {
 
   const [config, setConfig] = useState(DEFAULT_PAYMENT_CONFIG);
   const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState({});
   // Same unsequenced-request race already found and fixed in Attendance.jsx/Products.jsx/
   // SupplierList.jsx: this effect re-fires on every type change (switching between Tunai/
   // QRIS/E-Wallet/etc tabs all touch the same underlying document), so a slow GET issued on
@@ -105,59 +104,6 @@ export default function PaymentConfig() {
           </div>
         );
       
-      case "qris":
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold">Aktifkan QRIS Dinamis</label>
-              <input
-                type="checkbox"
-                checked={config.qris.is_active}
-                onChange={(e) => setConfig({ ...config, qris: { ...config.qris, is_active: e.target.checked } })}
-                className="rounded border-[hsl(var(--border))]"
-              />
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Integrasi Provider</label>
-                <select
-                  value={config.qris.provider}
-                  onChange={(e) => setConfig({ ...config, qris: { ...config.qris, provider: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm"
-                >
-                  <option value="Xendit">Xendit (Rekomendasi)</option>
-                  <option value="Midtrans">Midtrans</option>
-                  <option value="Doku">Doku</option>
-                </select>
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">QRIS Merchant ID</label>
-                <input
-                  type="text"
-                  value={config.qris.merchant_id || ""}
-                  onChange={(e) => {
-                    setConfig({ ...config, qris: { ...config.qris, merchant_id: e.target.value } });
-                    if (e.target.value.trim()) {
-                      setErrors((prev) => {
-                        const newErr = { ...prev };
-                        delete newErr.merchant_id;
-                        return newErr;
-                      });
-                    }
-                  }}
-                  className={`border ${errors.merchant_id ? 'border-red-500' : 'border-[hsl(var(--border))]'} rounded-md px-4 py-2 bg-white text-sm font-mono`}
-                  data-testid="qris-merchant-id-input"
-                />
-                {errors.merchant_id && (
-                  <span className="text-xs text-red-500 mt-1" data-testid="qris-validation-error">
-                    {errors.merchant_id}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-
       case "ewallet":
         return (
           <div className="space-y-4">
@@ -264,7 +210,7 @@ export default function PaymentConfig() {
                   onChange={(e) => setConfig({ ...config, credit_card: { ...config.credit_card, provider: e.target.value } })}
                   className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm"
                 >
-                  <option value="Stripe">Stripe</option>
+                  <option value="">Pilih penyedia</option>
                   <option value="Midtrans">Midtrans</option>
                   <option value="Xendit">Xendit</option>
                 </select>
@@ -382,11 +328,6 @@ export default function PaymentConfig() {
 
   const handleSave = (e) => {
     e.preventDefault();
-    setErrors({});
-    if (type?.toLowerCase() === "qris" && config?.qris?.is_active && (!config?.qris?.merchant_id || !config.qris.merchant_id.trim())) {
-      setErrors({ merchant_id: "Merchant ID wajib diisi" });
-      return;
-    }
     setSaving(true);
     const reqId = ++reqIdRef.current;
     api.post("/payments/config", config)
@@ -413,6 +354,8 @@ export default function PaymentConfig() {
     { id: "edc", label: "EDC", path: "/geraina/app/payments/edc" }
   ];
 
+  if (type === "qris") return <Navigate to="/geraina/app/integrations/qris" replace />;
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 text-left" data-testid="payment-config-page">
       <div className="flex items-center justify-between">
@@ -421,7 +364,7 @@ export default function PaymentConfig() {
           <h1 className="font-display text-3xl font-bold mt-1 capitalize">Metode Pembayaran ({type.replace("_", " ")})</h1>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded border border-emerald-100">
-          <ShieldCheck size={14} /> Keamanan PCI-DSS Terjamin
+          <ShieldCheck size={14} /> Pengaturan pembayaran
         </div>
       </div>
 

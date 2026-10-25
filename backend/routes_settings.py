@@ -45,7 +45,7 @@ async def get_payments_config(user: dict = Depends(get_current_user)):
         # Default Indonesian payment channels config
         return {
             "cash": { "is_active": True, "provider": "Sistem Kasir Lokal", "require_drawer": True, "active_drawer_port": "COM3" },
-            "qris": { "is_active": True, "provider": "Xendit", "type": "dynamic", "merchant_id": "MID-GER-QRIS-99", "callback_status": "Active" },
+            "qris": { "is_active": False, "provider": "Xendit", "type": "dynamic", "merchant_id": "", "callback_status": "Unverified" },
             "ewallet": {
                 "is_active": True,
                 "provider": "Xendit",
@@ -62,7 +62,7 @@ async def get_payments_config(user: dict = Depends(get_current_user)):
                     "CIMB": True, "Maybank": False, "Danamon": False, "Neo": False, "BSI": True
                 }
             },
-            "credit_card": { "is_active": True, "provider": "Stripe", "enable_3ds": True, "installment_banks": ["Mandiri", "BCA", "CIMB"] },
+            "credit_card": { "is_active": False, "provider": "", "enable_3ds": True, "installment_banks": [] },
             "bank_transfer": { "is_active": True, "accounts": [{ "bank": "Bank Central Asia", "account_no": "8820987111", "account_name": "DagangOS Geraina POS" }] },
             "edc": { "is_active": False, "provider": "" }
         }
@@ -91,8 +91,28 @@ async def save_payments_config(payload: Dict[str, Any], user: dict = Depends(get
 # it -- see AppLayout.jsx minPlan. One combined get/set endpoint covers all providers, so the
 # WhatsApp/Telegram/Email restriction is enforced inline in save_integrations below rather than
 # via the Depends, since a Pro user must still be able to save Xendit/Midtrans/Stripe/DOKU.) ----------
+async def integration_owner(user: dict = Depends(require_plan("pro"))):
+    if user.get("role") not in ("Owner", "admin"):
+        raise HTTPException(status_code=403, detail="Peran Owner diperlukan untuk mengelola kredensial integrasi")
+    return user
+
+
+@router.get("/api/integrations/qris/status")
+async def qris_setup_status(user: dict = Depends(integration_owner)):
+    """Read-only configuration status, never a claim of a successful payment/provider connection."""
+    saved = await get_db().integrations.find_one({"store_id": user["store_id"]}, {"_id": 0})
+    config = (saved or {}).get("xendit") or {}
+    return {
+        "provider": "xendit", "credentialSource": "merchant_store", "flowVersion": 2,
+        "active": config.get("is_active") is True,
+        "apiKeyConfigured": bool(str(config.get("secret_key") or "").strip()),
+        "callbackTokenConfigured": bool(str(config.get("webhook_token") or "").strip()),
+        "paymentVerified": False,
+    }
+
+
 @router.get("/api/integrations")
-async def get_integrations(user: dict = Depends(require_plan("pro"))):
+async def get_integrations(user: dict = Depends(integration_owner)):
     db = get_db()
     res = await db.integrations.find_one({"store_id": user["store_id"]}, {"_id": 0})
     if not res:
@@ -109,7 +129,7 @@ async def get_integrations(user: dict = Depends(require_plan("pro"))):
     return res
 
 @router.post("/api/integrations")
-async def save_integrations(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
+async def save_integrations(payload: Dict[str, Any], user: dict = Depends(integration_owner)):
     if plan_rank(user.get("plan")) < plan_rank("pro"):
         raise HTTPException(status_code=403, detail="Integrasi pihak ketiga tersedia mulai paket Pro. Upgrade paket untuk mengakses fitur ini.")
     if plan_rank(user.get("plan")) < plan_rank("business"):

@@ -26,8 +26,6 @@ const PLAN_ROUTES = [
   ["/staff/attendance", "business"],
   ["/branches", "business"],
   ["/integrations/whatsapp", "business"],
-  ["/integrations/telegram", "business"],
-  ["/integrations/email", "business"],
   ["/integrations", "pro"],
 ];
 

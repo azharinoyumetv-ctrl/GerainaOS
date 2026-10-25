@@ -13,6 +13,7 @@ import hashlib
 import hmac
 import logging
 import os
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, Depends
 from fastapi.responses import PlainTextResponse
@@ -50,12 +51,15 @@ def _map_status(payload: dict) -> str:
 
 async def _process(payload: dict, store_id: str):
     db = get_db()
+    if not isinstance(payload, dict):
+        return
+    nested = payload.get("data") if isinstance(payload.get("data"), dict) else {}
     # Possible fields: reference_id (e-wallet/qr v2), external_id (qr v1), data.reference_id
     ref = (
         payload.get("reference_id")
         or payload.get("external_id")
-        or (payload.get("data") or {}).get("reference_id")
-        or (payload.get("data") or {}).get("external_id")
+        or nested.get("reference_id")
+        or nested.get("external_id")
     )
     if not ref:
         return
@@ -66,39 +70,43 @@ async def _process(payload: dict, store_id: str):
     # paid for less than it's actually worth. Ported from DapurOS's routes_webhooks.py, which
     # had this hardening and this file didn't.
     order = await db.orders.find_one(
-        {"xendit_reference_id": ref, "store_id": store_id}, {"_id": 0, "id": 1, "store_id": 1, "total": 1, "order_no": 1}
+        {"xendit_reference_id": ref, "store_id": store_id}, {"_id": 0, "id": 1, "store_id": 1, "total": 1, "order_no": 1, "xendit_id": 1, "payment_status": 1}
     )
     if not order:
         logger.warning("Xendit webhook: no order found for reference_id=%s store_id=%s", ref, store_id)
         return
 
-    new_status = _map_status(payload if "status" in payload else (payload.get("data") or payload))
+    new_status = _map_status(payload if "status" in payload else (nested or payload))
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+    request_id = data.get("payment_request_id")
+    if request_id and order.get("xendit_id") and request_id != order["xendit_id"]:
+        return
+    # Creation/authorization events and late notifications must not undo a settled payment.
+    if (new_status == "pending" or order.get("payment_status") in ("refunded", "voided") or
+            (order.get("payment_status") == "paid" and new_status != "refunded")):
+        return
 
     if new_status == "paid":
-        webhook_amount = (
-            payload.get("amount")
-            or payload.get("capture_amount")
-            or payload.get("charge_amount")
-            or (payload.get("data") or {}).get("amount")
-        )
-        if webhook_amount is not None:
-            try:
-                if round(float(webhook_amount)) != round(float(order.get("total", 0))):
-                    logger.warning(
-                        "Xendit webhook amount mismatch for order_no=%s store_id=%s: "
-                        "webhook_amount=%r order_total=%r — ignoring payment_status update.",
-                        order.get("order_no"), order.get("store_id"), webhook_amount, order.get("total"),
-                    )
-                    return
-            except (TypeError, ValueError):
-                logger.warning(
-                    "Xendit webhook: could not parse amount %r for order_no=%s — ignoring payment_status update.",
-                    webhook_amount, order.get("order_no"),
-                )
+        # Payments API v3 uses request_amount and captures[].capture_amount, not data.amount.
+        # Never accept missing/NaN/zero/wrong amounts as evidence that money was received.
+        webhook_amount = next((data[key] for key in ("request_amount", "amount", "capture_amount", "charge_amount") if key in data), None)
+        try:
+            amount = Decimal(str(webhook_amount))
+            expected = Decimal(str(order.get("total", 0))).quantize(Decimal("1"))
+            if not amount.is_finite() or amount <= 0 or amount != expected or data.get("currency", "IDR") != "IDR":
                 return
+            captures = data.get("captures")
+            if captures is not None:
+                if not isinstance(captures, list) or not captures:
+                    return
+                captured = sum(Decimal(str(row["capture_amount"])) for row in captures)
+                if not captured.is_finite() or captured != expected:
+                    return
+        except (InvalidOperation, TypeError, ValueError, KeyError):
+            return
 
     await db.orders.update_one(
-        {"xendit_reference_id": ref, "store_id": order["store_id"]},
+        {"id": order["id"], "store_id": order["store_id"], "payment_status": {"$nin": ["refunded", "voided"] if new_status == "refunded" else ["paid", "refunded", "voided"]}},
         {
             "$set": {
                 "payment_status": new_status,

@@ -17,5 +17,5 @@ const root=join(__dirname,'..'),config=loadTestConfig(),out=join(root,'app/build
   const menu=await checks.menuChecks(page,screenshot),metadata=await checks.metadataChecks(page,screenshot);
   results.push({width,login,menu,metadata});await context.close();
  }
- writeFileSync(join(out,'verification.json'),JSON.stringify({status:'passed',version:'1.2.2',localFrontend:process.env.GERAINA_USE_LOCAL_FRONTEND==='1',results,merchantWrites:0},null,2));console.log(JSON.stringify({status:'passed',widths:results.map(result=>result.width),metadataScenarios:results.reduce((n,result)=>n+result.metadata.length*6,0)},null,2));
+ writeFileSync(join(out,'verification.json'),JSON.stringify({status:'passed',version:'1.2.3',localFrontend:process.env.GERAINA_USE_LOCAL_FRONTEND==='1',results,merchantWrites:0},null,2));console.log(JSON.stringify({status:'passed',widths:results.map(result=>result.width),metadataScenarios:results.reduce((n,result)=>n+result.metadata.length*6,0)},null,2));
 }finally{await browser.close();}})().catch(error=>{console.error(String(error.message).split(config.password).join('[REDACTED]'));process.exitCode=1;});
