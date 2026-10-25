@@ -6,6 +6,8 @@ The Android/web integration menu now has a functional QRIS setup page, which poi
 
 The payment flow creates an amount-specific dynamic QR using Xendit's v3 Payment Request API. The backend must return a real payment-request ID and QR action before an order can proceed. The POS displays a pending receipt, polls the store-scoped order, and shows paid after the backend receives a valid payment confirmation. Webhooks resolve the store by its own callback token, match the provider request ID where supplied, and verify IDR request/capture amounts. Missing/malformed/wrong amounts do not settle a sale. Duplicate or late pending/failure notifications cannot undo a paid sale. QRIS requests are limited to positive whole-Rupiah amounts up to Rp10 million.
 
+The callback URL for this Geraina deployment is **https://geraina-os.vercel.app/api/webhooks/xendit**. A live routing check found that the old `api.dagangos.com` address returned 404 for this webhook. Version 1.2.4 corrects both setup instructions. The working endpoint rejects invalid tokens with 401. It uses the merchant's saved callback token, without consulting DagangOS subscription credentials.
+
 ## Verification and activation
 
 - `backend/tests/test_qris_contract.py` uses an intercepted HTTP transport and isolated in-memory stores. It checks the merchant key (while a different platform key is present), no-key failure, response validation, limits, callback authentication, amount/currency/identity checks, tenant isolation, duplicate/late notifications, secret-free setup status and owner-only secret access. It makes no live payment and changes no merchant data.

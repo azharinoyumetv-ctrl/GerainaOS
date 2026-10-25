@@ -19,8 +19,8 @@ android {
         minSdk = 34
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
         targetSdk = 36
-        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("8").get().toInt()
-        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.3").get()
+        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("9").get().toInt()
+        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.4").get()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {

@@ -3,7 +3,7 @@ const {readFileSync,writeFileSync,mkdirSync,readdirSync,copyFileSync}=require('n
 const {resolve,join,dirname,sep}=require('node:path');
 const {createHash}=require('node:crypto');
 const root=resolve(__dirname,'..'),reports=join(root,'app/build/reports/offline-android'),out=join(root,'releases/android-offline-report');
-const version='1.2.3',hash=createHash('sha256').update(readFileSync(join(root,`releases/Geraina-POS-${version}.apk`))).digest('hex'),profiles=[];
+const version='1.2.4',hash=createHash('sha256').update(readFileSync(join(root,`releases/Geraina-POS-${version}.apk`))).digest('hex'),profiles=[];
 for(const profile of ['android14','android17','xiaomi12','tablet146']){
  const pointer=JSON.parse(readFileSync(join(reports,`latest-${profile}.json`),'utf8')),source=dirname(resolve(pointer.path));assert.ok(source.startsWith(reports+sep));
  const report=JSON.parse(readFileSync(join(source,'verification.json'),'utf8'));assert.equal(report.status,'passed');assert.equal(report.version,version);assert.equal(report.apkSha256,hash);assert.equal(report.checks.length,8);assert.ok(report.checks.every(row=>row.status==='passed'));

@@ -52,12 +52,16 @@ async function menuChecks(page,screenshot){
 async function metadataChecks(page,screenshot){
  const results=[];
  for(const [collection,singular]of[['categories','category'],['brands','brand'],['units','unit']]){
-  let mode='failure',writes=0,rows=[];
+  let mode='failure',writes=0,rows=[],releaseFailure,signalFailure;
+  const failureStarted=new Promise(resolve=>{signalFailure=resolve;});
   const pattern=new RegExp(`/api/products/${collection}(?:/[^?]+)?(?:\\?.*)?$`);
   await page.route(pattern,async route=>{
    const request=route.request(),method=request.method();if(method==='GET')return route.fulfill({json:rows});
-   writes++;await new Promise(resolve=>setTimeout(resolve,500));
-   if(mode==='failure')return route.fulfill({status:503,json:{detail:'Layanan sementara tidak tersedia. Coba lagi.'}});
+   writes++;
+   if(mode==='failure'){
+    await new Promise(resolve=>{releaseFailure=resolve;signalFailure();});
+    return route.fulfill({status:503,json:{detail:'Layanan sementara tidak tersedia. Coba lagi.'}});
+   }
    const payload=request.postDataJSON();assert.ok(payload.name.trim());if(singular==='unit')assert.ok(payload.short_name.trim());
    if(method==='POST')rows.push({id:`local-${collection}`,...payload});
    else if(method==='PUT')rows[0]={...rows[0],...payload};
@@ -72,7 +76,7 @@ async function metadataChecks(page,screenshot){
    await button.click();await page.getByTestId(`${singular}-error`).waitFor();assert.equal(writes,0);
    await page.getByTestId(`${singular}-name-input`).fill(`LOCAL FIXTURE ${collection}`);
    if(singular!=='unit')await page.getByTestId(`${singular}-desc-input`).fill('Isolated local example');
-   await button.click();assert.equal(await button.isDisabled(),true);await page.getByTestId(`${singular}-error`).getByText('Layanan sementara tidak tersedia. Coba lagi.').waitFor();
+   await button.click();await failureStarted;assert.equal(await button.isDisabled(),true);releaseFailure();await page.getByTestId(`${singular}-error`).getByText('Layanan sementara tidak tersedia. Coba lagi.').waitFor();
    assert.equal(await page.getByTestId(`${singular}-name-input`).inputValue(),`LOCAL FIXTURE ${collection}`);assert.equal(writes,1);
    mode='success';await button.click();await page.getByTestId(`${singular}-success`).waitFor();
    await page.getByTestId(`${collection}-list`).getByText(`LOCAL FIXTURE ${collection}`,{exact:true}).waitFor();
@@ -81,7 +85,7 @@ async function metadataChecks(page,screenshot){
    await page.getByTestId(`${singular}-name-input`).fill(`EDITED LOCAL ${collection}`);await button.click();
    await page.getByTestId(`${collection}-list`).getByText(`EDITED LOCAL ${collection}`,{exact:true}).waitFor();
    await screenshot(`${collection}-saved`);assert.equal(writes,3);results.push({collection,emptyAndWhitespaceValidation:true,pendingState:true,serverErrorPreservesInput:true,retryCreatesRow:true,editUpdatesRow:true,interceptedWrites:writes});
-  }finally{await page.unroute(pattern);}
+  }finally{releaseFailure?.();await page.unroute(pattern);}
  }
  return results;
 }

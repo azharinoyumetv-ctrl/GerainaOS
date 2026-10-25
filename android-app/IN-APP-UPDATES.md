@@ -26,6 +26,8 @@ Publish a tested APK at its immutable versioned URL before advertising it in `la
 
 The usual signed phone/tablet usability and offline checks still apply. These are AOSP emulator tests, not physical HyperOS/One UI certification. The source installer approval screens may vary by vendor or device policy.
 
+For a published-to-published upgrade, run the same script with `GERAINA_UPDATE_MODE=shipping` on the dedicated phone profile after advertising 1.2.4. It installs the immutable public 1.2.3 APK, checks for the new release through the app menu, downloads it from the official website and exercises Android's update confirmation and data preservation. Its result is saved separately as `app/build/reports/updater/shipping/verification.json`.
+
 ## Google Play
 
 This release is for the website distribution requested by the owner. Google Play prohibits using `REQUEST_INSTALL_PACKAGES` for app self-updates outside its allowed device-management exception. Before submitting to Play, remove the website updater/permission/provider and use Play's in-app update mechanism. Do not upload this release's AAB unchanged. References: [Android website distribution and source approval](https://developer.android.com/studio/publish), [Google Play permission policy](https://support.google.com/googleplay/android-developer/answer/18258653?hl=en-GB).

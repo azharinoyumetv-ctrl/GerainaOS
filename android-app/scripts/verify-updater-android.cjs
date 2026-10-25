@@ -6,9 +6,9 @@ const {join}=require('node:path');
 const {createHash,randomUUID}=require('node:crypto');
 const {_android}=require('../../frontend/node_modules/playwright');
 const root=join(__dirname,'..'),profileId=process.env.GERAINA_DEVICE_PROFILE||'phone',profile=require('./android-device-profiles.json')[profileId];
-const upgrade=process.env.GERAINA_UPDATE_MODE==='upgrade',serial=`emulator-${profile.port}`,app='com.dagangos.geraina';
-const apk=join(root,upgrade?'build/update-tests/bootstrap.apk':'releases/Geraina-POS-1.2.3.apk');
-const out=join(root,'app/build/reports/updater',profileId);mkdirSync(out,{recursive:true});
+const shipping=process.env.GERAINA_UPDATE_MODE==='shipping',upgrade=shipping||process.env.GERAINA_UPDATE_MODE==='upgrade',serial=`emulator-${profile.port}`,app='com.dagangos.geraina',fromCode=shipping?8:6;
+const apk=join(root,shipping?'releases/Geraina-POS-1.2.3.apk':upgrade?'build/update-tests/bootstrap.apk':'releases/Geraina-POS-1.2.4.apk');
+const out=join(root,'app/build/reports/updater',shipping?'shipping':profileId);mkdirSync(out,{recursive:true});
 const report={status:'running',profile:profileId,mode:upgrade?'real-system-upgrade':'current-release',apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex'),checks:[],merchantWrites:0};
 const adbPath=join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe');
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -19,6 +19,7 @@ async function tree(pattern){const match=new RegExp(pattern.source,'i');for(let 
 function tap(pattern){const match=new RegExp(pattern.source,'i'),node=(xml().match(/<node[^>]*>/g)||[]).find(n=>match.test(n));assert.ok(node,`Visible native control ${pattern}`);const b=node.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);adb(['shell','input','tap',String(Math.round((+b[1]+ +b[3])/2)),String(Math.round((+b[2]+ +b[4])/2))]);}
 function capture(name){writeFileSync(join(out,`${name}.png`),adb(['exec-out','screencap','-p'],true));}
 function launch(){adb(['shell','am','start','-f','0x10008000','-n',`${app}/com.example.gerainapos.MainActivity`]);}
+function installedCode(){return Number(adb(['shell','dumpsys','package',app]).match(/versionCode=(\d+)/)[1]);}
 async function attach(){
  for(const d of devices)await d.close().catch(()=>{});devices=await _android.devices({omitDriverInstall:true});
  const device=devices.find(d=>d.serial()===serial);assert.ok(device);page=await(await device.webView({pkg:app},{timeout:20000})).page();page.setDefaultTimeout(20000);
@@ -37,9 +38,9 @@ async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa p
  await page.reload({waitUntil:'domcontentloaded'});await page.getByTestId('login-form').waitFor();
  if(!upgrade){adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);}
  if(upgrade){
-  const official=await(await fetch('https://dagangos.com/downloads/geraina/latest.json')).json();assert.equal(official.versionCode,7,'Run bootstrap upgrade before staging a newer public release');report.targetVersion=official.version;report.targetVersionCode=official.versionCode;
-  await step('Automatic check offers the newer official release without opening an installer',async()=>{await tree(/Geraina 1\.2\.2 tersedia/);assert.ok(!/packageinstaller|permissioncontroller:id\/permission/.test(xml()));capture('automatic-update-banner');});
-  await step('Postponing the update leaves the installed version unchanged',async()=>{tap(/content-desc="Perbarui Geraina"/);await tree(/Unduh pembaruan/);tap(/text="Nanti"/);assert.match(adb(['shell','dumpsys','package',app]),/versionCode=6\b/);});
+  const official=await(await fetch('https://dagangos.com/downloads/geraina/latest.json')).json();assert.ok(official.versionCode>fromCode);assert.match(official.version,/^\d+\.\d+\.\d+$/);report.targetVersion=official.version;report.targetVersionCode=official.versionCode;report.fromVersionCode=fromCode;
+  await step(shipping?'Published 1.2.3 checks for a newer official update without forcing installation':'Automatic check offers the newer official release without opening an installer',async()=>{if(shipping){await manual();await tree(/Unduh pembaruan/);tap(/text="Nanti"/);}await tree(new RegExp(`Geraina ${official.version.replaceAll('.','\\.')} tersedia`));assert.ok(!/packageinstaller|permissioncontroller:id\/permission/.test(xml()));capture('automatic-update-banner');});
+  await step('Postponing the update leaves the installed version unchanged',async()=>{tap(/content-desc="Perbarui Geraina"/);await tree(/Unduh pembaruan/);tap(/text="Nanti"/);assert.equal(installedCode(),fromCode);});
   const sentinel=randomUUID();report.sentinelId=sentinel;
   await page.evaluate(async value=>{
    for(const k of ['geraina_token','geraina_user','dagangos_token','dagangos_user'])localStorage.removeItem(k);
@@ -47,15 +48,15 @@ async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa p
    await new Promise((resolve,reject)=>{const request=indexedDB.open('geraina-pos-offline-v1',1);request.onupgradeneeded=()=>{const db=request.result;db.createObjectStore('cache',{keyPath:'key'});db.createObjectStore('sales',{keyPath:'key'}).createIndex('scope','scope');};request.onerror=()=>reject(Error('Fixture storage failed'));request.onsuccess=()=>{const db=request.result,tx=db.transaction('sales','readwrite',{durability:'strict'});tx.objectStore('sales').put({key:'updater-isolated:sentinel',scope:'updater-isolated',status:'pending',body:{client_order_id:value},createdAt:new Date().toISOString()});tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(Error('Fixture storage commit failed'));};});
   },sentinel);
   await step('Official APK downloads and is verified before requesting installation permission',async()=>{tap(/content-desc="Perbarui Geraina"/);tap(/text="Unduh pembaruan"/);await tree(/Izinkan pembaruan Geraina/);capture('verified-update-permission-explanation');});
-  await step('Denying installation permission leaves the current app usable',async()=>{tap(/text="Buka pengaturan"/);await tree(/Allow from this source|Izinkan dari sumber ini/);capture('android-source-permission');adb(['shell','input','keyevent','KEYCODE_BACK']);await wait(700);assert.match(adb(['shell','dumpsys','package',app]),/versionCode=6\b/);await page.getByTestId('login-form').waitFor();});
+  await step('Denying installation permission leaves the current app usable',async()=>{tap(/text="Buka pengaturan"/);await tree(/Allow from this source|Izinkan dari sumber ini/);capture('android-source-permission');adb(['shell','input','keyevent','KEYCODE_BACK']);await wait(700);assert.equal(installedCode(),fromCode);await page.getByTestId('login-form').waitFor();});
   await step('Permission settings return to the standard Android update confirmation',async()=>{
    tap(/content-desc="Perbarui Geraina"/);tap(/text="Unduh pembaruan"/);await tree(/Izinkan pembaruan Geraina/);tap(/text="Buka pengaturan"/);await tree(/Allow from this source|Izinkan dari sumber ini/);
    tap(/text="Allow from this source"|text="Izinkan dari sumber ini"/);adb(['shell','input','keyevent','KEYCODE_BACK']);await tree(/text="Update"|text="Perbarui"/);capture('android-update-confirmation');
   });
   await step('Android installs the newer package over the existing app',async()=>{
    tap(/text="Update"|text="Perbarui"/);
-   for(let n=0;n<90;n++){if(/versionCode=7\b/.test(adb(['shell','dumpsys','package',app])))break;await wait(500);}
-   assert.match(adb(['shell','dumpsys','package',app]),/versionCode=7\b/);capture('android-update-installed');launch();await attach();await page.goto('https://dagangos.com/geraina/login');
+   for(let n=0;n<90;n++){if(installedCode()===official.versionCode)break;await wait(500);}
+   assert.equal(installedCode(),official.versionCode);capture('android-update-installed');launch();await attach();await page.goto('https://dagangos.com/geraina/login');
   });
   await step('The update preserves stored preferences and the pending offline-sale record',async()=>{
    assert.equal(await page.evaluate(()=>localStorage.getItem('updater-preservation')),sentinel);
@@ -64,7 +65,7 @@ async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa p
    await page.evaluate(()=>new Promise(resolve=>{localStorage.removeItem('updater-preservation');const r=indexedDB.open('geraina-pos-offline-v1',1);r.onsuccess=()=>{const db=r.result,tx=db.transaction('sales','readwrite');tx.objectStore('sales').delete('updater-isolated:sentinel');tx.oncomplete=()=>{db.close();resolve();};};}));
   });
  }else{
-  await step('Manual update check is available before login and refuses a downgrade',async()=>{await manual();await tree(/Geraina sudah terbaru/);assert.match(xml(),/Versi terpasang: 1\.2\.3/);capture('current-release-check');tap(/text="Tutup"/);assert.equal((await page.evaluate(()=>GerainaDevice.appInfo)).versionCode,8);});
+  await step('Manual update check is available before login and refuses a downgrade',async()=>{await manual();await tree(/Geraina sudah terbaru/);assert.match(xml(),/Versi terpasang: 1\.2\.4/);capture('current-release-check');tap(/text="Tutup"/);assert.equal((await page.evaluate(()=>GerainaDevice.appInfo)).versionCode,9);});
   await step('Offline update check has a readable dismissible error',async()=>{adb(['shell','svc','wifi','disable']);adb(['shell','svc','data','disable']);await page.waitForFunction(()=>!navigator.onLine);await manual();await tree(/Pembaruan belum dapat diperiksa/);capture('offline-update-check');tap(/text="Tutup"/);await page.getByTestId('login-form').waitFor();});
   await step('About provides the user-initiated native update check',async()=>{
    adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);

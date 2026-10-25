@@ -188,7 +188,7 @@ export default function Integrations() {
               <ol className="list-decimal pl-5 space-y-2 text-[hsl(var(--muted))]">
                 <li>Daftarkan usaha dan aktifkan kanal QRIS pada akun merchant Xendit milik toko Anda.</li>
                 <li>Isi Secret API Key dan token callback yang diberikan Xendit pada pengaturan Xendit. Gunakan mode test dahulu.</li>
-                <li>Daftarkan URL callback <span className="break-all font-mono text-xs">https://api.dagangos.com/api/webhooks/xendit</span> di dashboard Xendit.</li>
+                <li>Daftarkan URL callback <span className="break-all font-mono text-xs">https://geraina-os.vercel.app/api/webhooks/xendit</span> di dashboard Xendit.</li>
                 <li>Di kasir, pilih QRIS dan selesaikan pembayaran uji. Pastikan status berubah menjadi Lunas setelah konfirmasi dari penyedia.</li>
               </ol>
             </div>
@@ -228,7 +228,7 @@ export default function Integrations() {
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
               />
               <p className="text-[11px] text-[hsl(var(--muted))]">
-                Salin Verification Token dari pengaturan webhook Xendit, lalu daftarkan callback URL <code className="font-mono break-all">https://api.dagangos.com/api/webhooks/xendit</code> di dashboard akun Xendit toko Anda. Token harus sama dan tidak dipakai toko lain.
+                Salin Verification Token dari pengaturan webhook Xendit, lalu daftarkan callback URL <code className="font-mono break-all">https://geraina-os.vercel.app/api/webhooks/xendit</code> di dashboard akun Xendit toko Anda. Token harus sama dan tidak dipakai toko lain.
               </p>
             </div>
             <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan API key Xendit milik toko Anda sendiri. Transaksi pelanggan diproses pada akun Xendit Anda; biaya penyedia menjadi tanggung jawab toko sesuai perjanjian Xendit. Akun ini terpisah dari akun pembayaran langganan DagangOS.</p>

@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('../../frontend/node_modules/playwright');
 const root=path.resolve(__dirname,'..'),build=path.join(root,'app/build/generated/frontend-assets/frontend'),out=path.join(root,'app/build/reports/release-quality');fs.mkdirSync(out,{recursive:true});
-const version=process.env.GERAINA_RELEASE_VERSION||'1.2.3';
+const version=process.env.GERAINA_RELEASE_VERSION||'1.2.4';
 const user={id:'quality-user',store_id:'quality-store',store_name:'Quality fixture',email:'quality@example.invalid',role:'Owner',plan:'trial'};
 const product={id:'quality-coffee',name:'Quality coffee',sku:'5901234123457',price:12500,cost:5000,stock:10,category:'Drinks',unit:'pcs'};
 const results=[];
@@ -10,7 +10,7 @@ async function fixture(browser,{signedIn=true,authDelay=0,authStatus=200,failPro
  const context=await browser.newContext({viewport:{width:1016,height:1100}}),page=await context.newPage(),requests=[],writes=[],errors=[];page.setDefaultTimeout(3500);page.on('pageerror',error=>errors.push(error.message));
  const css=['mobile-support.css','mobile-ui.css'].map(name=>fs.readFileSync(path.join(root,'app/src/main/assets',name),'utf8')).join('\n');
  const scripts=['android-bridge.js','device-features.js','mobile-ui.js'].map(name=>fs.readFileSync(path.join(root,'app/src/main/assets',name),'utf8').replace('__GERAINA_MOBILE_STYLE__',JSON.stringify(css))).join('\n');
- await context.addInitScript({content:`window.nativeMessages=[];window.GerainaNative={postMessage:raw=>nativeMessages.push(JSON.parse(raw))};window.__gerainaAppInfo={versionName:${JSON.stringify(version)},versionCode:8,androidVersion:'14',model:'Quality phone'};${signedIn?`localStorage.setItem('geraina_token','quality-fixture-token');localStorage.setItem('geraina_user',${JSON.stringify(JSON.stringify(user))});localStorage.setItem('dagangos_user',${JSON.stringify(JSON.stringify(user))});`:''}\n${scripts}`});
+ await context.addInitScript({content:`window.nativeMessages=[];window.GerainaNative={postMessage:raw=>nativeMessages.push(JSON.parse(raw))};window.__gerainaAppInfo={versionName:${JSON.stringify(version)},versionCode:9,androidVersion:'14',model:'Quality phone'};${signedIn?`localStorage.setItem('geraina_token','quality-fixture-token');localStorage.setItem('geraina_user',${JSON.stringify(JSON.stringify(user))});localStorage.setItem('dagangos_user',${JSON.stringify(JSON.stringify(user))});`:''}\n${scripts}`});
  await page.route('https://dagangos.com/geraina/**',route=>{const pathname=new URL(route.request().url()).pathname;return route.fulfill({path:path.join(build,pathname.includes('/static/')?pathname.slice('/geraina/'.length):'index.html')});});
  await page.route('https://dagangos.com/api/**',async route=>{
   const request=route.request(),pathname=new URL(request.url()).pathname;requests.push({path:pathname,method:request.method()});
