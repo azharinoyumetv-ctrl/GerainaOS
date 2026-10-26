@@ -1,3 +1,8 @@
+import useWorkspace from '@/hooks/useWorkspace';
+import WorkspaceState from '@/components/WorkspaceState';
+import useTablePage from '@/hooks/useTablePage';
+import TablePage from '@/components/TablePage';
+import useAction from '@/hooks/useAction';
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Trash2, Edit } from "lucide-react";
@@ -7,8 +12,12 @@ import { canManageProducts } from "@/auth/permissions";
 export default function CustomerList() {
   const { user } = useAuth();
   const canDelete = canManageProducts(user?.role);
-  const [customers, setCustomers] = useState([]);
-  const [memberships, setMemberships] = useState([]);
+  const query = useWorkspace(['/customers', ...(['business','trial'].includes(user?.plan)?['/customers/memberships']:[])]);
+  const action = useAction();
+  const table = useTablePage(query.data['/customers'] || []);
+  const customers = table.rows;
+  const fetchData = query.retry;
+  const memberships = query.data['/customers/memberships'] || [];
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -17,42 +26,15 @@ export default function CustomerList() {
   const [points, setPoints] = useState(0);
   const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [expectedPoints,setExpectedPoints] = useState(null);
 
-  const fetchData = () => {
-    api.get("/customers").then((r) => setCustomers(r.data)).catch(() => {});
-    api.get("/customers/memberships").then((r) => setMemberships(r.data)).catch(() => {});
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     if (!name.trim()) return;
-
-    const payload = {
-      name,
-      phone,
-      email,
-      membership_tier: tier,
-      loyalty_points: parseInt(points) || 0,
-      notes: notes || null,
-      created_at: new Date().toISOString()
-    };
-
-    if (editingId) {
-      api.put(`/customers/${editingId}`, payload).then(() => {
-        setEditingId(null);
-        clearForm();
-        fetchData();
-      });
-    } else {
-      api.post("/customers", payload).then(() => {
-        clearForm();
-        fetchData();
-      });
-    }
+    const payload = { name, phone, email, membership_tier:tier, loyalty_points:parseInt(points)||0, expected_loyalty_points:editingId ? expectedPoints : undefined, notes:notes||null };
+    action.run(() => editingId ? api.put(`/customers/${editingId}`,payload) : api.post('/customers',payload), () => {
+      setEditingId(null); clearForm(); fetchData();
+    });
   };
 
   const clearForm = () => {
@@ -66,6 +48,7 @@ export default function CustomerList() {
 
   const handleEdit = (c) => {
     setEditingId(c.id);
+    setExpectedPoints(c.loyalty_points || 0);
     setName(c.name);
     setPhone(c.phone || "");
     setEmail(c.email || "");
@@ -74,15 +57,16 @@ export default function CustomerList() {
     setNotes(c.notes || "");
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = id => {
     if (!canDelete) return;
-    if (confirm("Apakah Anda yakin ingin menghapus pelanggan ini?")) {
-      api.delete(`/customers/${id}`).then(() => fetchData());
-    }
+    if (confirm('Hapus catatan ini?')) action.run(() => api.delete(`/customers/${id}`), fetchData);
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="customers-page">
+      <WorkspaceState query={query}>
+      {action.busy && <p role="status">Menyimpan perubahan…</p>}
+      {action.error && <p role="alert" className="text-red-800">{action.error}</p>}
       <div>
         <span className="label-tiny">Pelanggan</span>
         <h1 className="font-display text-3xl font-bold mt-1">Daftar Pelanggan</h1>
@@ -142,7 +126,7 @@ export default function CustomerList() {
               <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Poin Loyalitas</label>
               <input
                 type="number"
-                value={points}
+                disabled={!["Owner","Manager"].includes(user?.role)} value={points}
                 onChange={(e) => setPoints(e.target.value)}
                 placeholder="Poin"
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none text-sm"
@@ -162,7 +146,7 @@ export default function CustomerList() {
             />
           </div>
 
-          <button type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="customer-submit">
+          <button disabled={action.busy} type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="customer-submit">
             {editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Pelanggan</>}
           </button>
           {editingId && (
@@ -223,9 +207,11 @@ export default function CustomerList() {
                 )}
               </tbody>
             </table>
+            <TablePage label="pelanggan" value={table} />
           </div>
         </div>
       </div>
+      </WorkspaceState>
     </div>
   );
 }

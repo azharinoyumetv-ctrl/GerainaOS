@@ -1,3 +1,4 @@
+from payment_state import provider_transition
 """Xendit webhook handler.
 
 Endpoint: POST /api/webhooks/xendit
@@ -105,16 +106,8 @@ async def _process(payload: dict, store_id: str):
         except (InvalidOperation, TypeError, ValueError, KeyError):
             return
 
-    await db.orders.update_one(
-        {"id": order["id"], "store_id": order["store_id"], "payment_status": {"$nin": ["refunded", "voided"] if new_status == "refunded" else ["paid", "refunded", "voided"]}},
-        {
-            "$set": {
-                "payment_status": new_status,
-                "xendit_webhook_payload": payload,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }
-        },
-    )
+    await provider_transition(db, {'id': order['id'], 'store_id': store_id}, new_status,
+                              {'xendit_webhook_payload': payload})
 
 
 @router.post("/xendit")
@@ -345,16 +338,21 @@ async def _process_doku(raw_body: bytes, headers: dict):
     if not invoice_number:
         return
     new_status = map_doku_status(payload)
-    await db.orders.update_one(
-        {"order_no": invoice_number, "store_id": tenant.get("store_id")},
-        {
-            "$set": {
-                "payment_status": new_status,
-                "doku_webhook_payload": payload,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }
-        },
-    )
+    # DOKU Checkout retries may fail before another channel succeeds; FAILED is
+    # not terminal for the checkout invoice. Follow DOKU notification best practice.
+    # https://developers.doku.com/get-started-with-doku-api/notification/best-practice
+    if new_status == 'failed':
+        return
+    if new_status == 'paid':
+        order = await db.orders.find_one({'order_no':invoice_number, 'store_id':tenant.get('store_id')})
+        try:
+            received = Decimal(str((payload.get('order') or {}).get('amount')))
+            if not order or not received.is_finite() or received <= 0 or received != Decimal(str(order['total'])):
+                return
+        except (InvalidOperation, TypeError, ValueError):
+            return
+    await provider_transition(db, {'order_no': invoice_number, 'store_id': tenant.get('store_id')},
+                              new_status, {'doku_webhook_payload': payload})
 
 
 @router.post("/doku")
@@ -387,10 +385,8 @@ async def simulate_doku_webhook(payload: dict, req: Request, store_id: str = "")
     if not invoice_number:
         return {"ok": False}
     new_status = map_doku_status(payload)
-    await db.orders.update_one(
-        {"order_no": invoice_number, "store_id": store_id},
-        {"$set": {"payment_status": new_status, "doku_webhook_payload": payload, "updated_at": datetime.now(timezone.utc).isoformat()}},
-    )
+    await provider_transition(db, {'order_no': invoice_number, 'store_id': store_id},
+                              new_status, {'doku_webhook_payload': payload})
     return {"ok": True}
 
 

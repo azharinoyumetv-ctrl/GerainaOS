@@ -1,95 +1,25 @@
-import { useEffect, useState } from "react";
-import api, { fmtIDR } from "@/api/client";
-import { CreditCard, Check } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
-
-export default function SupplierInvoice() {
-  const [invoices, setInvoices] = useState([]);
-
-  const fetchInvoices = () => {
-    api.get("/purchase/invoices").then((r) => setInvoices(r.data)).catch(() => {});
-  };
-
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
-
-  const handlePay = (id) => {
-    if (confirm("Konfirmasi pembayaran faktur supplier ini?")) {
-      // HISTORY: this used to POST {id, status: "Paid"} straight to the CREATE endpoint,
-      // which ignores 'id' and requires invoice_no/po_no/amount/due_date that were never
-      // sent -- always 422'd, silently (no .catch()). Real fix: PUT to the invoice's own URL.
-      api.put(`/purchase/invoices/${id}`, { status: "Paid" }).then(() => {
-        fetchInvoices();
-        toast.success("Faktur berhasil ditandai Lunas!");
-      }).catch((err) => {
-        toast.error(err?.response?.data?.detail || "Gagal menandai faktur lunas.");
-      });
-    }
-  };
-
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="supplier-invoice-page">
-      <div>
-        <span className="label-tiny">Pembelian</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Faktur Supplier</h1>
-      </div>
-
-      <div className="card-surface p-6">
-        <h2 className="font-display font-bold text-lg mb-4">Tagihan & Faktur Supplier</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-[hsl(var(--border))]">
-                <th className="py-3 font-semibold text-[hsl(var(--muted))]">No Invoice</th>
-                <th className="py-3 font-semibold text-[hsl(var(--muted))]">Referensi PO</th>
-                <th className="py-3 font-semibold text-[hsl(var(--muted))]">Jumlah Tagihan</th>
-                <th className="py-3 font-semibold text-[hsl(var(--muted))]">Jatuh Tempo</th>
-                <th className="py-3 font-semibold text-[hsl(var(--muted))]">Status</th>
-                <th className="py-3 text-right font-semibold text-[hsl(var(--muted))]">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[hsl(var(--border))]">
-              {invoices.map((inv) => {
-                const isPaid = inv.status === "Paid";
-                const isOverdue = new Date(inv.due_date) < new Date() && !isPaid;
-                return (
-                  <tr key={inv.id} className="hover:bg-[hsl(var(--background))]/50 transition-colors">
-                    <td className="py-3 font-mono font-bold text-xs">{inv.invoice_no}</td>
-                    <td className="py-3 font-mono text-xs text-[hsl(var(--muted))]">{inv.po_no}</td>
-                    <td className="py-3 font-mono font-semibold">{fmtIDR(inv.amount)}</td>
-                    <td className={`py-3 text-xs ${isOverdue ? "text-red-500 font-bold" : "text-[hsl(var(--muted))]"}`}>
-                      {inv.due_date} {isOverdue && "(Overdue)"}
-                    </td>
-                    <td className="py-3">
-                      <span className={`pill ${isPaid ? "pill-success" : "pill-warning"}`}>
-                        {inv.status}
-                      </span>
-                    </td>
-                    <td className="py-3 text-right">
-                      {!isPaid && (
-                        <button onClick={() => handlePay(inv.id)} className="btn-primary py-1 px-3 text-xs flex items-center gap-1 font-semibold ml-auto">
-                          <CreditCard size={12} /> Tandai Lunas
-                        </button>
-                      )}
-                      {isPaid && (
-                        <span className="text-emerald-600 text-xs font-semibold flex items-center gap-0.5 justify-end">
-                          <Check size={14} /> Terbayar
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {invoices.length === 0 && (
-                <tr>
-                  <td colSpan="6" className="py-8 text-center text-[hsl(var(--muted))]">Belum ada faktur supplier.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+import {useState} from 'react';
+import api,{fmtIDR} from '@/api/client';
+import useWorkspace from '@/hooks/useWorkspace';
+import useAction from '@/hooks/useAction';
+import useTablePage from '@/hooks/useTablePage';
+import TablePage from '@/components/TablePage';
+import WorkspaceState from '@/components/WorkspaceState';
+export default function SupplierInvoice(){
+ const query=useWorkspace(['/purchase/invoices','/purchase/orders','/suppliers']),action=useAction(),table=useTablePage(query.data['/purchase/invoices']||[]);
+ const [number,setNumber]=useState(''),[po,setPo]=useState(''),[supplier,setSupplier]=useState(''),[amount,setAmount]=useState(''),[date,setDate]=useState('');
+ const orders=query.data['/purchase/orders']||[],suppliers=query.data['/suppliers']||[];
+ const create=e=>{e.preventDefault();action.run(()=>api.post('/purchase/invoices',{invoice_no:number.trim(),po_no:po,supplier_id:supplier||undefined,amount:Number(amount),due_date:date}),()=>{setNumber('');setPo('');setSupplier('');setAmount('');setDate('');query.retry();});};
+ const pay=row=>{if(confirm('Tandai lunas hanya jika pembayaran faktur sudah dilakukan.'))action.run(()=>api.put('/purchase/invoices/'+row.id,{status:'Paid'}),query.retry);};
+ return <div className="p-4 sm:p-6 lg:p-8 space-y-5" data-testid="supplier-invoice-page"><div><span className="label-tiny">Pembelian</span><h1 className="font-display text-3xl font-bold mt-1">Faktur supplier</h1></div>
+ <WorkspaceState query={query}>{action.error&&<p role="alert" className="text-red-800">{action.error}</p>}
+ <form onSubmit={create} className="card-surface p-5 grid gap-4 sm:grid-cols-2" data-testid="supplier-invoice-form">
+ <label>Nomor faktur<input required maxLength={200} className="input-field mt-1" value={number} onChange={e=>setNumber(e.target.value)} data-testid="invoice-number"/></label>
+ <label>PO (opsional)<select className="input-field mt-1" value={po} onChange={e=>{setPo(e.target.value);const selected=orders.find(row=>row.po_no===e.target.value);if(selected){setSupplier(selected.supplier_id);setAmount(String(selected.total));}}}><option value="">Faktur tanpa PO</option>{orders.map(row=><option key={row.id} value={row.po_no}>{row.po_no}</option>)}</select></label>
+ <label>Supplier<select required={!po} className="input-field mt-1" value={supplier} onChange={e=>setSupplier(e.target.value)}><option value="">Pilih supplier</option>{suppliers.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
+ <label>Jumlah tagihan<input required className="input-field mt-1" type="number" min="0.01" max="1000000000000" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} data-testid="invoice-amount"/></label>
+ <label>Jatuh tempo<input required className="input-field mt-1" type="date" value={date} onChange={e=>setDate(e.target.value)} data-testid="invoice-due"/></label>
+ <button className="btn-primary" disabled={action.busy}>Simpan faktur</button></form>
+ <section className="card-surface p-5 overflow-x-auto"><table className="workspace-table w-full text-left text-sm"><thead><tr><th>Faktur</th><th>PO</th><th>Jumlah</th><th>Dibayar</th><th>Jatuh tempo</th><th>Status</th><th>Aksi</th></tr></thead><tbody>{table.rows.map(row=><tr key={row.id} className="border-t"><td className="py-3">{row.invoice_no}</td><td>{row.po_no||'—'}</td><td>{fmtIDR(row.amount)}</td><td>{fmtIDR(row.paid_amount||0)}</td><td>{row.due_date}</td><td>{row.status}</td><td>{row.status!=='Paid'&&<button className="btn-primary" disabled={action.busy} onClick={()=>pay(row)}>Tandai lunas</button>}</td></tr>)}</tbody></table>{!table.count&&<p className="py-6">Belum ada faktur supplier.</p>}<TablePage label="faktur" value={table}/></section>
+ </WorkspaceState></div>;
 }

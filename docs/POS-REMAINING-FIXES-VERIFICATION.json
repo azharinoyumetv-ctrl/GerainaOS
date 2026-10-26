@@ -1,0 +1,755 @@
+{
+  "verifiedAt": "2026-10-26T08:05:06.381026+00:00",
+  "status": "five_findings_implemented_and_locally_verified",
+  "published": false,
+  "sourceHead": "08b5624e8d49c8af37804e9d2023ff385c0649d3",
+  "sourceIncludesUncommittedChanges": true,
+  "paymentScope": "User explicitly chose to keep working methods consistent; virtual accounts stay within gateway checkout, no new standalone card/transfer flows.",
+  "findings": {
+    "POS-CATALOGUE-500": {
+      "status": "addressed_locally",
+      "implementation": "Complete cursor enumeration, authoritative barcode lookup, completed-only IndexedDB replacement and explicit legacy-cache coverage",
+      "fixtureProducts": 1203,
+      "pageSize": 500,
+      "visiblePOSCards": 48,
+      "inventoryRowsPerPage": 50
+    },
+    "SALES-HISTORY-200": {
+      "status": "addressed_locally",
+      "implementation": "Store-scoped server search/status filters and deterministic created_at/id cursor pages",
+      "fixtureOrders": 257,
+      "visibleRows": 50
+    },
+    "PAYMENT-PREFERENCES": {
+      "status": "addressed_locally",
+      "implementation": "Readiness drives POS; online order endpoint enforces enabled methods/channels; unsupported activation is rejected; legacy settings/credentials preserved",
+      "supported": [
+        "cash",
+        "bank-issued static QRIS/manual staff confirmation",
+        "Xendit OVO/DANA/ShopeePay/LinkAja",
+        "DOKU hosted gateway checkout including configured VA channels"
+      ],
+      "offlineCashPolicy": "Last saved policy is used offline; already-recorded cash sales can still synchronize",
+      "newStandalonePaymentIntegrations": false
+    },
+    "DOKU-RETURN": {
+      "status": "addressed_locally",
+      "implementation": "Fixed canonical return URL with stored order ID; sign-in continuation and store-scoped reference resolution; payment truth is never taken from URL parameters"
+    },
+    "READ-ERROR-STATES": {
+      "status": "addressed_locally",
+      "implementation": "Explicit loading/error/empty/success and retry in POS, sales, stock overview, low-stock and reports; stale/unmounted reads ignored"
+    }
+  },
+  "backendChecks": {
+    "status": "passed",
+    "tests": 244,
+    "xml": "android-app/app/build/reports/remaining-pos-backend.xml"
+  },
+  "frontendUnitChecks": {
+    "status": "passed",
+    "tests": 38,
+    "suites": 4
+  },
+  "focusedUI": {
+    "status": "passed",
+    "scope": "Prepared frontend + Android presentation in Chromium, isolated API/IndexedDB fixtures; no physical devices or real gateway settlement",
+    "merchantWrites": 0,
+    "results": [
+      {
+        "profile": "phone",
+        "name": "Complete catalogue search and barcode lookup beyond product 500",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "Interrupted later catalogue page preserves complete offline snapshot and retries",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "Owner cash and channel preferences change POS choices",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "Payment-options failure prevents checkout and recovers explicitly",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "Unsupported standalone payments cannot be activated or saved",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "Sales history searches old orders on the server and pages bounded rows",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "Sales history failure is not presented as no transactions",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "DOKU return survives login and ignores forged paid URL parameters",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "DOKU missing reference shows a scoped error rather than a fake receipt",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "Inventory failure preserves unknown state then loads all products with bounded rows",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "Report failures have retry states instead of false zeroes or perpetual loading",
+        "status": "passed"
+      },
+      {
+        "profile": "phone",
+        "name": "Cash checkout remains actor-scoped and produces a preserved local receipt",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Complete catalogue search and barcode lookup beyond product 500",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Interrupted later catalogue page preserves complete offline snapshot and retries",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Owner cash and channel preferences change POS choices",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Payment-options failure prevents checkout and recovers explicitly",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Unsupported standalone payments cannot be activated or saved",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Sales history searches old orders on the server and pages bounded rows",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Sales history failure is not presented as no transactions",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "DOKU return survives login and ignores forged paid URL parameters",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "DOKU missing reference shows a scoped error rather than a fake receipt",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Inventory failure preserves unknown state then loads all products with bounded rows",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Report failures have retry states instead of false zeroes or perpetual loading",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "Cash checkout remains actor-scoped and produces a preserved local receipt",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Complete catalogue search and barcode lookup beyond product 500",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Interrupted later catalogue page preserves complete offline snapshot and retries",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Owner cash and channel preferences change POS choices",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Payment-options failure prevents checkout and recovers explicitly",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Unsupported standalone payments cannot be activated or saved",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Sales history searches old orders on the server and pages bounded rows",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Sales history failure is not presented as no transactions",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "DOKU return survives login and ignores forged paid URL parameters",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "DOKU missing reference shows a scoped error rather than a fake receipt",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Inventory failure preserves unknown state then loads all products with bounded rows",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Report failures have retry states instead of false zeroes or perpetual loading",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "Cash checkout remains actor-scoped and produces a preserved local receipt",
+        "status": "passed"
+      }
+    ]
+  },
+  "navigationUI": {
+    "phone": {
+      "status": "passed",
+      "viewportWidth": 412,
+      "results": [
+        {
+          "name": "DOKU appears in expanded integration navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Sales history is directly reachable in the sidebar",
+          "status": "passed"
+        },
+        {
+          "name": "EDC setup availability page is included in payment navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Credit-card route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Bank-transfer route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Failed payment settings load cannot save defaults and offers retry",
+          "status": "passed"
+        },
+        {
+          "name": "Empty payment settings merge safe defaults without crashing",
+          "status": "passed"
+        },
+        {
+          "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+          "status": "passed"
+        },
+        {
+          "name": "xendit merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "doku merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown integrations subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown settings subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown payments subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown reports subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown staff subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Starter Owner can reach bank QRIS from the integration menu",
+          "status": "passed"
+        },
+        {
+          "name": "Browser expanding a menu retains the current screen",
+          "status": "passed"
+        },
+        {
+          "name": "Legacy product deep link retains its destination and query",
+          "status": "passed"
+        },
+        {
+          "name": "Root app alias applies the same cashier permissions as canonical route",
+          "status": "passed"
+        },
+        {
+          "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+          "status": "passed"
+        },
+        {
+          "name": "Bank QRIS screen retains payment subsection navigation",
+          "status": "passed"
+        },
+        {
+          "name": "EDC cannot claim activation before certified support exists",
+          "status": "passed"
+        },
+        {
+          "name": "Billing uses the authoritative account plan without an absent subscription API",
+          "status": "passed"
+        },
+        {
+          "name": "Android retains a visible read-only billing tab and permits its SPA navigation",
+          "status": "passed"
+        },
+        {
+          "name": "doku instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+          "status": "passed"
+        },
+        {
+          "name": "Sales report does not invent a daily distribution from a weekly total",
+          "status": "passed"
+        },
+        {
+          "name": "Browser dashboard does not fabricate drawer cash or profit",
+          "status": "passed"
+        }
+      ]
+    },
+    "xiaomi": {
+      "status": "passed",
+      "viewportWidth": 1016,
+      "results": [
+        {
+          "name": "DOKU appears in expanded integration navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Sales history is directly reachable in the sidebar",
+          "status": "passed"
+        },
+        {
+          "name": "EDC setup availability page is included in payment navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Credit-card route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Bank-transfer route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Failed payment settings load cannot save defaults and offers retry",
+          "status": "passed"
+        },
+        {
+          "name": "Empty payment settings merge safe defaults without crashing",
+          "status": "passed"
+        },
+        {
+          "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+          "status": "passed"
+        },
+        {
+          "name": "xendit merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "doku merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown integrations subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown settings subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown payments subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown reports subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown staff subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Starter Owner can reach bank QRIS from the integration menu",
+          "status": "passed"
+        },
+        {
+          "name": "Browser expanding a menu retains the current screen",
+          "status": "passed"
+        },
+        {
+          "name": "Legacy product deep link retains its destination and query",
+          "status": "passed"
+        },
+        {
+          "name": "Root app alias applies the same cashier permissions as canonical route",
+          "status": "passed"
+        },
+        {
+          "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+          "status": "passed"
+        },
+        {
+          "name": "Bank QRIS screen retains payment subsection navigation",
+          "status": "passed"
+        },
+        {
+          "name": "EDC cannot claim activation before certified support exists",
+          "status": "passed"
+        },
+        {
+          "name": "Billing uses the authoritative account plan without an absent subscription API",
+          "status": "passed"
+        },
+        {
+          "name": "Android retains a visible read-only billing tab and permits its SPA navigation",
+          "status": "passed"
+        },
+        {
+          "name": "doku instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+          "status": "passed"
+        },
+        {
+          "name": "Sales report does not invent a daily distribution from a weekly total",
+          "status": "passed"
+        },
+        {
+          "name": "Browser dashboard does not fabricate drawer cash or profit",
+          "status": "passed"
+        }
+      ]
+    },
+    "samsung": {
+      "status": "passed",
+      "viewportWidth": 1480,
+      "results": [
+        {
+          "name": "DOKU appears in expanded integration navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Sales history is directly reachable in the sidebar",
+          "status": "passed"
+        },
+        {
+          "name": "EDC setup availability page is included in payment navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Credit-card route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Bank-transfer route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Failed payment settings load cannot save defaults and offers retry",
+          "status": "passed"
+        },
+        {
+          "name": "Empty payment settings merge safe defaults without crashing",
+          "status": "passed"
+        },
+        {
+          "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+          "status": "passed"
+        },
+        {
+          "name": "xendit merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "doku merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown integrations subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown settings subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown payments subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown reports subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown staff subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Starter Owner can reach bank QRIS from the integration menu",
+          "status": "passed"
+        },
+        {
+          "name": "Browser expanding a menu retains the current screen",
+          "status": "passed"
+        },
+        {
+          "name": "Legacy product deep link retains its destination and query",
+          "status": "passed"
+        },
+        {
+          "name": "Root app alias applies the same cashier permissions as canonical route",
+          "status": "passed"
+        },
+        {
+          "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+          "status": "passed"
+        },
+        {
+          "name": "Bank QRIS screen retains payment subsection navigation",
+          "status": "passed"
+        },
+        {
+          "name": "EDC cannot claim activation before certified support exists",
+          "status": "passed"
+        },
+        {
+          "name": "Billing uses the authoritative account plan without an absent subscription API",
+          "status": "passed"
+        },
+        {
+          "name": "Android retains a visible read-only billing tab and permits its SPA navigation",
+          "status": "passed"
+        },
+        {
+          "name": "doku instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+          "status": "passed"
+        },
+        {
+          "name": "Sales report does not invent a daily distribution from a weekly total",
+          "status": "passed"
+        },
+        {
+          "name": "Browser dashboard does not fabricate drawer cash or profit",
+          "status": "passed"
+        }
+      ]
+    }
+  },
+  "apiInventory": {
+    "backendRoutes": 129,
+    "frontendReferences": 122,
+    "unmatched": [],
+    "runtimeWrappers": [
+      {
+        "method": "GET",
+        "file": "frontend/src/api/client.js",
+        "line": 226,
+        "expression": "path, { responseType: \"blob\" });"
+      },
+      {
+        "method": "GET",
+        "file": "frontend/src/pages/reports/Reports.jsx",
+        "line": 43,
+        "expression": "path, { timeout: 12000, signal: controller.signal });"
+      }
+    ]
+  },
+  "preparedBuild": {
+    "status": "passed",
+    "mainBundles": [
+      {
+        "name": "main.772243fa.js",
+        "sha256": "a7d202e44301ffc3c96d0ed6dfda5e1846a60ac3e7356d53e3345c2ec145f144"
+      }
+    ]
+  },
+  "publishedApk": {
+    "version": "1.2.6",
+    "versionCode": 11,
+    "unchanged": true,
+    "sha256": "11da42cc1a7cc02e5afa02313a6136c5206851b15553952aca63be03ffd83b53"
+  },
+  "merchantWrites": 0,
+  "providerChargesOrMessages": 0,
+  "notPerformed": [
+    "New signed APK build/install/update verification",
+    "Physical tablet/printer certification",
+    "Live gateway charge and webhook settlement",
+    "TestSprite run: local patch has no deployed preview/release URL"
+  ],
+  "rollout": "Deploy matching Geraina backend first, then publish a newly versioned/signed APK after release gates. Old list endpoints remain compatible.",
+  "playwrightCLI": {
+    "tool": "Playwright CLI",
+    "version": "1.61.1",
+    "command": ".\\node_modules\\.bin\\playwright.cmd test --config=playwright.local.config.js",
+    "status": "passed",
+    "stats": {
+      "startTime": "2026-10-26T08:49:23.381Z",
+      "duration": 43725.257000000005,
+      "expected": 45,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "retries": 0,
+    "projects": [
+      "phone-layout",
+      "xiaomi-tablet-layout",
+      "samsung-tablet-layout"
+    ],
+    "screenshots": 45,
+    "htmlReport": "android-app/app/build/reports/playwright-cli/report/index.html",
+    "rawResults": "android-app/app/build/reports/playwright-cli/results.json",
+    "scope": "Prepared local frontend with Android presentation and isolated APIs/IndexedDB. Browser layouts; no native installation or physical hardware certification.",
+    "merchantWrites": 0,
+    "releasePublished": false
+  },
+  "followUpDefects": {
+    "status": "addressed_and_locally_verified",
+    "scope": "Three confirmed inventory defects corrected locally; baseline evidence retained below.",
+    "merchantWrites": 0,
+    "baselineFindings": [
+      {
+        "id": "INVENTORY-VALUATION-CAP",
+        "status": "confirmed",
+        "actualAssetValue": 50000,
+        "expectedAssetValue": 50100,
+        "fixtureProducts": 501,
+        "legacyApiProducts": 500,
+        "source": "frontend/src/pages/inventory/InventoryValuation.jsx:8",
+        "detail": "Standalone inventory valuation still reads the legacy 500-product list, understating the complete store value."
+      },
+      {
+        "id": "INVENTORY-VALUATION-ERROR",
+        "status": "confirmed",
+        "responseStatus": 503,
+        "displayedAssetValue": 0,
+        "errorShown": false,
+        "source": "frontend/src/pages/inventory/InventoryValuation.jsx:8",
+        "detail": "A failed valuation load is presented as zero inventory rather than an error with retry."
+      },
+      {
+        "id": "DEAD-STOCK-WINDOW",
+        "status": "confirmed",
+        "lastSale": "2000-01-01T00:00:00Z",
+        "expectedListedAsNoSalesInLast30Days": true,
+        "actuallyListed": false,
+        "source": "frontend/src/pages/inventory/DeadStock.jsx:9",
+        "detail": "The advertised 30-day calculation considers the latest 100 orders without filtering dates or paid status."
+      }
+    ],
+    "findings": [
+      {
+        "id": "INVENTORY-VALUATION-CAP",
+        "status": "addressed_locally",
+        "implementation": "Complete catalogue enumeration before computing totals; 50 rendered rows per page.",
+        "regression": "501 products at stock 1 and cost 100 produce asset value 50100, retail value 100200 and gross margin 50100."
+      },
+      {
+        "id": "INVENTORY-VALUATION-ERROR",
+        "status": "addressed_locally",
+        "implementation": "Loading and failed reads hide metrics and empty results; explicit retry recovers the complete catalogue.",
+        "regression": "HTTP 503 shows error/retry, no false zero value. Recovery displays full 50100 asset value."
+      },
+      {
+        "id": "DEAD-STOCK-WINDOW",
+        "status": "addressed_locally",
+        "implementation": "Store-scoped server report examines all positive-quantity paid sales within a pinned rolling 30-day UTC window, with 50-row cursor pages.",
+        "regression": "620 products and 120 paid orders exercise both former caps; 501 eligible products paginate without duplicates. Old, pending, failed, voided, future and nonpositive-quantity sales do not hide stock. Bounds, store/role/plan access and error/retry are checked."
+      }
+    ],
+    "verification": "INVENTORY-FIXES-VERIFICATION.json"
+  },
+  "releaseReadiness": "local_signed_candidate_ready; device_and_deployed_candidate_checks_pending",
+  "followUpReport": "POS-FOLLOWUP-DEFECTS.md",
+  "latestVerification": "CUSTOMER-FIXES.json",
+  "frontendBuild": {
+    "status": "passed",
+    "bundle": "main.af2d8c26.js",
+    "sha256": "bd1666d907f98c497050543a0c7f6590b84329131d6f1d2084b87e76eaf0f43d"
+  },
+  "latestAudit": "CUSTOMER-EXPERIENCE-AUDIT.json"
+}

@@ -30,9 +30,11 @@ const bridge = readFileSync(join(root, 'app/src/main/assets/android-bridge.js'),
     await page.evaluate(() => history.pushState({}, '', '/geraina/app/pos'));
     assert.equal(new URL(page.url()).pathname, '/geraina/app/pos');
     await page.evaluate(() => history.pushState({}, '', '/geraina/app/settings/billing'));
-    assert.equal(new URL(page.url()).pathname, '/geraina/app/pos', 'React navigation must not bypass subscription gating');
+    assert.equal(new URL(page.url()).pathname, '/geraina/app/settings/billing', 'Read-only account status must remain reachable');
+    await page.evaluate(() => history.pushState({}, '', '/geraina/app/settings/billing/checkout'));
+    assert.equal(new URL(page.url()).pathname, '/geraina/app/settings/billing', 'Nested checkout must remain blocked');
     await page.evaluate(() => history.replaceState({}, '', '/geraina/%63heckout'));
-    assert.equal(new URL(page.url()).pathname, '/geraina/app/pos');
+    assert.equal(new URL(page.url()).pathname, '/geraina/app/settings/billing');
     await page.evaluate(() => window.print());
     assert.ok((await page.evaluate(() => nativeMessages)).some(m => m.type === 'print'));
 
@@ -66,7 +68,7 @@ const bridge = readFileSync(join(root, 'app/src/main/assets/android-bridge.js'),
     const report = {
       verifiedAt: new Date().toISOString(),
       checks: ['subscription links/forms/upgrade CTAs hidden', 'POS and physical payment links preserved',
-        'SPA subscription navigation blocked', 'encoded checkout path blocked', 'native print message',
+        'read-only account status preserved', 'SPA subscription checkout blocked', 'encoded checkout path blocked', 'native print message',
         'PDF blob download survives immediate URL revocation', '10 MB limit', 'dynamic links hidden', 'untrusted origin excluded'],
       status: 'passed',
       scope: 'Android document-start JavaScript in Chromium; not an Android device test'

@@ -18,6 +18,7 @@ object NavigationPolicy {
             return if (uri.host.isNullOrBlank()) Destination.BLOCKED else Destination.EXTERNAL
         }
         val path = uri.normalize().path.orEmpty().trimEnd('/').lowercase(Locale.ROOT)
+        if (path in setOf("/geraina/app/settings/billing", "/geraina/app/billing")) return Destination.INTERNAL
         if (path.split('/').any { it in setOf("pricing", "checkout", "order", "billing") }) return Destination.SUBSCRIPTION
         return if (path == "/geraina" || path.startsWith("/geraina/")) Destination.INTERNAL else Destination.EXTERNAL
     }

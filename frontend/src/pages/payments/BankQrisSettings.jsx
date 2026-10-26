@@ -1,3 +1,4 @@
+import SectionNavigation from "@/navigation/SectionNavigation";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
@@ -45,6 +46,7 @@ export default function BankQrisSettings() {
   };
   return <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-4xl" data-testid="bank-qris-settings">
     <div><span className="label-tiny">Pembayaran</span><h1 className="font-display text-3xl font-bold mt-1">QRIS bank</h1></div>
+    <SectionNavigation section="payments" active="qris" />
     <p className="text-sm">Gunakan QRIS statis yang diterbitkan bank untuk toko Anda. Pelanggan memasukkan nominal sesuai total belanja. Staf memeriksa penerimaan di aplikasi bank merchant sebelum menandai Lunas.</p>
     <p className="rounded-xl border border-[hsl(var(--border))] p-4 text-sm" data-testid="bank-qris-manual-notice">Tidak memerlukan API key Xendit. Dana diterima melalui QRIS merchant Anda; biaya mengikuti ketentuan bank. Geraina tidak memeriksa rekening atau mengonfirmasi pembayaran secara otomatis.</p>
     {error && <div role="alert" className="card-surface p-4 space-y-3"><p>{error}</p><button className="btn-outline" onClick={load}>Coba lagi</button></div>}

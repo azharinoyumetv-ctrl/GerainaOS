@@ -1,19 +1,16 @@
-import { useEffect, useState } from "react";
-import api, { fmtIDR } from "@/api/client";
+import { useMemo } from "react";
+import useTablePage from "@/hooks/useTablePage";
+import TablePage from "@/components/TablePage";
+import useCatalogue from "@/hooks/useCatalogue";
+import ReadState from "@/components/ReadState";
+import { fmtIDR } from "@/api/client";
 import { ShoppingBag, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function LowStock() {
-  const [lowStockProducts, setLowStockProducts] = useState([]);
-
-  useEffect(() => {
-    api.get("/products").then((r) => {
-      const list = r.data || [];
-      // Filter products with stock <= 5
-      const low = list.filter(p => p.stock <= 5);
-      setLowStockProducts(low);
-    }).catch(() => {});
-  }, []);
+  const { products, loading, error, retry } = useCatalogue();
+  const lowStockProducts = useMemo(() => products.filter(product => product.stock <= 5), [products]);
+  const table = useTablePage(lowStockProducts);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="low-stock-page">
@@ -22,7 +19,8 @@ export default function LowStock() {
         <h1 className="font-display text-3xl font-bold mt-1">Peringatan Stok Menipis</h1>
       </div>
 
-      <div className="card-surface p-6">
+      <ReadState loading={loading} error={error} retry={retry} testid="inventory-read-state" />
+      {!loading && !error && <div className="card-surface p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-bold text-lg">Peringatan Stok Menipis (Stok ≤ 5)</h2>
           {lowStockProducts.length > 0 && (
@@ -45,7 +43,7 @@ export default function LowStock() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[hsl(var(--border))]">
-              {lowStockProducts.map((p) => (
+              {table.rows.map((p) => (
                 <tr key={p.id} className="hover:bg-[hsl(var(--background))]/50 transition-colors">
                   <td className="py-3 font-medium">{p.name}</td>
                   <td className="py-3 font-mono text-xs">{p.sku || "-"}</td>
@@ -72,8 +70,9 @@ export default function LowStock() {
               )}
             </tbody>
           </table>
+          <TablePage value={table} />
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

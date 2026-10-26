@@ -1,221 +1,42 @@
-import { useEffect, useState } from "react";
-import api, { fmtIDR } from "@/api/client";
-import { Plus, Check, ListRestart } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
+import { useRef,useState } from 'react';
+import api,{fmtIDR} from '@/api/client';
+import useWorkspace from '@/hooks/useWorkspace';
+import useAction from '@/hooks/useAction';
+import useTablePage from '@/hooks/useTablePage';
+import TablePage from '@/components/TablePage';
+import WorkspaceState from '@/components/WorkspaceState';
 
-export default function PurchaseOrder() {
-  const [suppliers, setSuppliers] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
+export function PurchaseLineEditor({products,items,onChange}){
+ const [product,setProduct]=useState(''),[qty,setQty]=useState(''),[cost,setCost]=useState(''),[error,setError]=useState('');
+ const add=()=>{
+  if(!product||!Number.isInteger(Number(qty))||Number(qty)<1||cost===''||!Number.isFinite(Number(cost))||Number(cost)<0){setError('Pilih produk, jumlah bulat positif dan harga beli yang valid.');return;}
+  if(items.some(line=>line.product_id===product)){setError('Produk sudah ada. Hapus baris untuk mengganti jumlah atau harga.');return;}
+  const selected=products.find(p=>p.id===product);if(!selected)return;
+  onChange([...items,{product_id:product,name:selected.name,qty:Number(qty),cost:Number(cost)}]);setProduct('');setQty('');setCost('');setError('');
+ };
+ return <div className="space-y-3"><div className="grid gap-3 sm:grid-cols-3">
+  <label>Produk<select className="input-field mt-1" value={product} onChange={e=>setProduct(e.target.value)} data-testid="po-product-select"><option value="">Pilih produk</option>{products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+  <label>Jumlah<input className="input-field mt-1" type="number" min="1" max="100000" step="1" value={qty} onChange={e=>setQty(e.target.value)} data-testid="po-qty-input"/></label>
+  <label>Harga beli per unit<input className="input-field mt-1" type="number" min="0" step="0.01" value={cost} onChange={e=>setCost(e.target.value)} data-testid="po-cost-input"/></label>
+ </div><button className="btn-outline" type="button" onClick={add} data-testid="po-add-item">Tambah rincian</button>{error&&<p role="alert" className="text-red-800">{error}</p>}
+ <div className="overflow-x-auto"><table className="workspace-table w-full text-sm text-left"><thead><tr><th>Produk</th><th>Jumlah</th><th>Harga beli</th><th>Subtotal</th><th>Aksi</th></tr></thead><tbody>{items.map(line=><tr key={line.product_id} className="border-t"><td className="py-3">{line.name}</td><td>{line.qty}</td><td>{fmtIDR(line.cost)}</td><td>{fmtIDR(line.qty*line.cost)}</td><td><button className="btn-outline" type="button" onClick={()=>onChange(items.filter(it=>it.product_id!==line.product_id))}>Hapus</button></td></tr>)}</tbody></table></div></div>;
+}
 
-  const [supplierId, setSupplierId] = useState("");
-  const [productId, setProductId] = useState("");
-  const [qty, setQty] = useState("");
-  const [cost, setCost] = useState("");
-  const [poItems, setPoItems] = useState([]);
-
-  const fetchData = () => {
-    api.get("/suppliers").then((r) => setSuppliers(r.data)).catch(() => {});
-    api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
-    api.get("/purchase/orders").then((r) => setOrders(r.data)).catch(() => {});
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleAddItem = (e) => {
-    e.preventDefault();
-    if (!productId || !qty || isNaN(qty) || parseInt(qty) <= 0 || !cost || isNaN(cost) || parseInt(cost) <= 0) return;
-
-    const prod = products.find(p => p.id === productId);
-    if (!prod) return;
-
-    const newItem = {
-      product_id: productId,
-      name: prod.name,
-      qty: parseInt(qty),
-      cost: parseInt(cost),
-      subtotal: parseInt(qty) * parseInt(cost)
-    };
-
-    setPoItems([...poItems, newItem]);
-    setProductId("");
-    setQty("");
-    setCost("");
-  };
-
-  const handleCreatePO = () => {
-    if (!supplierId || poItems.length === 0) return;
-
-    const sup = suppliers.find(s => s.id === supplierId);
-    if (!sup) return;
-
-    const total = poItems.reduce((acc, it) => acc + it.subtotal, 0);
-
-    const payload = {
-      po_no: `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(100 + Math.random() * 900)}`,
-      supplier_id: supplierId,
-      supplier_name: sup.name,
-      items: poItems,
-      total,
-      status: "Ordered",
-      created_at: new Date().toISOString()
-    };
-
-    api.post("/purchase/orders", payload).then(() => {
-      setSupplierId("");
-      setPoItems([]);
-      fetchData();
-      toast.success("Purchase Order berhasil diterbitkan!");
-    });
-  };
-
-  return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="purchase-orders-page">
-      <div>
-        <span className="label-tiny">Pembelian</span>
-        <h1 className="font-display text-3xl font-bold mt-1">Order Pembelian</h1>
-      </div>
-
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 lg:col-span-5 card-surface p-6 space-y-4">
-          <h2 className="font-display font-bold text-lg">Buat PO Baru</h2>
-          
-          <div className="flex flex-col space-y-1">
-            <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Pilih Supplier</label>
-            <select
-              value={supplierId}
-              onChange={(e) => setSupplierId(e.target.value)}
-              className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none text-sm"
-            >
-              <option value="">-- Pilih Supplier --</option>
-              {suppliers.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="border-t border-[hsl(var(--border))] pt-4">
-            <h3 className="text-xs font-bold text-[hsl(var(--muted))] uppercase mb-3">Tambah Item Barang</h3>
-            <form onSubmit={handleAddItem} className="space-y-3">
-              <div className="flex flex-col space-y-1">
-                <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Produk</label>
-                <select
-                  value={productId}
-                  onChange={(e) => {
-                    setProductId(e.target.value);
-                    const prod = products.find(p => p.id === e.target.value);
-                    if (prod) setCost(prod.cost || "");
-                  }}
-                  className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-[hsl(var(--foreground))] outline-none text-xs"
-                >
-                  <option value="">-- Pilih Produk --</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} (Cost: {fmtIDR(p.cost)})</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col space-y-1">
-                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Qty</label>
-                  <input
-                    type="number"
-                    value={qty}
-                    onChange={(e) => setQty(e.target.value)}
-                    placeholder="Contoh: 100"
-                    className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-[hsl(var(--foreground))] outline-none text-xs"
-                  />
-                </div>
-                <div className="flex flex-col space-y-1">
-                  <label className="text-[10px] font-semibold text-[hsl(var(--muted))] uppercase">Harga Beli</label>
-                  <input
-                    type="number"
-                    value={cost}
-                    onChange={(e) => setCost(e.target.value)}
-                    placeholder="Rp"
-                    className="border border-[hsl(var(--border))] rounded-md px-3 py-1.5 bg-white text-[hsl(var(--foreground))] outline-none text-xs"
-                  />
-                </div>
-              </div>
-              <button type="submit" className="btn-outline w-full py-1.5 text-xs flex items-center justify-center gap-2">
-                <Plus size={14} /> Tambah ke Daftar PO
-              </button>
-            </form>
-          </div>
-
-          <div className="border-t border-[hsl(var(--border))] pt-4">
-            <h3 className="text-xs font-bold text-[hsl(var(--muted))] uppercase mb-2">Item Terpilih</h3>
-            <div className="divide-y divide-[hsl(var(--border))] max-h-40 overflow-y-auto">
-              {poItems.map((it, idx) => (
-                <div key={idx} className="flex justify-between py-2 text-xs">
-                  <div>
-                    <p className="font-semibold">{it.name}</p>
-                    <p className="text-[hsl(var(--muted))]">{it.qty} x {fmtIDR(it.cost)}</p>
-                  </div>
-                  <p className="font-bold">{fmtIDR(it.subtotal)}</p>
-                </div>
-              ))}
-              {poItems.length === 0 && (
-                <p className="text-xs text-[hsl(var(--muted))] py-4 text-center">Belum ada item ditambahkan.</p>
-              )}
-            </div>
-            {poItems.length > 0 && (
-              <div className="border-t border-[hsl(var(--border))] pt-3 mt-2 flex justify-between items-center">
-                <div>
-                  <span className="text-[10px] text-[hsl(var(--muted))]">Total PO Est:</span>
-                  <p className="font-display font-bold text-[hsl(var(--primary))]">
-                    {fmtIDR(poItems.reduce((acc, it) => acc + it.subtotal, 0))}
-                  </p>
-                </div>
-                <button onClick={handleCreatePO} className="btn-primary py-2 px-4 text-xs flex items-center gap-1">
-                  <Check size={14} /> Kirim PO
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="col-span-12 lg:col-span-7 card-surface p-6" data-testid="po-list">
-          <h2 className="font-display font-bold text-lg mb-4">Daftar Order Pembelian</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-[hsl(var(--border))]">
-                  <th className="py-3 font-semibold text-[hsl(var(--muted))]">No PO</th>
-                  <th className="py-3 font-semibold text-[hsl(var(--muted))]">Supplier</th>
-                  <th className="py-3 font-semibold text-[hsl(var(--muted))]">Tanggal</th>
-                  <th className="py-3 font-semibold text-[hsl(var(--muted))]">Total</th>
-                  <th className="py-3 text-right font-semibold text-[hsl(var(--muted))]">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))]">
-                {orders.map((o) => (
-                  <tr key={o.id} className="hover:bg-[hsl(var(--background))]/50 transition-colors">
-                    <td className="py-3 font-mono font-semibold text-xs text-[hsl(var(--primary))]">{o.po_no}</td>
-                    <td className="py-3 font-medium text-xs">{o.supplier_name}</td>
-                    <td className="py-3 text-xs text-[hsl(var(--muted))]">{new Date(o.created_at).toLocaleDateString("id-ID")}</td>
-                    <td className="py-3 font-mono font-bold text-xs">{fmtIDR(o.total)}</td>
-                    <td className="py-3 text-right">
-                      <span className={`pill ${
-                        o.status === "Received" ? "pill-success" :
-                        o.status === "Ordered" ? "pill-warning" : "pill-danger"
-                      }`}>
-                        {o.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {orders.length === 0 && (
-                  <tr>
-                    <td colSpan="5" className="py-8 text-center text-[hsl(var(--muted))]">Belum ada PO yang dibuat.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+export default function PurchaseOrder(){
+ const query=useWorkspace(['/suppliers','/products','/purchase/orders']),action=useAction();
+ const products=query.data['/products']||[],suppliers=query.data['/suppliers']||[],table=useTablePage(query.data['/purchase/orders']||[]);
+ const [supplier,setSupplier]=useState(''),[number,setNumber]=useState(''),[items,setItems]=useState([]),reference=useRef(null);
+ const total=Math.round(items.reduce((sum,line)=>sum+line.qty*line.cost,0)*100)/100;
+ const submit=e=>{e.preventDefault();if(!items.length)return;
+  if(!reference.current)reference.current='PO-'+new Date().toISOString().slice(0,10).replaceAll('-','')+'-'+crypto.randomUUID().slice(0,8).toUpperCase();
+  const body={po_no:number.trim()||reference.current,supplier_id:supplier,total,items};
+  action.run(()=>api.post('/purchase/orders',body),()=>{reference.current=null;setItems([]);setNumber('');setSupplier('');query.retry();});};
+ return <div className="p-4 sm:p-6 lg:p-8 space-y-5" data-testid="purchase-order-page"><div><span className="label-tiny">Pembelian</span><h1 className="font-display text-3xl font-bold mt-1">Pesanan pembelian</h1></div>
+ <WorkspaceState query={query}>{action.error&&<p role="alert" className="text-red-800">{action.error}</p>}
+ <form onSubmit={submit} className="card-surface p-5 space-y-4" data-testid="purchase-order-form"><div className="grid gap-4 sm:grid-cols-2">
+ <label>Supplier<select required className="input-field mt-1" value={supplier} onChange={e=>setSupplier(e.target.value)} data-testid="po-supplier-select"><option value="">Pilih supplier</option>{suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+ <label>Nomor PO (opsional)<input maxLength={200} className="input-field mt-1" placeholder="Dibuat otomatis jika kosong" value={number} onChange={e=>setNumber(e.target.value)} data-testid="po-number-input"/></label></div>
+ <PurchaseLineEditor products={products} items={items} onChange={setItems}/><p className="font-bold">Total {fmtIDR(total)}</p><button className="btn-primary" disabled={action.busy||!items.length} data-testid="po-create-btn">{action.busy?'Menyimpan…':'Buat PO'}</button></form>
+ <div className="card-surface p-5 overflow-x-auto" data-testid="purchase-order-list"><table className="workspace-table w-full text-sm text-left"><thead><tr><th>Nomor PO</th><th>Supplier</th><th>Total</th><th>Status</th><th>Rincian</th></tr></thead><tbody>{table.rows.map(row=><tr className="border-t" key={row.id}><td className="py-3">{row.po_no}</td><td>{row.supplier_name}</td><td>{fmtIDR(row.total)}</td><td>{row.status}</td><td>{row.items?.length?<details><summary>Lihat produk</summary>{row.items.map((line,i)=><p key={line.product_id||i}>{line.name} · {line.qty??line.quantity} · diterima {line.received_qty||0}</p>)}</details>:<a className="underline" href="/geraina/app/purchase/receiving">Lengkapi rincian PO lama</a>}</td></tr>)}</tbody></table>{!table.count&&<p className="py-6">Belum ada pesanan pembelian.</p>}<TablePage label="PO" value={table}/></div>
+ </WorkspaceState></div>;
 }

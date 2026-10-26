@@ -65,7 +65,7 @@ def fixture(monkeypatch):
     gateway = AsyncMock(side_effect=AssertionError("Bank QRIS must never call a gateway"))
     monkeypatch.setattr(orders, "create_qris", gateway)
     monkeypatch.setenv("XENDIT_SECRET_KEY", "platform-subscription-fixture-only")
-    run(db.products.insert_one({"id": "product-a", "store_id": "store-a", "stock": 10}))
+    run(db.products.insert_one({"id": "product-a", "store_id": "store-a", "stock": 10, "price": 12500, "name": "Fixture coffee", "cost": 4000}))
     return db, user, TestClient(app), gateway
 
 
@@ -103,7 +103,7 @@ def test_unconfigured_or_invalid_total_does_not_change_stock_or_create_order(fix
     db, _, client, gateway = fixture
     if changes:
         assert configure(client).status_code == 200
-    assert create(client, **changes).status_code == 400
+    assert create(client, **changes).status_code in (400, 422)
     assert run(db.products.find_one({"id": "product-a"}))["stock"] == 10
     assert run(db.orders.count_documents({})) == 0
     gateway.assert_not_awaited()

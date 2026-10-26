@@ -1,0 +1,1144 @@
+{
+  "verifiedAt": "2026-10-26T09:22:39.267382+00:00",
+  "status": "hold_release_confirmed_customer_experience_blockers",
+  "scope": "Current prepared source/frontend with Android presentation. Actual local HTTP APIs, isolated in-memory stores plus actual disposable MongoDB replica; not certification of the installed/public APK or physical hardware.",
+  "sourceHead": "08b5624e8d49c8af37804e9d2023ff385c0649d3",
+  "sourceIncludesUncommittedChanges": true,
+  "productCodeChangedDuringAudit": false,
+  "published": false,
+  "publishedVersion": "1.2.6",
+  "publishedVersionCode": 11,
+  "productionMerchantWrites": 0,
+  "providerChargesOrMessages": 0,
+  "findingCounts": {
+    "P1": 16,
+    "P2": 5
+  },
+  "findings": [
+    {
+      "id": "AUD-001",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Online sale amount validation is incomplete",
+      "customerImpact": "Incorrect revenue/change can be recorded by an authenticated checkout request. Native offline-cash validation is a separate path.",
+      "evidence": [
+        "ORDER-LINE-TOTAL",
+        "CASH-REQUIRED",
+        "ORDER-NEGATIVE-TAX"
+      ],
+      "sources": [
+        "backend/routes_orders.py:55",
+        "backend/models.py:93"
+      ],
+      "acceptance": "Recompute/validate line totals; require sufficient finite received cash; bound discount/tax and forbid negative/nonfinite totals."
+    },
+    {
+      "id": "AUD-002",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Online sale accepts unavailable or foreign product references",
+      "customerImpact": "Invalid products become paid sales without a matching store stock deduction. This did not expose or modify the other store product.",
+      "evidence": [
+        "ORDER-MISSING-PRODUCT",
+        "ORDER-FOREIGN-PRODUCT",
+        "ORDER-INACTIVE"
+      ],
+      "sources": [
+        "backend/routes_orders.py:65"
+      ],
+      "acceptance": "Validate every product belongs to the store, exists, and is saleable before payment/order mutations."
+    },
+    {
+      "id": "AUD-003",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Online checkout silently oversells stock",
+      "customerImpact": "A sale at stock 0 leaves stock -1 without a warning. Preserve explicit historical offline-sale reconciliation separately.",
+      "evidence": [
+        "ORDER-STOCK"
+      ],
+      "sources": [
+        "backend/routes_orders.py:206",
+        "frontend/src/pages/POS.jsx:332"
+      ],
+      "acceptance": "Use an explicit stock policy with atomic availability checks or a clear recorded override/warning."
+    },
+    {
+      "id": "AUD-004",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Online checkout has no retry idempotency",
+      "customerImpact": "The same keyed request creates two orders and deducts stock twice. Electronic provider duplication is a risk, not a tested charge.",
+      "evidence": [
+        "ORDER-RETRY"
+      ],
+      "sources": [
+        "backend/routes_orders.py:65"
+      ],
+      "acceptance": "Persist a checkout attempt key, reuse provider reference and order across retries, and test response-loss recovery."
+    },
+    {
+      "id": "AUD-005",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Order storage failure leaves stock deducted",
+      "customerImpact": "Injected insert failures leave stock 9 with zero orders instead of rolling back to 10.",
+      "evidence": [
+        "ORDER-ATOMICITY"
+      ],
+      "sources": [
+        "backend/routes_orders.py:206"
+      ],
+      "acceptance": "Commit local order/inventory effects atomically and reconcile external payment intents after failures."
+    },
+    {
+      "id": "AUD-006",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Concurrent void restores stock repeatedly",
+      "customerImpact": "Eight actual HTTP cancellations on real MongoDB left stock above its original 10 units.",
+      "evidence": [
+        "VOID-CONCURRENT"
+      ],
+      "sources": [
+        "backend/routes_orders.py:398"
+      ],
+      "acceptance": "Use a guarded atomic status transition plus exactly-once stock restoration; concurrent requests must restore only once."
+    },
+    {
+      "id": "AUD-007",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Voided orders can be marked paid again",
+      "customerImpact": "Stock stays restored while the sale reappears in paid revenue.",
+      "evidence": [
+        "VOID-TERMINAL",
+        "A voided sale cannot be marked paid again without restoring stock accounting"
+      ],
+      "sources": [
+        "backend/routes_orders.py:379"
+      ],
+      "acceptance": "Enforce legal payment state transitions, including manual actions and late provider callbacks."
+    },
+    {
+      "id": "AUD-008",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Purchase order product lines are discarded",
+      "customerImpact": "Selected products, quantities and costs are not persisted; an order cannot support accurate receiving.",
+      "evidence": [
+        "PURCHASE-LINES",
+        "Creating a purchase preserves its selected product and quantity"
+      ],
+      "sources": [
+        "backend/models.py:227",
+        "backend/routes_purchase.py:79",
+        "frontend/src/pages/purchase/PurchaseOrder.jsx:53"
+      ],
+      "acceptance": "Persist validated product/quantity/cost lines and verify them after saving and reloading."
+    },
+    {
+      "id": "AUD-009",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Receiving changes status but does not add inventory",
+      "customerImpact": "Five units received leave stock 10 instead of 15; a nonexistent PO can also get a successful receipt.",
+      "evidence": [
+        "RECEIVING-STOCK",
+        "RECEIVING-REFERENCE",
+        "Receiving a purchase changes actual stock rather than only its status"
+      ],
+      "sources": [
+        "backend/routes_purchase.py:127",
+        "frontend/src/pages/purchase/GoodsReceiving.jsx:33"
+      ],
+      "acceptance": "Validate the PO and remaining line quantities, update inventory atomically, and prevent duplicate receiving."
+    },
+    {
+      "id": "AUD-010",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Supplier invoice and payable statuses diverge",
+      "customerImpact": "Paying via Hutang leaves the invoice Unpaid; reopening an invoice leaves the debt Paid.",
+      "evidence": [
+        "DEBT-INVOICE",
+        "INVOICE-DEBT"
+      ],
+      "sources": [
+        "backend/routes_customers.py:187",
+        "backend/routes_purchase.py:190"
+      ],
+      "acceptance": "Use a shared linked settlement record and update both screens consistently for partial/full/reversed payments."
+    },
+    {
+      "id": "AUD-011",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Stock adjustments can succeed without changing the selected product",
+      "customerImpact": "An SKU-less product sends N/A and stays at stock 10 after an add-5 success. Negative quantities and a forged author are also accepted.",
+      "evidence": [
+        "ADJUSTMENT-PRODUCT-ID",
+        "ADJUSTMENT-VALIDATION"
+      ],
+      "sources": [
+        "backend/routes_inventory.py:163",
+        "frontend/src/pages/products/StockAdjustment.jsx:29"
+      ],
+      "acceptance": "Identify the store product by ID, validate a positive quantity/type, require a matched update, and derive actor from auth."
+    },
+    {
+      "id": "AUD-012",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Debt endpoints allow overpayment",
+      "customerImpact": "A Rp1000 payable accepts paid_amount Rp2000 without rejection.",
+      "evidence": [
+        "DEBT-OVERPAY"
+      ],
+      "sources": [
+        "backend/models.py:312",
+        "backend/routes_customers.py:187"
+      ],
+      "acceptance": "Validate finite nonnegative debt/payment amounts, cap settlement to the balance, and derive status from the ledger."
+    },
+    {
+      "id": "AUD-013",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Stock movement shows invented business transactions",
+      "customerImpact": "A fresh store displays Kopi Arabika 250g, ORD-1002 and other default movements that never occurred.",
+      "evidence": [
+        "Stock movement on a new store contains no invented sales or purchases"
+      ],
+      "sources": [
+        "frontend/src/pages/inventory/StockMovement.jsx:4"
+      ],
+      "acceptance": "Remove demo entries and use a complete server-backed movement ledger with real receipts, adjustments, sales and reversals."
+    },
+    {
+      "id": "AUD-014",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Load errors still look like empty or healthy data on eight screens",
+      "customerImpact": "HTTP 503 is hidden on dashboard, stock movement, purchase orders/receiving/invoices, customers, suppliers and branches.",
+      "evidence": [
+        "A failed read on dashboard",
+        "A failed read on inventory/movement",
+        "A failed read on purchase/orders",
+        "A failed read on purchase/receiving",
+        "A failed read on purchase/invoices",
+        "A failed read on customers",
+        "A failed read on suppliers",
+        "A failed read on branches"
+      ],
+      "sources": [
+        "frontend/src/pages/Dashboard.jsx:47",
+        "frontend/src/pages/purchase/GoodsReceiving.jsx:13",
+        "frontend/src/pages/customer/CustomerList.jsx:22",
+        "frontend/src/pages/branches/BranchManagement.jsx:14"
+      ],
+      "acceptance": "Distinguish loading/error/valid empty/success and offer retry; do not save defaults after failed configuration reads."
+    },
+    {
+      "id": "AUD-015",
+      "priority": "P2",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Adjustment, transfer and purchase selectors still stop at product 500",
+      "customerImpact": "Product 501 is available in the catalogue but cannot be chosen in three workflows.",
+      "evidence": [
+        "products/stock-adjustment can select product 501",
+        "products/stock-transfer can select product 501",
+        "purchase/orders can select product 501"
+      ],
+      "sources": [
+        "frontend/src/pages/products/StockAdjustment.jsx:16",
+        "frontend/src/pages/products/StockTransfer.jsx:17",
+        "frontend/src/pages/purchase/PurchaseOrder.jsx:19"
+      ],
+      "acceptance": "Use complete catalogue enumeration or searchable server selectors with explicit paging."
+    },
+    {
+      "id": "AUD-016",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Customer, supplier and unpaid invoice lists silently truncate",
+      "customerImpact": "Real Mongo returns 200/201 customers, 100/106 suppliers and 100/101 unpaid invoices, with no continuation or count boundary.",
+      "evidence": [
+        "LIST-CUSTOMERS",
+        "LIST-SUPPLIERS",
+        "LIST-UNPAID-INVOICES"
+      ],
+      "sources": [
+        "backend/routes_customers.py:19",
+        "backend/routes_purchase.py:19",
+        "backend/routes_purchase.py:150"
+      ],
+      "acceptance": "Provide store-scoped search/pagination and visible complete counts, including older unpaid bills."
+    },
+    {
+      "id": "AUD-017",
+      "priority": "P2",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Warehouse stock movement requests a forbidden POS endpoint",
+      "customerImpact": "The permitted inventory screen requests /orders?limit=100, gets 403, then leaves its sample movement list.",
+      "evidence": [
+        "warehouse permitted screens / inventory/movement"
+      ],
+      "sources": [
+        "frontend/src/pages/inventory/StockMovement.jsx:16",
+        "backend/routes_orders.py:256"
+      ],
+      "acceptance": "Serve inventory movement through inventory.read and keep sale-history/credential permissions separate."
+    },
+    {
+      "id": "AUD-018",
+      "priority": "P1",
+      "type": "defect",
+      "status": "open_confirmed",
+      "title": "Today totals use UTC instead of the store timezone",
+      "customerImpact": "A paid sale at 23:00 UTC / 06:00 WIB on the current store day is missing from today_sales.",
+      "evidence": [
+        "REPORT-LOCAL-DAY"
+      ],
+      "sources": [
+        "backend/routes_orders.py:270"
+      ],
+      "acceptance": "Apply the configured IANA store timezone to day boundaries and test WIB/WITA/WIT midnight transitions."
+    },
+    {
+      "id": "AUD-019",
+      "priority": "P2",
+      "type": "known_financial_accuracy_gap",
+      "status": "open_confirmed",
+      "title": "Historical profit changes when current product cost changes",
+      "customerImpact": "Recorded net profit changed from Rp600 to Rp200 after editing current cost. This is an existing documented approximation.",
+      "evidence": [
+        "REPORT-HISTORICAL-COST"
+      ],
+      "sources": [
+        "backend/routes_reports.py:1",
+        "backend/routes_reports.py:128"
+      ],
+      "acceptance": "Snapshot cost on new sale lines; use explicit approximation/unknown handling for legacy sales rather than rewriting history."
+    },
+    {
+      "id": "AUD-020",
+      "priority": "P2",
+      "type": "feature_gap",
+      "status": "open_confirmed",
+      "title": "Saved loyalty earning rules do not award sale points",
+      "customerImpact": "A matched customer buying Rp1000 under a saved Rp1000=1 point rule remains at zero points.",
+      "evidence": [
+        "LOYALTY-ACCRUAL"
+      ],
+      "sources": [
+        "backend/routes_customers.py:109",
+        "backend/routes_orders.py:65",
+        "frontend/src/pages/customer/LoyaltyPoints.jsx:50"
+      ],
+      "acceptance": "Persist the customer ID on sales and apply earning/reversal/redemption rules exactly once, or clearly describe manual-only points."
+    },
+    {
+      "id": "AUD-021",
+      "priority": "P2",
+      "type": "feature_gap_and_validation_defect",
+      "status": "open_confirmed",
+      "title": "Transfers are record-only and lack basic validation",
+      "customerImpact": "A transfer between the same nonexistent branch with quantity -5 is accepted as Shipped; schema stores product names, without branch balances or a receiving workflow.",
+      "evidence": [
+        "TRANSFER-VALIDATION"
+      ],
+      "sources": [
+        "backend/models.py:200",
+        "backend/routes_inventory.py:197",
+        "frontend/src/pages/products/StockTransfer.jsx:33"
+      ],
+      "acceptance": "Validate store branch/product IDs and positive quantities; implement shipment/receipt/reversal inventory effects or label this as a transfer log."
+    }
+  ],
+  "browserChecks": {
+    "total": 276,
+    "passed": 228,
+    "failed": 48,
+    "flaky": 0,
+    "skipped": 0,
+    "screenRoutes": 56,
+    "routeRenderChecks": 168,
+    "profiles": [
+      "phone 412x915",
+      "Xiaomi-sized tablet 1016x1100",
+      "Samsung-sized tablet 1480x924"
+    ],
+    "roles": [
+      "Owner",
+      "Manager",
+      "Cashier",
+      "Warehouse"
+    ],
+    "runs": {
+      "screens": {
+        "startTime": "2026-10-26T09:02:26.011Z",
+        "duration": 487969.49600000004,
+        "expected": 189,
+        "skipped": 0,
+        "unexpected": 45,
+        "flaky": 0
+      },
+      "money": {
+        "startTime": "2026-10-26T09:10:18.551Z",
+        "duration": 30818.528,
+        "expected": 15,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "roles": {
+        "startTime": "2026-10-26T09:16:50.304Z",
+        "duration": 25327.985,
+        "expected": 15,
+        "skipped": 0,
+        "unexpected": 3,
+        "flaky": 0
+      },
+      "onboarding": {
+        "startTime": "2026-10-26T09:26:21.876Z",
+        "duration": 24714.255,
+        "expected": 9,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "failedChecks": [
+      {
+        "run": "screens",
+        "scenario": "Stock movement on a new store contains no invented sales or purchases",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 108
+      },
+      {
+        "run": "screens",
+        "scenario": "Receiving a purchase changes actual stock rather than only its status",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 114
+      },
+      {
+        "run": "screens",
+        "scenario": "Creating a purchase preserves its selected product and quantity",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 122
+      },
+      {
+        "run": "screens",
+        "scenario": "A voided sale cannot be marked paid again without restoring stock accounting",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 129
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on dashboard is visible to the customer",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on inventory/movement is visible to the customer",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on purchase/orders is visible to the customer",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on purchase/receiving is visible to the customer",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on purchase/invoices is visible to the customer",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on customers is visible to the customer",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on suppliers is visible to the customer",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on branches is visible to the customer",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "Stock movement on a new store contains no invented sales or purchases",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 108
+      },
+      {
+        "run": "screens",
+        "scenario": "Receiving a purchase changes actual stock rather than only its status",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 114
+      },
+      {
+        "run": "screens",
+        "scenario": "Creating a purchase preserves its selected product and quantity",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 122
+      },
+      {
+        "run": "screens",
+        "scenario": "A voided sale cannot be marked paid again without restoring stock accounting",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 129
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on dashboard is visible to the customer",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on inventory/movement is visible to the customer",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on purchase/orders is visible to the customer",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on purchase/receiving is visible to the customer",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on purchase/invoices is visible to the customer",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on customers is visible to the customer",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on suppliers is visible to the customer",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on branches is visible to the customer",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "Stock movement on a new store contains no invented sales or purchases",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 108
+      },
+      {
+        "run": "screens",
+        "scenario": "Receiving a purchase changes actual stock rather than only its status",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 114
+      },
+      {
+        "run": "screens",
+        "scenario": "Creating a purchase preserves its selected product and quantity",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 122
+      },
+      {
+        "run": "screens",
+        "scenario": "A voided sale cannot be marked paid again without restoring stock accounting",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 129
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on dashboard is visible to the customer",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on inventory/movement is visible to the customer",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on purchase/orders is visible to the customer",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on purchase/receiving is visible to the customer",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on purchase/invoices is visible to the customer",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on customers is visible to the customer",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on suppliers is visible to the customer",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "A failed read on branches is visible to the customer",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 157
+      },
+      {
+        "run": "screens",
+        "scenario": "products/stock-adjustment can select product 501",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 139
+      },
+      {
+        "run": "screens",
+        "scenario": "products/stock-transfer can select product 501",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 139
+      },
+      {
+        "run": "screens",
+        "scenario": "purchase/orders can select product 501",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 139
+      },
+      {
+        "run": "screens",
+        "scenario": "products/stock-adjustment can select product 501",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 139
+      },
+      {
+        "run": "screens",
+        "scenario": "products/stock-transfer can select product 501",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 139
+      },
+      {
+        "run": "screens",
+        "scenario": "purchase/orders can select product 501",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 139
+      },
+      {
+        "run": "screens",
+        "scenario": "products/stock-adjustment can select product 501",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 139
+      },
+      {
+        "run": "screens",
+        "scenario": "products/stock-transfer can select product 501",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 139
+      },
+      {
+        "run": "screens",
+        "scenario": "purchase/orders can select product 501",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-audit.spec.js",
+        "line": 139
+      },
+      {
+        "run": "roles",
+        "scenario": "inventory/movement loads only APIs the employee is allowed to access",
+        "profile": "phone",
+        "status": "unexpected",
+        "file": "customer-role-audit.spec.js",
+        "line": 5
+      },
+      {
+        "run": "roles",
+        "scenario": "inventory/movement loads only APIs the employee is allowed to access",
+        "profile": "xiaomi-tablet",
+        "status": "unexpected",
+        "file": "customer-role-audit.spec.js",
+        "line": 5
+      },
+      {
+        "run": "roles",
+        "scenario": "inventory/movement loads only APIs the employee is allowed to access",
+        "profile": "samsung-tablet",
+        "status": "unexpected",
+        "file": "customer-role-audit.spec.js",
+        "line": 5
+      }
+    ]
+  },
+  "apiDiagnostics": {
+    "inMemory": {
+      "cases": 27,
+      "passed": 5,
+      "failed": 22,
+      "inconclusive": 0,
+      "results": [
+        {
+          "id": "CASH-HAPPY",
+          "name": "A paid cash sale decrements stock exactly once",
+          "status": "passed",
+          "observed": {
+            "total": 1000.0,
+            "stock": 9
+          }
+        },
+        {
+          "id": "ORDER-LINE-TOTAL",
+          "name": "Server reconciles line quantity/price with its subtotal",
+          "status": "failed",
+          "detail": "price=1000 x quantity=1 with subtotal=1 returned HTTP 200, total=1.0; stock=9"
+        },
+        {
+          "id": "CASH-REQUIRED",
+          "name": "Cash checkout requires a received amount",
+          "status": "failed",
+          "detail": "Cash with no received amount returned HTTP 200, status=paid"
+        },
+        {
+          "id": "ORDER-MISSING-PRODUCT",
+          "name": "A sale references an existing product in its own store",
+          "status": "failed",
+          "detail": "missing-product accepted with HTTP 200, order count=1"
+        },
+        {
+          "id": "ORDER-FOREIGN-PRODUCT",
+          "name": "A sale references an existing product in its own store",
+          "status": "failed",
+          "detail": "foreign-product accepted with HTTP 200, order count=1"
+        },
+        {
+          "id": "ORDER-INACTIVE",
+          "name": "Online checkout rejects an inactive product",
+          "status": "failed",
+          "detail": "Inactive product accepted with HTTP 200"
+        },
+        {
+          "id": "ORDER-NEGATIVE-TAX",
+          "name": "Negative tax cannot produce a paid negative sale",
+          "status": "failed",
+          "detail": "Negative tax produced HTTP 200, total=-1000.0, change=2000.0"
+        },
+        {
+          "id": "ORDER-STOCK",
+          "name": "Online overselling is rejected or explicitly warned",
+          "status": "failed",
+          "detail": "Online sale accepted at stock 0; resulting stock=-1, warning=None"
+        },
+        {
+          "id": "ORDER-RETRY",
+          "name": "Repeated online payment attempt cannot duplicate a sale",
+          "status": "failed",
+          "detail": "Retrying the same keyed request created 2 orders; stock=8"
+        },
+        {
+          "id": "VOID-TERMINAL",
+          "name": "Voided sale cannot reappear as revenue with restored stock",
+          "status": "failed",
+          "detail": "Voided sale became paid; stock=10 (already restored)"
+        },
+        {
+          "id": "INVOICE-DEBT",
+          "name": "Reopening an invoice keeps the matching payable consistent",
+          "status": "failed",
+          "detail": "Invoice=Unpaid, matching payable=Paid, paid_amount=5000.0"
+        },
+        {
+          "id": "DEBT-OVERPAY",
+          "name": "Debt payment cannot exceed the debt amount",
+          "status": "failed",
+          "detail": "Payable amount 1000 accepted paid_amount=2000.0 with HTTP 200"
+        },
+        {
+          "id": "ADJUSTMENT-VALIDATION",
+          "name": "Inventory additions require a positive amount",
+          "status": "failed",
+          "detail": "Adding -5 was accepted; stock=5, recorded_author=Forged author"
+        },
+        {
+          "id": "PURCHASE-LINES",
+          "name": "Purchase preserves product and quantity lines",
+          "status": "failed",
+          "detail": "Saved purchase fields: ['created_at', 'id', 'po_no', 'status', 'store_id', 'supplier_id', 'supplier_name', 'total']; selected product and quantity were discarded"
+        },
+        {
+          "id": "RECEIVING-STOCK",
+          "name": "Received goods update inventory quantities",
+          "status": "failed",
+          "detail": "HTTP 200; PO status=Received, actual stock=10, expected=15"
+        },
+        {
+          "id": "RECEIVING-REFERENCE",
+          "name": "A goods receipt must reference a real store purchase",
+          "status": "failed",
+          "detail": "Receipt accepted for nonexistent PO with HTTP 200"
+        },
+        {
+          "id": "TENANT-PRODUCT",
+          "name": "Other-store product writes are rejected",
+          "status": "passed",
+          "observed": null
+        },
+        {
+          "id": "CASHIER-AUTHORITY",
+          "name": "Cashier cannot access credentials, payment settings or owner void",
+          "status": "passed",
+          "observed": null
+        },
+        {
+          "id": "ORDER-ATOMICITY",
+          "name": "Failed order storage cannot leave stock deducted without a sale",
+          "status": "failed",
+          "detail": "Order insert failed twice; orders=0, stock=9 (should roll back to 10)"
+        },
+        {
+          "id": "REPORT-LOCAL-DAY",
+          "name": "Today totals follow the configured store day",
+          "status": "failed",
+          "detail": "Store timezone=WIB; sale at 2026-10-25T23:00:00+00:00 belongs to current local day but today_sales=0"
+        },
+        {
+          "id": "REPORT-HISTORICAL-COST",
+          "name": "Current cost edits do not rewrite historical sale profit",
+          "status": "failed",
+          "detail": "Editing current product cost from 400 to 800 rewrote recorded sale net profit from 600.0 to 200.0"
+        },
+        {
+          "id": "LIST-CUSTOMERS",
+          "name": "Business record lists expose their complete results",
+          "status": "passed",
+          "observed": null
+        },
+        {
+          "id": "LIST-SUPPLIERS",
+          "name": "Business record lists expose their complete results",
+          "status": "passed",
+          "observed": null
+        },
+        {
+          "id": "ADJUSTMENT-PRODUCT-ID",
+          "name": "An adjustment cannot report success without updating the selected product",
+          "status": "failed",
+          "detail": "Product without SKU: adjustment returned HTTP 200 but stock stayed 10; expected 15"
+        },
+        {
+          "id": "DEBT-INVOICE",
+          "name": "Paying an invoice through Hutang updates both linked screens",
+          "status": "failed",
+          "detail": "Payable=Paid, matching invoice=Unpaid"
+        },
+        {
+          "id": "LOYALTY-ACCRUAL",
+          "name": "Saved earning rules are applied to a paid customer sale",
+          "status": "failed",
+          "detail": "Configured Rp1000=1 point; matched customer paid Rp1000, saved loyalty_points=0"
+        },
+        {
+          "id": "TRANSFER-VALIDATION",
+          "name": "A shipped transfer requires valid distinct branches and positive product quantities",
+          "status": "failed",
+          "detail": "HTTP 200; nonexistent identical branches and negative quantity recorded as Shipped"
+        }
+      ]
+    },
+    "realMongo": {
+      "scope": "Actual HTTP API + actual disposable MongoDB replica at 127.0.0.1; no mocked API/database responses",
+      "productionWrites": 0,
+      "results": [
+        {
+          "id": "ORDER-LINE-TOTAL",
+          "status": "failed",
+          "detail": "HTTP 200; line 1000 x 1 recorded at total 1.0"
+        },
+        {
+          "id": "CASH-REQUIRED",
+          "status": "failed",
+          "detail": "HTTP 200; payment_status=paid"
+        },
+        {
+          "id": "ORDER-NEGATIVE-TAX",
+          "status": "failed",
+          "detail": "HTTP 200; paid total=-1000.0"
+        },
+        {
+          "id": "ORDER-FOREIGN-PRODUCT",
+          "status": "failed",
+          "detail": "HTTP 200; another store product ID accepted as a sale item"
+        },
+        {
+          "id": "ORDER-STOCK",
+          "status": "failed",
+          "detail": "Stock became -1 without warning"
+        },
+        {
+          "id": "ORDER-RETRY",
+          "status": "failed",
+          "detail": "Same keyed attempt created 2 orders and stock=8"
+        },
+        {
+          "id": "VOID-TERMINAL",
+          "status": "failed",
+          "detail": "Voided -> paid; stock=10"
+        },
+        {
+          "id": "VOID-CONCURRENT",
+          "status": "failed",
+          "detail": "8 concurrent cancellations returned [200, 200, 200, 200, 200, 200, 200, 200]; final stock=16, expected 10"
+        },
+        {
+          "id": "PURCHASE-LINES",
+          "status": "failed",
+          "detail": "Persisted fields=['id', 'store_id', 'po_no', 'supplier_id', 'supplier_name', 'total', 'status', 'created_at']; no product lines"
+        },
+        {
+          "id": "RECEIVING-STOCK",
+          "status": "failed",
+          "detail": "HTTP 200; PO=Received; actual stock=10, expected 15"
+        },
+        {
+          "id": "DEBT-INVOICE",
+          "status": "failed",
+          "detail": "Payable=Paid; invoice=Unpaid"
+        },
+        {
+          "id": "LIST-CUSTOMERS",
+          "status": "failed",
+          "detail": "201 records saved, only 200 returned, no paging/total envelope"
+        },
+        {
+          "id": "LIST-SUPPLIERS",
+          "status": "failed",
+          "detail": "106 records saved, only 100 returned, no paging/total envelope"
+        },
+        {
+          "id": "LIST-UNPAID-INVOICES",
+          "status": "failed",
+          "detail": "101 unpaid invoices saved; UI list response has only 100, without search/paging/total"
+        },
+        {
+          "id": "REPORT-LOCAL-DAY",
+          "status": "failed",
+          "detail": "WIB store today excludes sale at 2026-10-25T23:00:00+00:00; today_sales=0"
+        },
+        {
+          "id": "REPORT-HISTORICAL-COST",
+          "status": "failed",
+          "detail": "Past net profit changed from 600.0 to 200.0 after current cost edit"
+        }
+      ],
+      "passed": 0,
+      "failed": 16,
+      "inconclusive": 0
+    },
+    "limitation": "AsyncMongoMock does not enforce to_list(length) like real MongoDB. Real-Mongo list results supersede the small in-memory list passes; these passes do not certify complete datasets."
+  },
+  "existingRegressionChecks": {
+    "backend": {
+      "passed": 280,
+      "xml": [
+        "backend-regressions.xml",
+        "offline-transactions.xml"
+      ]
+    },
+    "androidUnits": {
+      "tests": 24,
+      "failures": 0,
+      "cachedTask": true
+    },
+    "androidLint": {
+      "status": "passed",
+      "errors": 0,
+      "warnings": 51,
+      "note": "Warnings reviewed; RequiresFeature calls are guarded by the common feature check and are not counted as confirmed crashes."
+    }
+  },
+  "bundle": {
+    "name": "main.af2d8c26.js",
+    "sha256": "bd1666d907f98c497050543a0c7f6590b84329131d6f1d2084b87e76eaf0f43d"
+  },
+  "notVerified": [
+    "Physical Android phone/tablet installation, touch keyboard, rotation, split screen, large font, accessibility and sustained low-memory performance",
+    "Physical Bluetooth printer pairing/printing and real camera barcode capture",
+    "Real Xendit/DOKU merchant charges, signatures/webhook settlement and cancellations/refunds",
+    "Actual bank receipt: QRIS test exercises staff-confirmed recording with a synthetic nonpayable QR, not bank verification",
+    "New APK installer/update/rollback on Android devices",
+    "Production network cold launch/navigation performance and representative merchant dataset latency",
+    "Deployed candidate via TestSprite: no candidate preview/release URL is deployed"
+  ],
+  "recommendedOrder": [
+    "Checkout calculation/validation, attempt idempotency and atomic writes",
+    "Exactly-once cancellation and legal payment status transitions",
+    "Purchase lines, receiving, adjustments and linked debts/invoices",
+    "Remove invented movement data, repair role-specific reads, and expose read failures",
+    "Complete selectors/list paging and store-local report boundaries",
+    "Explicitly finish or label loyalty, cost history, branch transfers and refunds"
+  ],
+  "reports": {
+    "html": "android-app/app/build/reports/customer-audit/index.html",
+    "screens": "android-app/app/build/reports/customer-audit/report/index.html",
+    "money": "android-app/app/build/reports/customer-audit/real-mongo/report/index.html",
+    "roles": "android-app/app/build/reports/customer-audit/roles/report/index.html",
+    "onboarding": "android-app/app/build/reports/customer-audit/onboarding/report/index.html"
+  },
+  "onboardingVerification": {
+    "status": "passed",
+    "scenarios": [
+      "New merchant registration creates an empty trial store",
+      "Expired POS stays locked; documented public Pricing recovery remains available",
+      "Queued offline cash cannot be replayed by a different authenticated merchant"
+    ],
+    "initialExpectationCorrected": "Initial diagnostic expected the guarded in-app billing tab to be available after trial expiry. Code review confirmed the documented recovery route is public Pricing, which passes. This expectation was corrected and is not counted as a product defect."
+  },
+  "followUp": {
+    "status": "21_findings_fixed_and_verified_locally",
+    "verification": "CUSTOMER-FIXES.json",
+    "notes": "CUSTOMER-FIXES.md",
+    "historicalFindingsPreserved": true
+  }
+}

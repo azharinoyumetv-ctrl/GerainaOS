@@ -8,6 +8,7 @@ from auth import get_current_user, require_admin
 from plan_limits import require_plan, plan_rank
 from bank_qris import BankQrisSetup, inspect_static_qris, public_bank_qris
 from permissions import require_permission, canonical_role
+from payment_options import payment_options, section, EWALLETS
 
 router = APIRouter(tags=["settings"])
 
@@ -48,6 +49,10 @@ async def save_settings(payload: Dict[str, Any], user: dict = Depends(get_curren
     return res
 
 # ---------- Payments Config ----------
+@router.get('/api/payments/options', dependencies=[Depends(require_permission('pos.use'))])
+async def get_payment_options(user: dict = Depends(get_current_user)):
+    return await payment_options(get_db(), user)
+
 @router.get("/api/payments/bank-qris")
 async def get_bank_qris(user: dict = Depends(get_current_user)):
     # Cashiers can read the public payment code, never another provider's API secrets.
@@ -76,35 +81,51 @@ async def save_bank_qris(payload: BankQrisSetup, user: dict = Depends(require_ad
 async def get_payments_config(user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.payments_config.find_one({"store_id": user["store_id"]}, {"_id": 0})
-    if not res:
-        # Default Indonesian payment channels config
-        return {
-            "cash": { "is_active": True, "provider": "Sistem Kasir Lokal", "require_drawer": True, "active_drawer_port": "COM3" },
-            "qris": { "is_active": False, "provider": "Xendit", "type": "dynamic", "merchant_id": "", "callback_status": "Unverified" },
-            "ewallet": {
-                "is_active": True,
-                "provider": "Xendit",
-                "channels": {
-                    "GoPay": True, "OVO": True, "DANA": True, "ShopeePay": True, "LinkAja": True,
-                    "AstraPay": False, "Sakuku": False, "iSaku": False, "MotionPay": False, "JeniusPay": True
-                }
-            },
-            "va": {
-                "is_active": True,
-                "provider": "Midtrans",
-                "banks": {
-                    "BCA": True, "BNI": True, "BRI": True, "Mandiri": True, "Permata": True,
-                    "CIMB": True, "Maybank": False, "Danamon": False, "Neo": False, "BSI": True
-                }
-            },
-            "credit_card": { "is_active": False, "provider": "", "enable_3ds": True, "installment_banks": [] },
-            "bank_transfer": { "is_active": True, "accounts": [{ "bank": "Bank Central Asia", "account_no": "8820987111", "account_name": "DagangOS Geraina POS" }] },
-            "edc": { "is_active": False, "provider": "" }
-        }
+    saved = res or {}
+    # Default Indonesian payment channels config
+    defaults = {
+        "cash": { "is_active": True, "provider": "Sistem Kasir Lokal", "require_drawer": False, "active_drawer_port": "" },
+        "qris": { "is_active": False, "provider": "Xendit", "type": "dynamic", "merchant_id": "", "callback_status": "Unverified" },
+        "ewallet": {
+            "is_active": False,
+            "provider": "Xendit",
+            "channels": {
+                "GoPay": True, "OVO": True, "DANA": True, "ShopeePay": True, "LinkAja": True,
+                "AstraPay": False, "Sakuku": False, "iSaku": False, "MotionPay": False, "JeniusPay": True
+            }
+        },
+        "va": {
+            "is_active": False,
+            "provider": "Midtrans",
+            "banks": {
+                "BCA": True, "BNI": True, "BRI": True, "Mandiri": True, "Permata": True,
+                "CIMB": True, "Maybank": False, "Danamon": False, "Neo": False, "BSI": True
+            }
+        },
+        "credit_card": { "is_active": False, "provider": "", "enable_3ds": True, "installment_banks": [] },
+        "bank_transfer": { "is_active": False, "accounts": [{ "bank": "", "account_no": "", "account_name": "" }] },
+        "edc": { "is_active": False, "provider": "" }
+    }
+    res = {**saved, **{key: {**value, **section(saved, key)} for key, value in defaults.items()}}
+    # Older clients also receive a complete document. Unsupported legacy flags
+    # do not represent a usable checkout and must not appear active on read.
+    for key in ('va', 'credit_card', 'bank_transfer', 'edc'):
+        res[key]['is_active'] = False
+    options = await payment_options(db, user)
+    wallet = section(res, 'ewallet')
+    res['ewallet'] = {**wallet, 'provider': wallet.get('provider') or 'Xendit',
+                      'is_active': section(saved, 'ewallet').get('is_active', options['methods']['ewallet']['enabled']),
+                      'channels': {label: section(wallet, 'channels').get(label, section(wallet, 'channels').get(code, True)) for code, label in EWALLETS.items()}}
     return res
 
 @router.post("/api/payments/config", dependencies=[Depends(require_permission("payments.configure"))])
 async def save_payments_config(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
+    for key in ('va', 'credit_card', 'bank_transfer', 'edc'):
+        if section(payload, key).get('is_active'):
+            raise HTTPException(400, 'Metode ini belum tersedia sebagai checkout terpisah. Gunakan DOKU untuk kanal yang didukung.')
+    wallet = section(payload, 'ewallet')
+    if wallet.get('is_active') and str(wallet.get('provider') or 'Xendit').lower() != 'xendit':
+        raise HTTPException(400, 'E-Wallet kasir saat ini menggunakan Xendit milik toko. Pilih Xendit.')
     qris = payload.get("qris")
     if qris and qris.get("is_active"):
         mid = qris.get("merchant_id")
@@ -165,6 +186,8 @@ async def get_integrations(user: dict = Depends(integration_owner)):
 
 @router.post("/api/integrations", dependencies=[Depends(require_permission("integrations.manage"))])
 async def save_integrations(payload: Dict[str, Any], user: dict = Depends(integration_owner)):
+    if section(payload, "midtrans").get("is_active"):
+        raise HTTPException(400, "Checkout Midtrans toko belum tersedia. Gunakan Xendit atau DOKU yang didukung.")
     if plan_rank(user.get("plan")) < plan_rank("pro"):
         raise HTTPException(status_code=403, detail="Integrasi pihak ketiga tersedia mulai paket Pro. Upgrade paket untuk mengakses fitur ini.")
     if plan_rank(user.get("plan")) < plan_rank("business"):

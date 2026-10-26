@@ -38,8 +38,8 @@ export async function cached(scope, name) {
   });
 }
 
-export async function cache(scope, name, data) {
-  await transact(["cache"], "readwrite", tx => tx.objectStore("cache").put({ key: `${scope}:${name}`, data, savedAt: new Date().toISOString() }));
+export async function cache(scope, name, data, metadata = {}) {
+  await transact(["cache"], "readwrite", tx => tx.objectStore("cache").put({ ...metadata, key: `${scope}:${name}`, data, savedAt: new Date().toISOString() }));
 }
 
 export async function localSales(scope) {

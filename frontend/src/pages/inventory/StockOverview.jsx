@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
-import api from "@/api/client";
+import useTablePage from "@/hooks/useTablePage";
+import TablePage from "@/components/TablePage";
+import useCatalogue from "@/hooks/useCatalogue";
+import ReadState from "@/components/ReadState";
 
 export default function StockOverview() {
-  const [products, setProducts] = useState([]);
-  
-  useEffect(() => {
-    api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
-  }, []);
+  const { products, loading, error, retry } = useCatalogue();
+  const table = useTablePage(products);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="stock-overview-page">
@@ -15,7 +14,8 @@ export default function StockOverview() {
         <h1 className="font-display text-3xl font-bold mt-1">Ringkasan Stok</h1>
       </div>
 
-      <div className="card-surface p-6">
+      <ReadState loading={loading} error={error} retry={retry} testid="inventory-read-state" />
+      {!loading && !error && <div className="card-surface p-6">
         <h2 className="font-display font-bold text-lg mb-4">Ringkasan Stok Produk</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
@@ -30,7 +30,7 @@ export default function StockOverview() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[hsl(var(--border))]">
-              {products.map((p) => {
+              {table.rows.map((p) => {
                 const isLow = p.stock <= 5;
                 const isOut = p.stock <= 0;
                 return (
@@ -59,8 +59,9 @@ export default function StockOverview() {
               )}
             </tbody>
           </table>
+          <TablePage value={table} />
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

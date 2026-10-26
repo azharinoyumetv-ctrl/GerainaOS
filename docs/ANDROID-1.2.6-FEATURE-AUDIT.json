@@ -1,0 +1,1176 @@
+{
+  "auditedAt": "2026-10-26T06:48:58.396965+00:00",
+  "status": "audit_complete_local_corrections_prepared",
+  "published": false,
+  "sourceHead": "08b5624e8d49c8af37804e9d2023ff385c0649d3",
+  "sourceHasUncommittedCorrections": true,
+  "publishedApk": {
+    "version": "1.2.6",
+    "versionCode": 11,
+    "sha256": "11da42cc1a7cc02e5afa02313a6136c5206851b15553952aca63be03ffd83b53",
+    "unchanged": true
+  },
+  "scope": "56 operational screens; sidebar/page/route/role/plan consistency; API method/path inventory; isolated failure and boundary reproductions. Not exhaustive business-rule, physical-device or payment-provider certification.",
+  "localCorrectionGroups": [
+    "sidebar/tab parity: DOKU, sales, EDC",
+    "payment route normalization",
+    "payment load/retry and missing-section defaults",
+    "section-only payment saves and double-submit lock",
+    "new-store bank/gateway defaults",
+    "server-authoritative billing/license display",
+    "Android read-only billing navigation",
+    "Geraina callback instructions",
+    "merchant simulator controls removed",
+    "bank QRIS plan/navigation consistency",
+    "dashboard role/plan shortcuts",
+    "canonical and unknown app routes",
+    "browser menu expansion",
+    "fabricated financial/chart figures removed",
+    "no-op tax export removed/unavailable states disclosed",
+    "unused cross-product navigation permissions removed"
+  ],
+  "originalApkContractFailures": [
+    {
+      "name": "DOKU appears in expanded integration navigation",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('aside a[href=\"/geraina/app/integrations/doku\"]') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Sales history is directly reachable in the sidebar",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n0 !== 1\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "EDC setup availability page is included in payment navigation",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n0 !== 1\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Credit-card route renders the matching configuration",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Aktifkan Kartu Kredit Online', { exact: true }) to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Bank-transfer route renders the matching configuration",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Rekening Penerima', { exact: true }) to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Failed payment settings load cannot save defaults and offers retry",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('payment-config-error') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Empty payment settings merge safe defaults without crashing",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Rekening Penerima', { exact: true }) to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n2 !== 1\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "xendit merchant screen excludes developer webhook simulators",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "doku merchant screen excludes developer webhook simulators",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "whatsapp merchant screen excludes developer webhook simulators",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n1 !== 0\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Unknown integrations subsection has a safe not-found screen",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('app-page-not-found') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Unknown settings subsection has a safe not-found screen",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('app-page-not-found') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Unknown payments subsection has a safe not-found screen",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('app-page-not-found') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Unknown reports subsection has a safe not-found screen",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('app-page-not-found') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Unknown staff subsection has a safe not-found screen",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('app-page-not-found') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Starter Owner can reach bank QRIS from the integration menu",
+      "status": "failed",
+      "error": "locator.click: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('menu-parent-integrations')\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Browser expanding a menu retains the current screen",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ '/geraina/app/products'\n- '/geraina/app/about'\n                ^\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Legacy product deep link retains its destination and query",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('categories-page') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Root app alias applies the same cashier permissions as canonical route",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('pos-page') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n4 !== 0\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Bank QRIS screen retains payment subsection navigation",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"bank-qris-settings\"] a[href=\"/geraina/app/payments/cash\"]') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "EDC cannot claim activation before certified support exists",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Billing uses the authoritative account plan without an absent subscription API",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\ntrue !== false\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "doku instructions use the Geraina callback backend",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n0 !== 1\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "whatsapp instructions use the Geraina callback backend",
+      "status": "failed",
+      "error": "Expected values to be strictly equal:\n\n0 !== 1\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('tax-report-unavailable') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Sales report does not invent a daily distribution from a weekly total",
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 3500ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByTestId('sales-daily-unavailable') to be visible\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "name": "Browser dashboard does not fabricate drawer cash or profit",
+      "status": "failed",
+      "error": "The input did not match the regular expression /—/. Input:\n\n'POSISI KAS\\n\\nRp 500.000\\n\\nKas dalam laci kasir'\n",
+      "runtimeErrors": []
+    }
+  ],
+  "rootAliasReproductionNote": "Corrected test-server /app alias handling before independently confirming original cashier denial.",
+  "preparedUiProfiles": {
+    "phone": {
+      "viewportWidth": 412,
+      "status": "passed",
+      "results": [
+        {
+          "name": "DOKU appears in expanded integration navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Sales history is directly reachable in the sidebar",
+          "status": "passed"
+        },
+        {
+          "name": "EDC setup availability page is included in payment navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Credit-card route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Bank-transfer route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Failed payment settings load cannot save defaults and offers retry",
+          "status": "passed"
+        },
+        {
+          "name": "Empty payment settings merge safe defaults without crashing",
+          "status": "passed"
+        },
+        {
+          "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+          "status": "passed"
+        },
+        {
+          "name": "xendit merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "doku merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown integrations subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown settings subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown payments subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown reports subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown staff subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Starter Owner can reach bank QRIS from the integration menu",
+          "status": "passed"
+        },
+        {
+          "name": "Browser expanding a menu retains the current screen",
+          "status": "passed"
+        },
+        {
+          "name": "Legacy product deep link retains its destination and query",
+          "status": "passed"
+        },
+        {
+          "name": "Root app alias applies the same cashier permissions as canonical route",
+          "status": "passed"
+        },
+        {
+          "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+          "status": "passed"
+        },
+        {
+          "name": "Bank QRIS screen retains payment subsection navigation",
+          "status": "passed"
+        },
+        {
+          "name": "EDC cannot claim activation before certified support exists",
+          "status": "passed"
+        },
+        {
+          "name": "Billing uses the authoritative account plan without an absent subscription API",
+          "status": "passed"
+        },
+        {
+          "name": "Android retains a visible read-only billing tab and permits its SPA navigation",
+          "status": "passed"
+        },
+        {
+          "name": "doku instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+          "status": "passed"
+        },
+        {
+          "name": "Sales report does not invent a daily distribution from a weekly total",
+          "status": "passed"
+        },
+        {
+          "name": "Browser dashboard does not fabricate drawer cash or profit",
+          "status": "passed"
+        }
+      ]
+    },
+    "xiaomi": {
+      "viewportWidth": 1016,
+      "status": "passed",
+      "results": [
+        {
+          "name": "DOKU appears in expanded integration navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Sales history is directly reachable in the sidebar",
+          "status": "passed"
+        },
+        {
+          "name": "EDC setup availability page is included in payment navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Credit-card route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Bank-transfer route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Failed payment settings load cannot save defaults and offers retry",
+          "status": "passed"
+        },
+        {
+          "name": "Empty payment settings merge safe defaults without crashing",
+          "status": "passed"
+        },
+        {
+          "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+          "status": "passed"
+        },
+        {
+          "name": "xendit merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "doku merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown integrations subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown settings subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown payments subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown reports subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown staff subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Starter Owner can reach bank QRIS from the integration menu",
+          "status": "passed"
+        },
+        {
+          "name": "Browser expanding a menu retains the current screen",
+          "status": "passed"
+        },
+        {
+          "name": "Legacy product deep link retains its destination and query",
+          "status": "passed"
+        },
+        {
+          "name": "Root app alias applies the same cashier permissions as canonical route",
+          "status": "passed"
+        },
+        {
+          "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+          "status": "passed"
+        },
+        {
+          "name": "Bank QRIS screen retains payment subsection navigation",
+          "status": "passed"
+        },
+        {
+          "name": "EDC cannot claim activation before certified support exists",
+          "status": "passed"
+        },
+        {
+          "name": "Billing uses the authoritative account plan without an absent subscription API",
+          "status": "passed"
+        },
+        {
+          "name": "Android retains a visible read-only billing tab and permits its SPA navigation",
+          "status": "passed"
+        },
+        {
+          "name": "doku instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+          "status": "passed"
+        },
+        {
+          "name": "Sales report does not invent a daily distribution from a weekly total",
+          "status": "passed"
+        },
+        {
+          "name": "Browser dashboard does not fabricate drawer cash or profit",
+          "status": "passed"
+        }
+      ]
+    },
+    "samsung": {
+      "viewportWidth": 1480,
+      "status": "passed",
+      "results": [
+        {
+          "name": "DOKU appears in expanded integration navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Sales history is directly reachable in the sidebar",
+          "status": "passed"
+        },
+        {
+          "name": "EDC setup availability page is included in payment navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Credit-card route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Bank-transfer route renders the matching configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Failed payment settings load cannot save defaults and offers retry",
+          "status": "passed"
+        },
+        {
+          "name": "Empty payment settings merge safe defaults without crashing",
+          "status": "passed"
+        },
+        {
+          "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+          "status": "passed"
+        },
+        {
+          "name": "xendit merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "doku merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp merchant screen excludes developer webhook simulators",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown integrations subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown settings subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown payments subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown reports subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Unknown staff subsection has a safe not-found screen",
+          "status": "passed"
+        },
+        {
+          "name": "Starter Owner can reach bank QRIS from the integration menu",
+          "status": "passed"
+        },
+        {
+          "name": "Browser expanding a menu retains the current screen",
+          "status": "passed"
+        },
+        {
+          "name": "Legacy product deep link retains its destination and query",
+          "status": "passed"
+        },
+        {
+          "name": "Root app alias applies the same cashier permissions as canonical route",
+          "status": "passed"
+        },
+        {
+          "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+          "status": "passed"
+        },
+        {
+          "name": "Bank QRIS screen retains payment subsection navigation",
+          "status": "passed"
+        },
+        {
+          "name": "EDC cannot claim activation before certified support exists",
+          "status": "passed"
+        },
+        {
+          "name": "Billing uses the authoritative account plan without an absent subscription API",
+          "status": "passed"
+        },
+        {
+          "name": "Android retains a visible read-only billing tab and permits its SPA navigation",
+          "status": "passed"
+        },
+        {
+          "name": "doku instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "whatsapp instructions use the Geraina callback backend",
+          "status": "passed"
+        },
+        {
+          "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+          "status": "passed"
+        },
+        {
+          "name": "Sales report does not invent a daily distribution from a weekly total",
+          "status": "passed"
+        },
+        {
+          "name": "Browser dashboard does not fabricate drawer cash or profit",
+          "status": "passed"
+        }
+      ]
+    }
+  },
+  "dokuSidebarClickRechecks": {
+    "phone": [
+      {
+        "name": "DOKU appears in expanded integration navigation",
+        "status": "passed"
+      }
+    ],
+    "xiaomi": [
+      {
+        "name": "DOKU appears in expanded integration navigation",
+        "status": "passed"
+      }
+    ],
+    "samsung": [
+      {
+        "name": "DOKU appears in expanded integration navigation",
+        "status": "passed"
+      }
+    ]
+  },
+  "readOnlyScreenCheck": {
+    "status": "passed",
+    "scope": "Prepared frontend at production origin, real account sign-in and read-only APIs; every merchant mutation is blocked",
+    "verifiedAt": "2026-10-26T06:42:57.591Z",
+    "screens": 56,
+    "results": [
+      {
+        "route": "dashboard",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/dashboard"
+      },
+      {
+        "route": "pos",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/pos"
+      },
+      {
+        "route": "sales",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/sales"
+      },
+      {
+        "route": "products",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/products"
+      },
+      {
+        "route": "products/categories",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/products/categories"
+      },
+      {
+        "route": "products/brands",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/products/brands"
+      },
+      {
+        "route": "products/units",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/products/units"
+      },
+      {
+        "route": "products/stock-adjustment",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/products/stock-adjustment"
+      },
+      {
+        "route": "products/stock-transfer",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/products/stock-transfer"
+      },
+      {
+        "route": "inventory/overview",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/inventory/overview"
+      },
+      {
+        "route": "inventory/movement",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/inventory/movement"
+      },
+      {
+        "route": "inventory/valuation",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/inventory/valuation"
+      },
+      {
+        "route": "inventory/low-stock",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/inventory/low-stock"
+      },
+      {
+        "route": "inventory/dead-stock",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/inventory/dead-stock"
+      },
+      {
+        "route": "purchase/orders",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/purchase/orders"
+      },
+      {
+        "route": "purchase/receiving",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/purchase/receiving"
+      },
+      {
+        "route": "purchase/invoices",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/purchase/invoices"
+      },
+      {
+        "route": "suppliers",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/suppliers"
+      },
+      {
+        "route": "customers",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/customers"
+      },
+      {
+        "route": "customers/membership",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/customers/membership"
+      },
+      {
+        "route": "customers/loyalty",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/customers/loyalty"
+      },
+      {
+        "route": "debt/receivable",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/debt/receivable"
+      },
+      {
+        "route": "debt/payable",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/debt/payable"
+      },
+      {
+        "route": "payments/cash",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/payments/cash"
+      },
+      {
+        "route": "payments/qris",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/payments/qris"
+      },
+      {
+        "route": "payments/ewallet",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/payments/ewallet"
+      },
+      {
+        "route": "payments/va",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/payments/va"
+      },
+      {
+        "route": "payments/credit-card",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/payments/credit-card"
+      },
+      {
+        "route": "payments/bank-transfer",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/payments/bank-transfer"
+      },
+      {
+        "route": "payments/edc",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/payments/edc"
+      },
+      {
+        "route": "reports/sales",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/reports/sales"
+      },
+      {
+        "route": "reports/product",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/reports/product"
+      },
+      {
+        "route": "reports/inventory",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/reports/inventory"
+      },
+      {
+        "route": "reports/profit",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/reports/profit"
+      },
+      {
+        "route": "reports/cashflow",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/reports/cashflow"
+      },
+      {
+        "route": "reports/tax",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/reports/tax"
+      },
+      {
+        "route": "staff/management",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/staff/management"
+      },
+      {
+        "route": "staff/roles",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/staff/roles"
+      },
+      {
+        "route": "staff/permissions",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/staff/permissions"
+      },
+      {
+        "route": "staff/attendance",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/staff/attendance"
+      },
+      {
+        "route": "attendance",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/attendance"
+      },
+      {
+        "route": "branches",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/branches"
+      },
+      {
+        "route": "integrations/xendit",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/integrations/xendit"
+      },
+      {
+        "route": "integrations/doku",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/integrations/doku"
+      },
+      {
+        "route": "integrations/midtrans",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/integrations/midtrans"
+      },
+      {
+        "route": "integrations/whatsapp",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/integrations/whatsapp"
+      },
+      {
+        "route": "integrations/qris",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/payments/qris"
+      },
+      {
+        "route": "settings/general",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/settings/general"
+      },
+      {
+        "route": "settings/store",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/settings/store"
+      },
+      {
+        "route": "settings/billing",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/settings/billing"
+      },
+      {
+        "route": "settings/receipt",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/settings/receipt"
+      },
+      {
+        "route": "settings/printer",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/settings/printer"
+      },
+      {
+        "route": "settings/users",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/settings/users"
+      },
+      {
+        "route": "settings/license",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/settings/license"
+      },
+      {
+        "route": "about",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/about"
+      },
+      {
+        "route": "license",
+        "status": "passed",
+        "runtimeErrors": [],
+        "apiFailures": [],
+        "placeholder": null,
+        "actualURL": "https://dagangos.com/geraina/app/license"
+      }
+    ],
+    "blockedMutationPaths": [],
+    "apiFailures": [],
+    "merchantWrites": 0
+  },
+  "backendChecks": {
+    "passed": 71,
+    "scope": "payment settings, bank QRIS, legacy QRIS; isolated stores"
+  },
+  "androidUnitChecks": {
+    "tests": 24,
+    "failures": 0
+  },
+  "frontendUnitChecks": {
+    "passed": 21
+  },
+  "bridgeCheck": {
+    "verifiedAt": "2026-10-26T06:38:49.484Z",
+    "checks": [
+      "subscription links/forms/upgrade CTAs hidden",
+      "POS and physical payment links preserved",
+      "read-only account status preserved",
+      "SPA subscription checkout blocked",
+      "encoded checkout path blocked",
+      "native print message",
+      "PDF blob download survives immediate URL revocation",
+      "10 MB limit",
+      "dynamic links hidden",
+      "untrusted origin excluded"
+    ],
+    "status": "passed",
+    "scope": "Android document-start JavaScript in Chromium; not an Android device test"
+  },
+  "apiInventorySummary": {
+    "backendRoutes": 124,
+    "frontendReferences": 129,
+    "unmatched": [],
+    "runtimePathWrappers": [
+      {
+        "method": "GET",
+        "file": "frontend/src/api/client.js",
+        "line": 226,
+        "expression": "path, { responseType: \"blob\" });"
+      }
+    ]
+  },
+  "openLimitReproduction": {
+    "status": "confirmed_open_findings",
+    "scope": "Reproduce catalogue/history truncation in isolated in-memory stores.",
+    "merchantWrites": 0,
+    "catalogue": {
+      "fixtureProducts": 501,
+      "defaultResponseProducts": 500,
+      "missingProduct": "product-500",
+      "serverSearchFindsMissingProduct": true,
+      "posUsesServerSearchOrPagination": false
+    },
+    "history": {
+      "fixtureOrders": 201,
+      "defaultResponseOrders": 200,
+      "missingOlderOrder": "order-0",
+      "salesSearchIsClientSide": true
+    }
+  },
+  "openFindings": [
+    {
+      "priority": "P1",
+      "id": "POS-CATALOGUE-500",
+      "summary": "POS search/barcode/offline snapshot only cover first 500 products; complete retrieval/server lookup remains unimplemented"
+    },
+    {
+      "priority": "P1",
+      "id": "SALES-HISTORY-200",
+      "summary": "History client search cannot reach older orders omitted by the default 200-order API response"
+    },
+    {
+      "priority": "P1",
+      "id": "PAYMENT-PREFERENCES",
+      "summary": "Configured channel/provider preferences do not govern checkout consistently; standalone VA, online card and manual transfer execution are incomplete"
+    },
+    {
+      "priority": "P1",
+      "id": "DOKU-RETURN",
+      "summary": "Default return URL points to /pos and returned order reference is not consumed by POS; production environment override was not inspected"
+    },
+    {
+      "priority": "P1",
+      "id": "READ-ERROR-STATES",
+      "summary": "Stock/report error handlers still show empty data or perpetual loading on failed reads; only payment-configuration retry was fixed in this patch"
+    }
+  ],
+  "merchantWrites": 0,
+  "releaseChecksPending": [
+    "new version/code and signed package",
+    "Android emulator/device and upgrade verification of new package",
+    "deployed-preview TestSprite verification"
+  ],
+  "externalLimits": [
+    "No real gateway charge or webhook settlement was performed",
+    "No bank settlement or WhatsApp message was sent",
+    "No physical Bluetooth/USB printer was certified"
+  ],
+  "build": {
+    "status": "passed",
+    "javascriptBundles": [
+      {
+        "name": "main.a6968088.js",
+        "sha256": "839c32f715c342e393b17b4b38c93d23848dad4238b8c1f554d1f129f7f3f71e"
+      }
+    ]
+  },
+  "historicalAudit": true,
+  "followUp": "POS-REMAINING-FIXES-VERIFICATION.json"
+}

@@ -1,48 +1,30 @@
+import useWorkspace from '@/hooks/useWorkspace';
+import WorkspaceState from '@/components/WorkspaceState';
+import useTablePage from '@/hooks/useTablePage';
+import TablePage from '@/components/TablePage';
+import useAction from '@/hooks/useAction';
 import { useEffect, useRef, useState } from "react";
 import api from "@/api/client";
 import { Plus, Trash2, Edit } from "lucide-react";
 
 export default function SupplierList() {
-  const [suppliers, setSuppliers] = useState([]);
+  const query = useWorkspace(['/suppliers']);
+  const action = useAction();
+  const table = useTablePage(query.data['/suppliers'] || []);
+  const suppliers = table.rows;
+  const fetchSuppliers = query.retry;
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [editingId, setEditingId] = useState(null);
-  // Same unsequenced-refetch race already found and fixed in Attendance.jsx/Products.jsx:
-  // guard against an older fetchSuppliers() call resolving after a newer one and
-  // clobbering the list with a stale snapshot.
-  const fetchReqIdRef = useRef(0);
-
-  const fetchSuppliers = () => {
-    const reqId = ++fetchReqIdRef.current;
-    api.get("/suppliers").then((r) => {
-      if (reqId === fetchReqIdRef.current) setSuppliers(r.data);
-    }).catch(() => {});
-  };
-
-  useEffect(() => {
-    fetchSuppliers();
-  }, []);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     if (!name.trim()) return;
-
     const payload = { name, phone, email, address };
-
-    if (editingId) {
-      api.put(`/suppliers/${editingId}`, payload).then(() => {
-        setEditingId(null);
-        clearForm();
-        fetchSuppliers();
-      });
-    } else {
-      api.post("/suppliers", payload).then(() => {
-        clearForm();
-        fetchSuppliers();
-      });
-    }
+    action.run(() => editingId ? api.put(`/suppliers/${editingId}`,payload) : api.post('/suppliers',payload), () => {
+      setEditingId(null); clearForm(); fetchSuppliers();
+    });
   };
 
   const clearForm = () => {
@@ -60,14 +42,15 @@ export default function SupplierList() {
     setAddress(s.address || "");
   };
 
-  const handleDelete = (id) => {
-    if (confirm("Apakah Anda yakin ingin menghapus supplier ini?")) {
-      api.delete(`/suppliers/${id}`).then(() => fetchSuppliers());
-    }
+  const handleDelete = id => {
+    if (confirm('Hapus catatan ini?')) action.run(() => api.delete(`/suppliers/${id}`), fetchSuppliers);
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="suppliers-page">
+      <WorkspaceState query={query}>
+      {action.busy && <p role="status">Menyimpan perubahan…</p>}
+      {action.error && <p role="alert" className="text-red-800">{action.error}</p>}
       <div>
         <span className="label-tiny">Pemasok</span>
         <h1 className="font-display text-3xl font-bold mt-1">Supplier Database</h1>
@@ -115,7 +98,7 @@ export default function SupplierList() {
               className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-[hsl(var(--foreground))] outline-none h-20 resize-none text-sm"
             />
           </div>
-          <button type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="supplier-submit">
+          <button disabled={action.busy} type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2" data-testid="supplier-submit">
             {editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Supplier</>}
           </button>
           {editingId && (
@@ -174,9 +157,11 @@ export default function SupplierList() {
                 )}
               </tbody>
             </table>
+            <TablePage label="supplier" value={table} />
           </div>
         </div>
       </div>
+      </WorkspaceState>
     </div>
   );
 }

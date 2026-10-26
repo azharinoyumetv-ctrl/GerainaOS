@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
-import api, { fmtIDR } from "@/api/client";
+import { useMemo } from "react";
+import useCatalogue from "@/hooks/useCatalogue";
+import useTablePage from "@/hooks/useTablePage";
+import TablePage from "@/components/TablePage";
+import ReadState from "@/components/ReadState";
+import { fmtIDR } from "@/api/client";
 
 export default function InventoryValuation() {
-  const [products, setProducts] = useState([]);
-
-  useEffect(() => {
-    api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
-  }, []);
-
-  const totalAssetValue = products.reduce((acc, p) => acc + ((p.stock || 0) * (p.cost || 0)), 0);
-  const totalRetailValue = products.reduce((acc, p) => acc + ((p.stock || 0) * (p.price || 0)), 0);
+  const { products, loading, error, retry } = useCatalogue();
+  const table = useTablePage(products);
+  const { totalAssetValue, totalRetailValue } = useMemo(() => products.reduce((totals, product) => ({
+    totalAssetValue: totals.totalAssetValue + (product.stock || 0) * (product.cost || 0),
+    totalRetailValue: totals.totalRetailValue + (product.stock || 0) * (product.price || 0),
+  }), { totalAssetValue: 0, totalRetailValue: 0 }), [products]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="inventory-valuation-page">
@@ -18,23 +20,25 @@ export default function InventoryValuation() {
         <h1 className="font-display text-3xl font-bold mt-1">Penilaian Inventaris</h1>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <ReadState loading={loading} error={error} retry={retry} testid="valuation-read-state" />
+      {!loading && !error && <>
+      <div className="grid md:grid-cols-3 gap-6" data-testid="valuation-summary">
         <div className="card-surface p-6">
           <span className="label-tiny">Total Nilai Aset (Harga Beli)</span>
           <p className="font-display num-display text-3xl font-extrabold text-[hsl(var(--primary))] mt-2">
-            {fmtIDR(totalAssetValue)}
+            <span data-testid="valuation-asset-total">{fmtIDR(totalAssetValue)}</span>
           </p>
         </div>
         <div className="card-surface p-6">
           <span className="label-tiny">Total Nilai Jual (Harga Retail)</span>
           <p className="font-display num-display text-3xl font-extrabold text-[hsl(var(--primary))] mt-2">
-            {fmtIDR(totalRetailValue)}
+            <span data-testid="valuation-retail-total">{fmtIDR(totalRetailValue)}</span>
           </p>
         </div>
         <div className="card-surface p-6">
           <span className="label-tiny">Potensi Keuntungan Kotor</span>
           <p className="font-display num-display text-3xl font-extrabold text-emerald-600 mt-2">
-            {fmtIDR(totalRetailValue - totalAssetValue)}
+            <span data-testid="valuation-profit-total">{fmtIDR(totalRetailValue - totalAssetValue)}</span>
           </p>
         </div>
       </div>
@@ -54,7 +58,7 @@ export default function InventoryValuation() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[hsl(var(--border))]">
-              {products.map((p) => {
+              {table.rows.map((p) => {
                 const assetVal = (p.stock || 0) * (p.cost || 0);
                 const retailVal = (p.stock || 0) * (p.price || 0);
                 return (
@@ -75,8 +79,10 @@ export default function InventoryValuation() {
               )}
             </tbody>
           </table>
+          <TablePage value={table} />
         </div>
       </div>
+      </>}
     </div>
   );
 }

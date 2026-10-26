@@ -1,3 +1,5 @@
+import { useAuth } from "@/auth/AuthContext";
+import SectionNavigation from "@/navigation/SectionNavigation";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "@/api/client";
@@ -17,7 +19,8 @@ export default function Settings() {
   const rawType = params.type || pathPart || "general";
   const type = (rawType === "settings" || !rawType) ? "general" : rawType.toLowerCase();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [sub, setSub] = useState(null);
+  const { user } = useAuth();
+  const sub = { plan: user?.plan, status: user?.subscription?.status || (user?.plan === "trial" ? "trial" : user?.plan === "expired" ? "expired" : "active"), trial_ends_at: user?.trial_ends_at };
   const [testingPrint, setTestingPrint] = useState(false);
   const [loaded, setLoaded] = useState(false), [loadError, setLoadError] = useState(""), [retry, setRetry] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -33,11 +36,6 @@ export default function Settings() {
     return () => { active = false; };
   }, [type, retry]);
 
-  useEffect(() => {
-    if (["billing", "subscription", "license"].includes(type)) {
-      api.get("/subscription").then((r) => setSub(r.data)).catch(() => setSub(null));
-    }
-  }, [type]);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -352,7 +350,7 @@ export default function Settings() {
             </div>
 
             <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-xs leading-relaxed">
-              Beli paket melalui halaman Harga dan selesaikan pembayaran di Midtrans. Membuka checkout atau pembayaran yang gagal tidak mengubah paket Anda. Aktivasi dikonfirmasi oleh tim DagangOS setelah pembayaran terverifikasi.
+              Beli paket melalui halaman Harga dan selesaikan checkout pembayaran. Membuka checkout atau pembayaran yang gagal tidak mengubah paket Anda. Paket diaktifkan setelah sistem memverifikasi pembayaran.
             </div>
 
             <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-between items-center">
@@ -369,15 +367,6 @@ export default function Settings() {
     }
   };
 
-  const subtabs = [
-    { id: "general", label: "Umum", path: "/geraina/app/settings/general" },
-    { id: "store", label: "Toko", path: "/geraina/app/settings/store" },
-    { id: "billing", label: "Langganan & Tagihan", path: "/geraina/app/settings/billing" },
-    { id: "receipt", label: "Struk", path: "/geraina/app/settings/receipt" },
-    { id: "printer", label: "Printer", path: "/geraina/app/settings/printer" },
-    { id: "users", label: "Pengguna", path: "/geraina/app/settings/users" },
-    { id: "license", label: "Lisensi", path: "/geraina/app/settings/license" }
-  ];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 text-left" data-testid="settings-page">
@@ -386,21 +375,7 @@ export default function Settings() {
         <h1 className="font-display text-3xl font-bold mt-1 capitalize">Pengaturan ({type})</h1>
       </div>
 
-      {/* Subtab Navigation Bar */}
-      <div className="flex flex-wrap gap-2 border-b border-[hsl(var(--border))] pb-3">
-        {subtabs.map((tab) => {
-          const isActive = type === tab.id || (type === "subscription" && tab.id === "billing");
-          return (
-            <Link
-              key={tab.id}
-              to={tab.path}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isActive ? "bg-[hsl(var(--primary))] text-white shadow-md" : "bg-[hsl(var(--surface))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"}`}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </div>
+      <SectionNavigation section="settings" active={type === "subscription" ? "billing" : type} />
 
       <div className="max-w-3xl card-surface p-6">
         {loadError && <div role="alert" data-testid="settings-error" className="mb-4"><p>{loadError}</p><button type="button" className="btn-outline mt-2" onClick={() => setRetry(value => value + 1)}>Coba lagi</button></div>}

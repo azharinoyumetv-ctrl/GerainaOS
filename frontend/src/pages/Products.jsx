@@ -1,3 +1,4 @@
+import { readCollection } from '@/api/records';
 import { useEffect, useRef, useState } from "react";
 import api, { fmtIDR, API_BASE } from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
@@ -72,7 +73,11 @@ function ProductForm({ product, onClose, onSaved }) {
         cost,
         stock,
       };
-      if (isEdit) await api.put(`/products/${product.id}`, payload);
+      if (isEdit) {
+        if (stock === product.stock) delete payload.stock;
+        else payload.expected_stock = product.stock;
+        await api.put(`/products/${product.id}`, payload);
+      }
       else await api.post("/products", payload);
       onSaved();
     } catch (e) {
@@ -359,7 +364,7 @@ export default function Products() {
     // A filtered edit/import can change the whole-catalogue counts. Ordinary
     // page entry uses the same unfiltered response for rows and summary once.
     if (refreshSummary && !unfiltered) {
-      api.get("/products").then(r => { if (Array.isArray(r.data)) applySummary(r.data); }).catch(() => {});
+      readCollection("/products").then(r => { if (Array.isArray(r.data)) applySummary(r.data); }).catch(() => {});
     }
     try {
       const r = await api.get("/products", { signal: controller.signal, params: { q: q || undefined, category: filterCat !== "all" ? filterCat : undefined } });

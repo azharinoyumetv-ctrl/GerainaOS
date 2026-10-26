@@ -66,9 +66,10 @@
     }
     return days;
   }
-  function chartMarkup(orders) {
-    const days = chartData(orders);
-    if (!days) return `<div class="ga-empty">Rincian harian belum tersedia.<br><a href="/geraina/app/reports/sales">Buka laporan penjualan →</a></div>`;
+  const dashboardAllows = route => !route.startsWith("inventory/") && !route.startsWith("reports/") || $('[data-testid="dashboard-page"]')?.dataset[route.startsWith("inventory/") ? "dashboardStock" : "dashboardReports"] === "true";
+  function chartMarkup(orders, stats) {
+    const days = Array.isArray(stats?.daily_sales) && stats.daily_sales.length === 7 ? stats.daily_sales.map(row => ({date:new Date(row.date+'T12:00:00Z'),value:row.value})) : null;
+    if (!days) return `<div class="ga-empty">Rincian harian belum tersedia.<br><a href="/geraina/app/sales">Buka riwayat penjualan →</a></div>`;
     const maximum = Math.max(1,...days.map(day=>day.value));
     const total = days.reduce((sum,day)=>sum+day.value,0);
     return `<p class="ga-chart-total" data-testid="mobile-week-total">${money(total)}</p><div class="ga-bars" role="img" aria-label="Penjualan per hari dalam zona waktu UTC">${days.map(day=>`<span class="ga-bar" style="height:${Math.max(3,day.value/maximum*100)}%" aria-label="${esc(day.date.toLocaleDateString('id-ID',{timeZone:'UTC'}))}: ${money(day.value)}" title="${money(day.value)}"></span>`).join('')}</div><div class="ga-days">${days.map(day=>`<span>${esc(day.date.toLocaleDateString('id-ID',{weekday:'short',timeZone:'UTC'}))}</span>`).join('')}</div><p class="ga-chart-note">${total===0?'Belum ada penjualan pada periode ini.':'Transaksi lunas'} · UTC</p>`;
@@ -85,17 +86,17 @@
     const orders=result?.[2]?.status==='fulfilled'&&Array.isArray(result[2].value)?result[2].value:null;
     const loaded = !!result && result.every(item=>item.status!=='pending');
     const failed = !!result && result.some(item=>item.status==='rejected');
-    const lowStock = products?.filter(product=>Number(product.stock)<=5).length;
+    const lowStock = stats && Number.isInteger(stats.low_stock_count) ? stats.low_stock_count : undefined;
     const count=stats?Number(stats.today_orders)||0:null;
     const sales=stats?Number(stats.today_sales)||0:null;
     const average=count?sales/count:0;
     const currentUser=user();
-    return `<div class="ga-head"><div><p class="ga-date">${esc(new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}</p><h1>Ringkasan toko</h1></div><button class="ga-store" data-ga-action="menu" aria-label="Pilih toko atau buka menu">${esc(currentUser.store_name || 'Toko Anda')}</button></div>
-      ${failed?'<div class="ga-data-error" role="status">Sebagian data belum dapat dimuat. Angka yang tidak tersedia ditandai —.<br><button data-ga-action="reload-dashboard">Coba lagi</button></div>':''}
+    return `<div class="ga-head"><div><p class="ga-date">${esc(new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:stats?.timezone || 'Asia/Jakarta'}))}</p><h1>Ringkasan toko</h1></div><button class="ga-store" data-ga-action="menu" aria-label="Pilih toko atau buka menu">${esc(currentUser.store_name || 'Toko Anda')}</button></div>
+      ${failed?'<div class="ga-data-error" role="alert">Sebagian data belum dapat dimuat. Angka yang tidak tersedia ditandai —.<br><button data-ga-action="reload-dashboard">Coba lagi</button></div>':''}
       <section class="ga-revenue"><span class="ga-revenue-symbol">${icon('trend')}</span><p>PENJUALAN HARI INI</p><strong data-testid="mobile-revenue">${sales===null?'—':money(sales)}</strong><p class="ga-revenue-caption">${stats?'Ringkasan transaksi lunas':loaded?'Data penjualan belum tersedia':'Memuat data toko…'}</p><div class="ga-revenue-footer"><span><b>${count===null?'—':count}</b> transaksi</span><span><b>${sales===null?'—':money(average)}</b> / transaksi</span></div></section>
-      <div class="ga-quick">${[{label:'Buka kasir',route:'pos',icon:'cart'},{label:'Produk',route:'products',icon:'box'},{label:'Stok',route:'inventory/overview',icon:'stock'},{label:'Laporan',route:'reports/sales',icon:'chart'}].map(item=>`<a href="/geraina/app/${item.route}"><span>${icon(item.icon)}</span>${item.label}</a>`).join('')}</div>
-      <div class="ga-metrics"><a class="ga-metric" href="/geraina/app/reports/sales">${icon('receipt')}<div><p>Transaksi hari ini</p><b data-testid="mobile-order-count">${count===null?'—':count}</b></div></a><a class="ga-metric" href="/geraina/app/inventory/low-stock">${icon('alert')}<div><p>Stok menipis</p><b data-testid="mobile-low-stock">${lowStock===undefined?'—':lowStock}<small>produk</small></b></div></a></div>
-      <section class="ga-chart"><div class="ga-section-head"><h2>Penjualan 7 hari terakhir</h2><span class="ga-period">7 hari</span></div>${result?.[2]?.status!=='pending'&&result?chartMarkup(orders):'<p class="ga-empty">Memuat penjualan…</p>'}</section>
+      <div class="ga-quick">${[{label:'Buka kasir',route:'pos',icon:'cart'},{label:'Produk',route:'products',icon:'box'},{label:'Stok',route:'inventory/overview',icon:'stock'},{label:'Laporan',route:'reports/sales',icon:'chart'}].filter(item=>dashboardAllows(item.route)).map(item=>`<a href="/geraina/app/${item.route}"><span>${icon(item.icon)}</span>${item.label}</a>`).join('')}</div>
+      <div class="ga-metrics"><a class="ga-metric" href="/geraina/app/sales">${icon('receipt')}<div><p>Transaksi hari ini</p><b data-testid="mobile-order-count">${count===null?'—':count}</b></div></a><a class="ga-metric" href="/geraina/app/${dashboardAllows('inventory/low-stock')?'inventory/low-stock':'products'}">${icon('alert')}<div><p>Stok menipis</p><b data-testid="mobile-low-stock">${lowStock===undefined?'—':lowStock}<small>produk</small></b></div></a></div>
+      <section class="ga-chart"><div class="ga-section-head"><h2>Penjualan 7 hari terakhir</h2><span class="ga-period">7 hari</span></div>${result?.[2]?.status!=='pending'&&result?chartMarkup(orders,stats):'<p class="ga-empty">Memuat penjualan…</p>'}</section>
       <section class="ga-recent"><div class="ga-section-head"><h2>Transaksi terbaru</h2><a href="/geraina/app/sales">Lihat semua ↗</a></div><div class="ga-orders">${result?.[2]?.status!=='pending'&&result?recentMarkup(orders):'<p class="ga-empty">Memuat transaksi…</p>'}</div></section>`;
   }
   async function loadDashboard(mount) {
@@ -105,8 +106,9 @@
     const timer=setTimeout(()=>controller.abort(),15000);
     mount.innerHTML=dashboardMarkup();
     const result=Array.from({length:3},()=>({status:'pending'}));
-    await Promise.all(['/orders/stats','/products','/orders?limit=1000'].map(async(path,index)=>{
-      try {result[index]={status:'fulfilled',value:await read(path,controller.signal,authToken)};}
+    result[1]={status:'fulfilled',value:[]};
+    await Promise.all([['/orders/stats',0],['/orders/history?limit=5',2]].map(async([path,index])=>{
+      try {const value=await read(path,controller.signal,authToken);if(index===0&&(!value||!['today_sales','today_orders','low_stock_count'].every(key=>typeof value[key]==='number'&&Number.isFinite(value[key]))))throw new Error('Invalid stats');if(index===2&&!Array.isArray(value?.items))throw new Error('Invalid history');result[index]={status:'fulfilled',value:index===2?value.items:value};}
       catch {result[index]={status:'rejected'};}
       if(mount.isConnected&&authToken===token()&&controller===dashboardController)mount.innerHTML=dashboardMarkup(result);
     }));
@@ -116,7 +118,7 @@
   function decorateDashboard() {
     const page=$('[data-testid="dashboard-page"]');
     if(!page) { if(dashboardController) {dashboardController.abort();dashboardController=null;} dashboardIdentity=''; return; }
-    const currentUser=user(),identity=JSON.stringify([token(),currentUser.id,currentUser.store_id,currentUser.role]);
+    const currentUser=user(),identity=JSON.stringify([token(),currentUser.id,currentUser.store_id,currentUser.role,currentUser.plan]);
     const existing=$('.ga-dashboard',page);
     if(existing&&dashboardIdentity===identity) return;
     if(existing)existing.remove();

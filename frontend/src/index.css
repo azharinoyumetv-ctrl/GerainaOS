@@ -473,3 +473,9 @@ html:has(.public-geraina)::-webkit-scrollbar-thumb {
   border: 2px solid #050b09;
   background: rgba(76, 139, 105, .72);
 }
+
+/* Operational tables retain readable columns and scroll inside their cards. */
+.workspace-table { min-width: 42rem; border-collapse: collapse; }
+.workspace-table th, .workspace-table td { padding: .75rem; vertical-align: top; text-align: left; }
+.workspace-table th { white-space: nowrap; }
+.workspace-table td { overflow-wrap: anywhere; }

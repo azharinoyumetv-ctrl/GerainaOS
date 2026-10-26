@@ -19,10 +19,15 @@ class NavigationPolicyTest {
         }
     }
     @Test fun subscriptionPaymentsAreBlockedWithoutBlockingPhysicalSales() {
-        for (path in listOf("/geraina/pricing", "/geraina/checkout", "/geraina/app/settings/billing", "/geraina/%63heckout", "/geraina/app/../pricing")) {
+        for (path in listOf("/geraina/pricing", "/geraina/checkout", "/geraina/app/settings/billing/checkout", "/geraina/%63heckout", "/geraina/app/../pricing")) {
             assertEquals(path, SUBSCRIPTION, NavigationPolicy.classify("https://dagangos.com$path"))
         }
         assertEquals(INTERNAL, NavigationPolicy.classify("https://dagangos.com/geraina/app/pos"))
+    }
+    @Test fun accountStatusOverviewsRemainAvailable() {
+        for (path in listOf("/geraina/app/settings/billing", "/geraina/app/settings/billing/", "/geraina/app/billing", "/geraina/app/settings/%62illing")) {
+            assertEquals(path, INTERNAL, NavigationPolicy.classify("https://dagangos.com$path"))
+        }
     }
     @Test fun exportNamesCannotEscapeTheSelectedDirectory() {
         assertEquals("invoice.pdf", NavigationPolicy.safeFilename("../../invoice.pdf"))

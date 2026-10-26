@@ -1,3 +1,4 @@
+import { readCollection } from '@/api/records';
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Trash2, Edit } from "lucide-react";
@@ -12,7 +13,7 @@ export default function Brands() {
   const [notice, setNotice] = useState("");
 
   const fetchBrands = () => {
-    return api.get("/products/brands").then((r) => setBrands(r.data)).catch(() => setError("Daftar brand belum dapat dimuat. Coba muat ulang."));
+    return readCollection("/products/brands").then((r) => setBrands(r.data)).catch(() => setError("Daftar brand belum dapat dimuat. Coba muat ulang."));
   };
 
   useEffect(() => {

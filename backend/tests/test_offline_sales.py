@@ -68,7 +68,7 @@ async def test_failure_after_insert_rolls_back_inventory_and_order(db, monkeypat
     async def fail(document, **options):
         await db.orders.insert_one(document, **options)
         raise RuntimeError("simulated interruption before commit")
-    proxy = SimpleNamespace(client=db.client, counters=db.counters, products=db.products, orders=SimpleNamespace(find_one=db.orders.find_one, insert_one=fail))
+    proxy = SimpleNamespace(client=db.client, counters=db.counters, products=db.products, stock_movements=db.stock_movements, orders=SimpleNamespace(find_one=db.orders.find_one, insert_one=fail))
     monkeypatch.setattr(offline, "get_db", lambda: proxy)
     with pytest.raises(RuntimeError):
         await offline.synchronize_cash_sale(sale(), USER)

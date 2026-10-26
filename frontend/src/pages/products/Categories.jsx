@@ -1,3 +1,4 @@
+import { readCollection } from '@/api/records';
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Trash2, Edit } from "lucide-react";
@@ -12,7 +13,7 @@ export default function Categories() {
   const [notice, setNotice] = useState("");
 
   const fetchCategories = () => {
-    return api.get("/products/categories").then((r) => setCategories(r.data)).catch(() => setError("Daftar kategori belum dapat dimuat. Coba muat ulang."));
+    return readCollection("/products/categories").then((r) => setCategories(r.data)).catch(() => setError("Daftar kategori belum dapat dimuat. Coba muat ulang."));
   };
 
   useEffect(() => {

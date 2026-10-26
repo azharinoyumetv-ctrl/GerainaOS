@@ -1,5 +1,6 @@
+import { safeAppReturn } from "@/auth/appReturn";
 import "@/index.css";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import PasswordSetup from "@/auth/PasswordSetup";
@@ -59,11 +60,27 @@ import Integrations from "@/pages/integrations/Integrations";
 import Settings from "@/pages/settings/Settings";
 
 import RoleGuard from "@/components/RoleGuard";
+import AppPageNotFound from "@/navigation/AppPageNotFound";
+import { SECTIONS } from "@/navigation/sections";
+
+function KnownSection({ section, children }) {
+  const { type } = useParams();
+  const legacy = section === "integrations" ? ["stripe", "telegram", "email"] : section === "settings" ? ["subscription"] : [];
+  return !type || SECTIONS[section].some(tab => tab.id === type.replaceAll("-", "_")) || legacy.includes(type) ? children : <AppPageNotFound />;
+}
+
+function CanonicalAppRedirect() {
+  const location = useLocation();
+  const path = location.pathname.startsWith("/app") ? "/geraina" + location.pathname : "/geraina/app" + location.pathname.slice("/geraina".length);
+  return <Navigate to={path + location.search + location.hash} replace />;
+}
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const returnTo = safeAppReturn(location.pathname + location.search);
   if (loading) return <div className="p-10 text-sm text-center text-[hsl(var(--muted))]" data-testid="auth-loading">Memuat sesi…</div>;
-  if (!user) return <Navigate to="/geraina/login" replace />;
+  if (!user) return <Navigate to={returnTo ? `/geraina/login?returnTo=${encodeURIComponent(returnTo)}` : "/geraina/login"} replace />;
   if (user.must_change_password) return <PasswordSetup />;
   return children;
 }
@@ -143,17 +160,17 @@ function getGerainaAppSubRoutes() {
     /* Payments */
     <Route key="g-bankqris" path="payments/qris" element={<RoleGuard><BankQrisSettings /></RoleGuard>} />,
     <Route key="g-bankqris-settings" path="settings/payments/qris" element={<RoleGuard><BankQrisSettings /></RoleGuard>} />,
-    <Route key="g-payt" path="settings/payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />,
-    <Route key="g-payw" path="settings/payments/*" element={<RoleGuard><PaymentConfig /></RoleGuard>} />,
-    <Route key="g-pay" path="settings/payments" element={<RoleGuard><PaymentConfig /></RoleGuard>} />,
-    <Route key="g-pt" path="payments/:type" element={<RoleGuard><PaymentConfig /></RoleGuard>} />,
-    <Route key="g-pw" path="payments/*" element={<RoleGuard><PaymentConfig /></RoleGuard>} />,
-    <Route key="g-p2" path="payments" element={<RoleGuard><PaymentConfig /></RoleGuard>} />,
+    <Route key="g-payt" path="settings/payments/:type" element={<RoleGuard><KnownSection section="payments"><PaymentConfig /></KnownSection></RoleGuard>} />,
+    <Route key="g-payw" path="settings/payments/*" element={<AppPageNotFound />} />,
+    <Route key="g-pay" path="settings/payments" element={<RoleGuard><KnownSection section="payments"><PaymentConfig /></KnownSection></RoleGuard>} />,
+    <Route key="g-pt" path="payments/:type" element={<RoleGuard><KnownSection section="payments"><PaymentConfig /></KnownSection></RoleGuard>} />,
+    <Route key="g-pw" path="payments/*" element={<AppPageNotFound />} />,
+    <Route key="g-p2" path="payments" element={<RoleGuard><KnownSection section="payments"><PaymentConfig /></KnownSection></RoleGuard>} />,
 
     /* Reports */
-    <Route key="g-rept" path="reports/:type" element={<RoleGuard><Reports /></RoleGuard>} />,
-    <Route key="g-repw" path="reports/*" element={<RoleGuard><Reports /></RoleGuard>} />,
-    <Route key="g-rep" path="reports" element={<RoleGuard><Reports /></RoleGuard>} />,
+    <Route key="g-rept" path="reports/:type" element={<RoleGuard><KnownSection section="reports"><Reports /></KnownSection></RoleGuard>} />,
+    <Route key="g-repw" path="reports/*" element={<AppPageNotFound />} />,
+    <Route key="g-rep" path="reports" element={<RoleGuard><KnownSection section="reports"><Reports /></KnownSection></RoleGuard>} />,
 
     /* Staff */
     <Route key="g-stfm" path="staff/management" element={<RoleGuard><StaffManagement /></RoleGuard>} />,
@@ -161,7 +178,7 @@ function getGerainaAppSubRoutes() {
     <Route key="g-stfp" path="staff/permissions" element={<RoleGuard><Permissions /></RoleGuard>} />,
     <Route key="g-stfa" path="staff/attendance" element={<RoleGuard><Attendance /></RoleGuard>} />,
     <Route key="g-myattendance" path="attendance" element={<RoleGuard><Attendance /></RoleGuard>} />,
-    <Route key="g-stfw" path="staff/*" element={<RoleGuard><StaffManagement /></RoleGuard>} />,
+    <Route key="g-stfw" path="staff/*" element={<AppPageNotFound />} />,
     <Route key="g-stf" path="staff" element={<RoleGuard><StaffManagement /></RoleGuard>} />,
 
     /* Branches */
@@ -169,16 +186,18 @@ function getGerainaAppSubRoutes() {
 
     /* Integrations */
     <Route key="g-bankqris-integration" path="integrations/qris" element={<Navigate to="/geraina/app/payments/qris" replace />} />,
-    <Route key="g-intt" path="integrations/:type" element={<RoleGuard><Integrations /></RoleGuard>} />,
-    <Route key="g-intw" path="integrations/*" element={<RoleGuard><Integrations /></RoleGuard>} />,
-    <Route key="g-int" path="integrations" element={<RoleGuard><Integrations /></RoleGuard>} />,
+    <Route key="g-intt" path="integrations/:type" element={<RoleGuard><KnownSection section="integrations"><Integrations /></KnownSection></RoleGuard>} />,
+    <Route key="g-intw" path="integrations/*" element={<AppPageNotFound />} />,
+    <Route key="g-int" path="integrations" element={<RoleGuard><KnownSection section="integrations"><Integrations /></KnownSection></RoleGuard>} />,
+
+    <Route key="g-not-found" path="*" element={<AppPageNotFound />} />,
 
     /* Settings */
-    <Route key="g-setb" path="settings/billing" element={<RoleGuard><Settings /></RoleGuard>} />,
-    <Route key="g-setbi" path="billing" element={<RoleGuard><Settings /></RoleGuard>} />,
-    <Route key="g-sett" path="settings/:type" element={<RoleGuard><Settings /></RoleGuard>} />,
-    <Route key="g-setw" path="settings/*" element={<RoleGuard><Settings /></RoleGuard>} />,
-    <Route key="g-set" path="settings" element={<RoleGuard><Settings /></RoleGuard>} />
+    <Route key="g-setb" path="settings/billing" element={<RoleGuard><KnownSection section="settings"><Settings /></KnownSection></RoleGuard>} />,
+    <Route key="g-setbi" path="billing" element={<RoleGuard><KnownSection section="settings"><Settings /></KnownSection></RoleGuard>} />,
+    <Route key="g-sett" path="settings/:type" element={<RoleGuard><KnownSection section="settings"><Settings /></KnownSection></RoleGuard>} />,
+    <Route key="g-setw" path="settings/*" element={<AppPageNotFound />} />,
+    <Route key="g-set" path="settings" element={<RoleGuard><KnownSection section="settings"><Settings /></KnownSection></RoleGuard>} />
   ];
 }
 
@@ -222,24 +241,24 @@ export default function App() {
             <Route path="app/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
 
             {/* Direct un-prefixed management routes & deep links */}
-            <Route path="dashboard/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="pos/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="products/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="inventory/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="purchase/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="suppliers/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="customers/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="debt/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="payments/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="reports/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="staff/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="branches/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="integrations/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
-            <Route path="settings/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="dashboard/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="pos/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="products/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="inventory/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="purchase/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="suppliers/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="customers/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="debt/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="payments/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="reports/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="staff/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="branches/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="integrations/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
+            <Route path="settings/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
           </Route>
 
           {/* Root Fallback */}
-          <Route path="/app/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+          <Route path="/app/*" element={<Protected><CanonicalAppRedirect /></Protected>} />
 
           <Route path="*" element={<GerainaRootComponent />} />
         </Routes>

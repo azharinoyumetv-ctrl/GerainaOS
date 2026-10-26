@@ -1,13 +1,18 @@
-import { useEffect, useState } from "react";
+import useTablePage from "@/hooks/useTablePage";
+import TablePage from "@/components/TablePage";
+import ReadState from "@/components/ReadState";
+import { useAuth } from "@/auth/AuthContext";
+import { loadCatalogue } from "@/api/catalogue";
+import SectionNavigation from "@/navigation/SectionNavigation";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import api, { fmtIDR } from "@/api/client";
 import {
-  ResponsiveContainer, AreaChart, Area, BarChart, Bar,
+  ResponsiveContainer, BarChart, Bar,
   XAxis, YAxis, Tooltip, CartesianGrid, Legend, LineChart, Line
 } from "recharts";
 import { toast } from "@/components/ui/sonner";
 
-import { Link } from "react-router-dom";
 
 export default function Reports() {
   const params = useParams();
@@ -17,6 +22,7 @@ export default function Reports() {
 
   const [stats, setStats] = useState(null);
   const [products, setProducts] = useState([]);
+  const inventoryPage = useTablePage(products);
   const [productSales, setProductSales] = useState([]);
   const [profitReport, setProfitReport] = useState(null);
   const [cashflowReport, setCashflowReport] = useState(null);
@@ -25,38 +31,49 @@ export default function Reports() {
   const [expenseForm, setExpenseForm] = useState({ category: "Lainnya", description: "", amount: "", expense_date: new Date().toISOString().slice(0, 10) });
   const [savingExpense, setSavingExpense] = useState(false);
 
+  const { user } = useAuth();
+  const [attempt, setAttempt] = useState(0), [read, setRead] = useState({ key: "", loading: true, error: "" });
+  const expenseLock = useRef(false);
+  const key = `${user?.id}:${user?.store_id}:${type}`;
+  const reloadCashflowData = () => setAttempt(value => value + 1);
   useEffect(() => {
-    api.get("/orders/stats").then((r) => setStats(r.data)).catch(() => {});
-    api.get("/products").then((r) => setProducts(r.data)).catch(() => {});
-    api.get("/orders/product-sales?days=30&limit=8").then((r) => setProductSales(r.data || [])).catch(() => setProductSales([]));
-  }, [type]);
-
-  useEffect(() => {
-    if (type === "profit") {
-      api.get("/reports/profit?months=6").then((r) => setProfitReport(r.data)).catch(() => setProfitReport(null));
-    }
-    if (type === "cashflow") {
-      reloadCashflowData();
-    }
-    if (type === "inventory") {
-      api.get("/reports/inventory/turnover?days=30").then((r) => setTurnover(r.data)).catch(() => setTurnover(null));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
-
-  const reloadCashflowData = () => {
-    api.get("/reports/cashflow?weeks=4").then((r) => setCashflowReport(r.data)).catch(() => setCashflowReport(null));
-    api.get("/expenses").then((r) => setExpenses(r.data || [])).catch(() => setExpenses([]));
-  };
+    let active = true; const controller = new AbortController();
+    setRead({ key, loading: true, error: "" });
+    const get = async (path, shape) => {
+      const { data } = await api.get(path, { timeout: 12000, signal: controller.signal });
+      if (!shape(data)) throw new Error("Invalid report response");
+      return data;
+    };
+    const object = value => value && typeof value === "object" && !Array.isArray(value);
+    (async () => {
+      if (type === "sales") {
+        const stats = await get("/orders/stats", object); if (active) setStats(stats);
+      } else if (type === "product") {
+        const rows = await get("/orders/product-sales?days=30&limit=8", Array.isArray); if (active) setProductSales(rows);
+      } else if (type === "inventory") {
+        const [stats, products, turnover] = await Promise.all([get("/orders/stats", object), loadCatalogue({ signal: controller.signal }), get("/reports/inventory/turnover?days=30", object)]);
+        if (active) { setStats(stats); setProducts(products); setTurnover(turnover); }
+      } else if (type === "profit") {
+        const value = await get("/reports/profit?months=6", value => object(value) && Array.isArray(value.series) && object(value.totals));
+        if (active) setProfitReport(value);
+      } else if (type === "cashflow") {
+        const [value, expenses] = await Promise.all([get("/reports/cashflow?weeks=4", value => object(value) && Array.isArray(value.series)), get("/expenses", Array.isArray)]);
+        if (active) { setCashflowReport(value); setExpenses(expenses); }
+      }
+      if (active) setRead({ key, loading: false, error: "" });
+    })().catch(() => { if (active) setRead({ key, loading: false, error: "Laporan belum dapat dimuat. Periksa koneksi dan coba lagi; angka kosong tidak digunakan sebagai pengganti data." }); });
+    return () => { active = false; controller.abort(); };
+  }, [key, attempt]);
 
   const handleAddExpense = (e) => {
     e.preventDefault();
+    if (expenseLock.current) return;
     const amount = parseFloat(expenseForm.amount);
     if (!expenseForm.category || !amount || amount <= 0 || !expenseForm.expense_date) {
       toast.error("Lengkapi kategori, jumlah, dan tanggal pengeluaran.");
       return;
     }
-    setSavingExpense(true);
+    expenseLock.current = true; setSavingExpense(true);
     api.post("/expenses", {
       category: expenseForm.category,
       description: expenseForm.description || null,
@@ -68,7 +85,7 @@ export default function Reports() {
     }).catch((err) => {
       const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
       toast.error(`Gagal mencatat pengeluaran: ${msg}`);
-    }).finally(() => setSavingExpense(false));
+    }).finally(() => { expenseLock.current = false; setSavingExpense(false); });
   };
 
   const handleDeleteExpense = (id) => {
@@ -79,41 +96,13 @@ export default function Reports() {
     });
   };
 
-  const subtabs = [
-    { id: "sales", label: "Penjualan", path: "/geraina/app/reports/sales" },
-    { id: "product", label: "Produk", path: "/geraina/app/reports/product" },
-    { id: "inventory", label: "Stok / Inventaris", path: "/geraina/app/reports/inventory" },
-    { id: "profit", label: "Laba Rugi", path: "/geraina/app/reports/profit" },
-    { id: "cashflow", label: "Arus Kas", path: "/geraina/app/reports/cashflow" },
-    { id: "tax", label: "Pajak", path: "/geraina/app/reports/tax" }
-  ];
 
   const renderReport = () => {
     switch (type) {
       case "sales":
-        const salesData = [
-          { day: "Senin", sales: (stats?.week_sales || 100000) * 0.1 },
-          { day: "Selasa", sales: (stats?.week_sales || 100000) * 0.15 },
-          { day: "Rabu", sales: (stats?.week_sales || 100000) * 0.12 },
-          { day: "Kamis", sales: (stats?.week_sales || 100000) * 0.18 },
-          { day: "Jumat", sales: (stats?.week_sales || 100000) * 0.22 },
-          { day: "Sabtu", sales: (stats?.week_sales || 100000) * 0.35 },
-          { day: "Minggu", sales: (stats?.week_sales || 100000) * 0.28 },
-        ];
         return (
           <div className="space-y-6">
-            <div className="card-surface p-6 h-80">
-              <h3 className="font-display font-bold text-sm mb-4">Tren Penjualan Mingguan</h3>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="day" fontSize={11} tickLine={false} />
-                  <YAxis fontSize={11} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
-                  <Tooltip formatter={(value) => [fmtIDR(value), "Penjualan"]} />
-                  <Area type="monotone" dataKey="sales" stroke="hsl(151,39%,17%)" fill="hsl(151,39%,17%,0.1)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            <div className="card-surface p-6" data-testid="sales-daily-unavailable"><h3 className="font-display font-bold text-sm mb-3">Tren Penjualan Harian</h3><p className="text-sm text-[hsl(var(--muted))]">Rincian harian belum tersedia pada laporan ini. Ringkasan di bawah memakai total penjualan yang tercatat.</p></div>
             <div className="card-surface p-6">
               <h3 className="font-display font-bold text-sm mb-4">Rekapitulasi Omset</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -238,6 +227,7 @@ export default function Reports() {
                     ))}
                   </tbody>
                 </table>
+                <TablePage value={inventoryPage} />
               </div>
             </div>
           </div>
@@ -269,6 +259,7 @@ export default function Reports() {
                 </ResponsiveContainer>
               )}
             </div>
+            {profitReport?.notice && <p role="status" className="card-surface p-4 text-sm" data-testid="profit-cost-notice">{profitReport.notice}</p>}
             {totals && (
               <div className="card-surface p-6">
                 <h3 className="font-display font-bold text-sm mb-4">Ringkasan 6 Bulan Terakhir</h3>
@@ -279,11 +270,11 @@ export default function Reports() {
                   </div>
                   <div className="p-4 bg-[hsl(var(--background))] rounded-lg">
                     <p className="text-xs text-[hsl(var(--muted))]">HPP (COGS)</p>
-                    <p className="font-display font-bold text-base mt-1">{fmtIDR(totals.cogs)}</p>
+                    <p className="font-display font-bold text-base mt-1">{totals.cogs == null ? "Belum diketahui" : fmtIDR(totals.cogs)}</p>
                   </div>
                   <div className="p-4 bg-[hsl(var(--background))] rounded-lg">
                     <p className="text-xs text-[hsl(var(--muted))]">Laba Kotor</p>
-                    <p className="font-display font-bold text-base mt-1">{fmtIDR(totals.gross_profit)}</p>
+                    <p className="font-display font-bold text-base mt-1">{totals.gross_profit == null ? "Belum diketahui" : fmtIDR(totals.gross_profit)}</p>
                   </div>
                   <div className="p-4 bg-[hsl(var(--background))] rounded-lg">
                     <p className="text-xs text-[hsl(var(--muted))]">Beban Operasional</p>
@@ -291,11 +282,11 @@ export default function Reports() {
                   </div>
                   <div className="p-4 bg-[hsl(var(--background))] rounded-lg">
                     <p className="text-xs text-[hsl(var(--muted))]">Laba Bersih</p>
-                    <p className="font-display font-bold text-base mt-1">{fmtIDR(totals.net_profit)}</p>
+                    <p className="font-display font-bold text-base mt-1">{totals.net_profit == null ? "Belum diketahui" : fmtIDR(totals.net_profit)}</p>
                   </div>
                 </div>
                 <p className="text-[11px] text-[hsl(var(--muted))] mt-3">
-                  HPP dihitung dari harga modal (cost) produk saat ini dikali kuantitas terjual, bukan snapshot harga modal saat transaksi terjadi. Beban operasional berasal dari pengeluaran yang dicatat di tab Arus Kas.
+                  HPP memakai snapshot biaya per unit yang disimpan bersama transaksi. Mengubah harga modal produk tidak mengubah laba transaksi yang sudah dicatat. Biaya produk yang diisi nol tetap dihitung sebagai HPP nol. Beban operasional berasal dari pengeluaran yang dicatat di tab Arus Kas.
                 </p>
               </div>
             )}
@@ -414,39 +405,11 @@ export default function Reports() {
       }
 
       case "tax":
-        const taxBase = stats?.month_sales || 15000000;
-        const ppn = taxBase * 0.11; // 11% PPN
-        return (
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="card-surface p-6 space-y-4">
-              <h3 className="font-display font-bold text-sm border-b border-[hsl(var(--border))] pb-2">Kewajiban Pajak Bulan Ini</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[hsl(var(--muted))]">Dasar Pengenaan Pajak (DPP)</span>
-                  <span className="font-mono font-semibold">{fmtIDR(taxBase)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[hsl(var(--muted))]">PPN Terhutang (11%)</span>
-                  <span className="font-mono font-semibold text-red-500">{fmtIDR(ppn)}</span>
-                </div>
-                <div className="flex justify-between border-t border-[hsl(var(--border))] pt-2 font-bold">
-                  <span>Net Revenue Setelah Pajak</span>
-                  <span className="font-mono text-emerald-600">{fmtIDR(taxBase - ppn)}</span>
-                </div>
-              </div>
-            </div>
-            <div className="card-surface p-6 space-y-4">
-              <h3 className="font-display font-bold text-sm border-b border-[hsl(var(--border))] pb-2">Kepatuhan Pajak</h3>
-              <p className="text-xs text-[hsl(var(--muted))] leading-relaxed">
-                Pajak Pertambahan Nilai (PPN) dihitung otomatis berdasarkan PMK Republik Indonesia dengan tarif standar 11%.
-                Semua laporan perpajakan dapat diekspor langsung ke CSV untuk diimpor ke aplikasi e-Faktur DJP Online.
-              </p>
-              <button onClick={() => toast.success("Laporan e-Faktur DJP siap diunduh (Format CSV).")} className="btn-primary w-full py-2 text-xs font-semibold">
-                Unduh Format e-Faktur CSV
-              </button>
-            </div>
-          </div>
-        );
+        return <div className="card-surface p-6 space-y-4" data-testid="tax-report-unavailable">
+          <h2 className="font-display text-lg font-bold">Laporan pajak belum tersedia</h2>
+          <p className="text-sm">Perhitungan kewajiban pajak dan ekspor e-Faktur belum tersedia. Nilai pajak pada transaksi tidak otomatis merupakan kewajiban pajak toko.</p>
+          <a href="/geraina/app/sales" className="btn-outline inline-flex">Lihat riwayat transaksi</a>
+        </div>;
 
       default:
         return <p className="text-sm text-[hsl(var(--muted))]">Tipe laporan tidak didukung.</p>;
@@ -460,23 +423,10 @@ export default function Reports() {
         <h1 className="font-display text-3xl font-bold mt-1 capitalize">Laporan ({type})</h1>
       </div>
 
-      {/* Subtab Navigation Bar */}
-      <div className="flex flex-wrap gap-2 border-b border-[hsl(var(--border))] pb-3">
-        {subtabs.map((tab) => {
-          const isActive = type === tab.id;
-          return (
-            <Link
-              key={tab.id}
-              to={tab.path}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isActive ? "bg-[hsl(var(--primary))] text-white shadow-md" : "bg-[hsl(var(--surface))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))]"}`}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </div>
+      <SectionNavigation section="reports" active={type} />
 
-      {renderReport()}
+      <ReadState loading={read.key !== key || read.loading} error={read.key === key ? read.error : ""} retry={reloadCashflowData} testid="reports-read-state" />
+      {read.key === key && !read.loading && !read.error && renderReport()}
     </div>
   );
 }

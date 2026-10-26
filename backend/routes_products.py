@@ -1,15 +1,49 @@
 """Product CRUD + bulk Excel/CSV import."""
 from permissions import require_permission
 import io
+import math
+import transactions
+from product_store import save_product
 import uuid
+import re
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 
 from database import get_db, utcnow
 from models import ProductCreate, ProductUpdate, BulkImportResult
 from auth import get_current_user
+from paging import encode_cursor, decode_cursor
 
 router = APIRouter(prefix="/api/products", tags=["products"])
+
+
+@router.get('/catalogue', dependencies=[Depends(require_permission('products.read'))])
+async def catalogue_page(user: dict = Depends(get_current_user), cursor: Optional[str] = None,
+                         limit: int = Query(500, ge=1, le=500), active_only: bool = False):
+    db = get_db()
+    scope = {'store_id': user['store_id']}
+    if active_only:
+        scope['active'] = {'$ne': False}
+    query = dict(scope)
+    if cursor:
+        query['id'] = {'$gt': decode_cursor(cursor, ['id'])['id']}
+    rows = await db.products.find(query, {'_id': 0}).sort('id', 1).limit(limit + 1).to_list(length=limit + 1)
+    more = len(rows) > limit
+    items = rows[:limit]
+    return {'items': items, 'total': await db.products.count_documents(scope),
+            'next_cursor': encode_cursor({'id': items[-1]['id']}) if more else None}
+
+
+@router.get('/lookup', dependencies=[Depends(require_permission('products.read'))])
+async def lookup_product(code: str = Query(min_length=1, max_length=200), user: dict = Depends(get_current_user)):
+    query = {'store_id': user['store_id'], 'active': {'$ne': False},
+             '$or': [{'id': code}, {'sku': {'$regex': '^' + re.escape(code) + '$', '$options': 'i'}}]}
+    rows = await get_db().products.find(query, {'_id': 0}).limit(2).to_list(length=2)
+    if not rows:
+        raise HTTPException(404, 'Barcode tidak ditemukan dalam katalog toko.')
+    if len(rows) > 1:
+        raise HTTPException(409, 'Barcode dipakai beberapa produk. Perbaiki SKU produk sebelum memindai.')
+    return rows[0]
 
 
 def _strip_id(p: dict) -> dict:
@@ -48,50 +82,27 @@ async def list_category_names(user: dict = Depends(get_current_user)):
 
 @router.post("", dependencies=[Depends(require_permission("products.write"))])
 async def create_product(payload: ProductCreate, user: dict = Depends(get_current_user)):
-    db = get_db()
-    from plan_limits import check_capacity
-    await check_capacity(db, user["store_id"], user.get("plan"), "products", "max_products")
-    doc = {
-        "id": str(uuid.uuid4()),
-        "store_id": user["store_id"],
-        "created_at": utcnow().isoformat(),
-        "updated_at": utcnow().isoformat(),
-        **payload.model_dump(),
-    }
-    await db.products.insert_one(doc)
-    return _strip_id(doc)
+    db=get_db()
+    return await transactions.run_transaction(db,lambda session:save_product(db,user,payload.model_dump(),session))
 
 
 @router.put("/{product_id}", dependencies=[Depends(require_permission("products.write"))])
 async def update_product(product_id: str, payload: ProductUpdate, user: dict = Depends(get_current_user)):
-    db = get_db()
-    update = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
-    if not update:
-        raise HTTPException(status_code=400, detail="Tidak ada perubahan")
-    update["updated_at"] = utcnow().isoformat()
-    
-    from bson import ObjectId
-    id_or_oid = [product_id]
-    try:
-        id_or_oid.append(ObjectId(product_id))
-    except Exception:
-        pass
-    
-    res = await db.products.find_one_and_update(
-        {"store_id": user["store_id"], "$or": [{"id": {"$in": id_or_oid}}, {"_id": {"$in": id_or_oid}}]},
-        {"$set": update},
-        return_document=True,
-        projection={"_id": 0},
-    )
-    if not res:
-        raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
-    return res
+    db=get_db()
+    values={key:value for key,value in payload.model_dump(exclude_unset=True).items() if value is not None and key!='expected_stock'}
+    if not values:
+        raise HTTPException(400,'Tidak ada perubahan.')
+    return await transactions.run_transaction(db,lambda session:save_product(db,user,values,session,product_id,payload.expected_stock))
 
 
 @router.delete("/{product_id}", dependencies=[Depends(require_permission("products.write"))])
 async def delete_product(product_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
-    
+    if await db.stock_transfers.find_one({'store_id':user['store_id'],'status':'Shipped','inventory_applied':True,'items.product_id':product_id}):
+        raise HTTPException(409,'Produk sedang dalam pengiriman cabang. Terima atau batalkan transfer sebelum menghapus produk.')
+    if await db.purchase_orders.find_one({'store_id':user['store_id'],'status':{'$in':['Ordered','Partial']},'items.product_id':product_id}):
+        raise HTTPException(409,'Produk masih ada pada PO yang belum diterima penuh.')
+
     from bson import ObjectId
     id_or_oid = [product_id]
     try:
@@ -118,7 +129,9 @@ async def bulk_import(
     Kolom opsional: sku, cost, stock, category, unit, description, image_url, active
     """
     db = get_db()
-    contents = await file.read()
+    contents = await file.read(10 * 1024 * 1024 + 1)
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(413, "Batas berkas impor adalah 10 MB.")
     fname = (file.filename or "").lower()
     
     rows_data = []
@@ -197,6 +210,8 @@ async def bulk_import(
             return False
         return True
 
+    if len(rows_data)>10000:
+        raise HTTPException(422,"Maksimal 10.000 baris per impor. Bagi berkas menjadi beberapa bagian.")
     for idx, row in enumerate(rows_data):
         try:
             name = str(row.get("name") or "").strip()
@@ -220,7 +235,10 @@ async def bulk_import(
             cost = float(cost_val) if _is_not_empty(cost_val) else 0.0
             
             stock_val = row.get("stock")
-            stock = int(float(stock_val)) if _is_not_empty(stock_val) else 0
+            stock_number = float(stock_val) if _is_not_empty(stock_val) else 0.0
+            if not math.isfinite(stock_number) or not stock_number.is_integer():
+                raise ValueError('Stok harus berupa bilangan bulat yang valid.')
+            stock = int(stock_number)
             
             category = str(row.get("category")).strip() if _is_not_empty(row.get("category")) else "Umum"
             unit = str(row.get("unit")).strip() if _is_not_empty(row.get("unit")) else "pcs"
@@ -249,18 +267,17 @@ async def bulk_import(
                 "updated_at": utcnow().isoformat(),
             }
 
+            validated = ProductCreate.model_validate(doc).model_dump()
             # Upsert by SKU within store, else insert new
             existing = None
             if doc["sku"]:
                 existing = await db.products.find_one({"store_id": user["store_id"], "sku": doc["sku"]})
 
             if existing:
-                await db.products.update_one({"id": existing["id"]}, {"$set": doc})
+                await transactions.run_transaction(db,lambda session:save_product(db,user,validated,session,existing['id'],existing.get('stock',0)))
                 updated += 1
             else:
-                doc["id"] = str(uuid.uuid4())
-                doc["created_at"] = utcnow().isoformat()
-                await db.products.insert_one(doc)
+                await transactions.run_transaction(db,lambda session:save_product(db,user,validated,session))
                 inserted += 1
         except Exception as e:
             errors.append(f"Baris {idx + 2}: {e}")

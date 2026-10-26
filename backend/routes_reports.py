@@ -1,29 +1,66 @@
-"""Reporting endpoints: profit (Laba Rugi), cashflow (Arus Kas), inventory turnover, and
-expense CRUD. Numbers here are computed from the real orders/products/expenses collections --
-no hardcoded demo series like the frontend used to render.
+"""Reports use actual persisted business data.
 
-Two known simplifications, documented rather than hidden:
-  1. COGS uses each product's CURRENT `cost` field, not a snapshot of cost-at-time-of-sale
-     (order line items don't persist a cost snapshot). If a product's cost changes, past
-     months' COGS shifts too when recomputed. Fine for a first cut; revisit if exact
-     historical COGS matters later (would need to snapshot cost onto each order item).
-  2. Inventory turnover uses CURRENT stock value as a stand-in for "average inventory value"
-     over the period, since no periodic stock snapshots are kept. A real average-inventory
-     turnover calculation would need those snapshots, which don't exist yet.
+New sale lines carry immutable unit_cost snapshots. Legacy missing costs are
+reported as unknown, never recomputed from today's product cost. Inventory
+turnover still uses current stock as an explicitly labelled approximation;
+periodic inventory snapshots are not available for historical average stock.
 """
 from permissions import require_permission
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from database import get_db
+from database import get_db, utcnow
 from models import Expense, ExpenseCreate
 from auth import get_current_user
 from plan_limits import require_plan
+from paging import encode_cursor, decode_cursor
+from store_time import store_zone
 
 router = APIRouter(prefix="/api", tags=["reports"])
 
 MONTH_LABELS_ID = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
+
+
+@router.get('/reports/inventory/dead-stock', dependencies=[Depends(require_permission('inventory.read'))])
+async def report_dead_stock(user: dict = Depends(require_plan('pro')), cursor: Optional[str] = None,
+                            limit: int = Query(50, ge=1, le=100)):
+    now = utcnow().astimezone(timezone.utc)
+    after = None
+    if cursor:
+        value = decode_cursor(cursor, ['id', 'as_of'])
+        try:
+            end = datetime.fromisoformat(value['as_of'].replace('Z', '+00:00'))
+            if end.tzinfo is None or end > now:
+                raise ValueError()
+            end = end.astimezone(timezone.utc)
+        except (ValueError, TypeError):
+            raise HTTPException(400, 'Periode halaman tidak valid. Muat ulang laporan.')
+        after = value['id']
+    else:
+        end = now
+    start = end - timedelta(days=30)
+    db = get_db()
+    # Order writers (including offline replay) persist UTC ISO timestamps.
+    # Aggregate all settled sales in this rolling window, never a recent-order
+    # sample. Keep the window fixed while moving between report pages.
+    sold = await db.orders.aggregate([
+        {'$match': {'store_id': user['store_id'], 'payment_status': 'paid',
+                    'created_at': {'$gte': start.isoformat(), '$lte': end.isoformat()}}},
+        {'$unwind': '$items'},
+        {'$match': {'items.quantity': {'$gt': 0}}},
+        {'$group': {'_id': '$items.product_id'}},
+    ]).to_list(length=None)
+    ids = [row['_id'] for row in sold if isinstance(row.get('_id'), str)]
+    scope = {'store_id': user['store_id'], 'stock': {'$gt': 0}, 'id': {'$nin': ids}}
+    query = dict(scope)
+    if after:
+        query['id'] = {**scope['id'], '$gt': after}
+    rows = await db.products.find(query, {'_id': 0}).sort('id', 1).limit(limit + 1).to_list(length=limit + 1)
+    items, more = rows[:limit], len(rows) > limit
+    return {'items': items, 'total': await db.products.count_documents(scope), 'days': 30,
+            'window_start': start.isoformat(), 'window_end': end.isoformat(),
+            'next_cursor': encode_cursor({'id': items[-1]['id'], 'as_of': end.isoformat()}) if more else None}
 
 
 def _parse_iso(s: Optional[str]) -> Optional[datetime]:
@@ -86,7 +123,8 @@ async def delete_expense(expense_id: str, user: dict = Depends(require_plan("pro
 async def report_profit(user: dict = Depends(require_plan("pro")), months: int = Query(6, ge=1, le=24)):
     db = get_db()
     store_id = user["store_id"]
-    now = datetime.now(timezone.utc)
+    zone = await store_zone(db, store_id)
+    now = utcnow().astimezone(zone)
 
     buckets = []
     y, m = now.year, now.month
@@ -97,36 +135,41 @@ async def report_profit(user: dict = Depends(require_plan("pro")), months: int =
             yy -= 1
         buckets.append((yy, mm))
     earliest_year, earliest_month = buckets[0]
-    range_start = datetime(earliest_year, earliest_month, 1, tzinfo=timezone.utc)
+    range_start = datetime(earliest_year, earliest_month, 1, tzinfo=zone).astimezone(timezone.utc)
 
-    orders = await db.orders.find(
-        {"store_id": store_id, "payment_status": "paid", "created_at": {"$gte": range_start.isoformat()}},
-        {"_id": 0, "items": 1, "total": 1, "created_at": 1},
-    ).to_list(length=100000)
-
-    cost_by_id = {}
-    async for p in db.products.find({"store_id": store_id}, {"_id": 0, "id": 1, "cost": 1}):
-        cost_by_id[p["id"]] = p.get("cost") or 0
-
-    monthly = {b: {"revenue": 0.0, "cost": 0.0} for b in buckets}
-    for o in orders:
-        dt = _parse_iso(o.get("created_at"))
+    monthly = {b: {'revenue':0.0,'cost':0.0,'unknown':False} for b in buckets}
+    unknown_orders, estimated_orders = 0, 0
+    async for order in db.orders.find(
+        {'store_id':store_id,'payment_status':'paid','created_at':{'$gte':range_start.isoformat(),'$lte':utcnow().isoformat()}},
+        {'_id':0,'items':1,'total':1,'created_at':1}):
+        dt = _parse_iso(order.get('created_at'))
         if not dt:
             continue
-        key = (dt.year, dt.month)
+        dt = dt.astimezone(zone)
+        key = (dt.year,dt.month)
         if key not in monthly:
             continue
-        monthly[key]["revenue"] += o.get("total") or 0
-        for it in o.get("items", []):
-            monthly[key]["cost"] += cost_by_id.get(it.get("product_id"), 0) * (it.get("quantity") or 0)
+        monthly[key]['revenue'] += order.get('total') or 0
+        unknown, estimated = False, False
+        for line in order.get('items',[]):
+            if line.get('unit_cost') is None:
+                unknown = True
+                continue
+            monthly[key]['cost'] += line['unit_cost'] * line.get('quantity',0)
+            estimated = estimated or line.get('cost_snapshot_source') in ('sync_time','offline_catalogue')
+        if unknown:
+            monthly[key]['unknown'] = True
+            unknown_orders += 1
+        if estimated:
+            estimated_orders += 1
 
-    expenses = await db.expenses.find(
+    expenses = db.expenses.find(
         {"store_id": store_id, "expense_date": {"$gte": f"{earliest_year:04d}-{earliest_month:02d}-01"}},
         {"_id": 0, "amount": 1, "expense_date": 1},
-    ).to_list(length=100000)
+    )
 
     monthly_opex = {b: 0.0 for b in buckets}
-    for e in expenses:
+    async for e in expenses:
         d = str(e.get("expense_date") or "")
         try:
             key = (int(d[0:4]), int(d[5:7]))
@@ -148,9 +191,9 @@ async def report_profit(user: dict = Depends(require_plan("pro")), months: int =
             "month": MONTH_LABELS_ID[mm - 1],
             "year": yy,
             "revenue": round(revenue, 2),
-            "cost": round(cogs, 2),
+            "cost": None if monthly[b]["unknown"] else round(cogs, 2),
             "operating_expenses": round(opex, 2),
-            "profit": round(net, 2),
+            "profit": None if monthly[b]["unknown"] else round(net, 2),
         })
         totals["revenue"] += revenue
         totals["cogs"] += cogs
@@ -158,7 +201,14 @@ async def report_profit(user: dict = Depends(require_plan("pro")), months: int =
         totals["gross_profit"] += gross
         totals["net_profit"] += net
 
-    return {"series": series, "totals": {k: round(v, 2) for k, v in totals.items()}}
+    values = {k:round(v,2) for k,v in totals.items()}
+    if unknown_orders:
+        for field in ('cogs','gross_profit','net_profit'):
+            values[field] = None
+    return {'series':series,'totals':values,'cost_complete':not unknown_orders,
+            'unknown_cost_orders':unknown_orders,'estimated_cost_orders':estimated_orders,'timezone':str(zone),
+            'cost_policy':'snapshot_at_sale',
+            'notice':f'{unknown_orders} transaksi lama tidak memiliki snapshot HPP. Laba tidak ditampilkan untuk menghindari perkiraan dari harga modal saat ini.' if unknown_orders else ''}
 
 
 # ---------- Cashflow (Arus Kas) ----------

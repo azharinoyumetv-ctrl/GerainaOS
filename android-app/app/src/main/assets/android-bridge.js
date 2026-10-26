@@ -6,6 +6,10 @@
   const subscriptionPath = url => {
     try {
       const parsed = new URL(url, location.href);
+      // These pages only show account status. Their pricing/checkout links stay
+      // blocked below; an overview is not a subscription purchase.
+      const path = decodeURIComponent(parsed.pathname).replace(/\/+$/, '').toLowerCase();
+      if (parsed.origin === location.origin && ['/geraina/app/settings/billing', '/geraina/app/billing'].includes(path)) return false;
       return parsed.origin === location.origin && decodeURIComponent(parsed.pathname).split('/').some(p => /^(pricing|checkout|order|billing)$/i.test(p));
     } catch { return true; }
   };

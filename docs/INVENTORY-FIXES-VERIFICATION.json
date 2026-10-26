@@ -1,0 +1,97 @@
+{
+  "verifiedAt": "2026-10-26T08:52:07.073415+00:00",
+  "status": "three_inventory_defects_fixed_and_locally_verified",
+  "sourceHead": "08b5624e8d49c8af37804e9d2023ff385c0649d3",
+  "sourceIncludesUncommittedChanges": true,
+  "published": false,
+  "findings": [
+    {
+      "id": "INVENTORY-VALUATION-CAP",
+      "status": "addressed_locally",
+      "implementation": "Complete catalogue enumeration before computing totals; 50 rendered rows per page.",
+      "regression": "501 products at stock 1 and cost 100 produce asset value 50100, retail value 100200 and gross margin 50100."
+    },
+    {
+      "id": "INVENTORY-VALUATION-ERROR",
+      "status": "addressed_locally",
+      "implementation": "Loading and failed reads hide metrics and empty results; explicit retry recovers the complete catalogue.",
+      "regression": "HTTP 503 shows error/retry, no false zero value. Recovery displays full 50100 asset value."
+    },
+    {
+      "id": "DEAD-STOCK-WINDOW",
+      "status": "addressed_locally",
+      "implementation": "Store-scoped server report examines all positive-quantity paid sales within a pinned rolling 30-day UTC window, with 50-row cursor pages.",
+      "regression": "620 products and 120 paid orders exercise both former caps; 501 eligible products paginate without duplicates. Old, pending, failed, voided, future and nonpositive-quantity sales do not hide stock. Bounds, store/role/plan access and error/retry are checked."
+    }
+  ],
+  "baseline": {
+    "diagnostic": "android-app/app/build/reports/followup-defects/verification.json",
+    "regressionRun": "android-app/app/build/reports/inventory-baseline/artifacts/.last-run.json",
+    "regressionFailuresBeforeFix": 3
+  },
+  "backendChecks": {
+    "status": "passed",
+    "tests": 271,
+    "newInventoryTests": 27,
+    "xml": "android-app/app/build/reports/inventory-fixes-backend.xml"
+  },
+  "frontendUnitChecks": {
+    "status": "passed",
+    "tests": 38,
+    "suites": 4
+  },
+  "frontendBuild": {
+    "status": "passed",
+    "bundle": "main.af2d8c26.js",
+    "sha256": "bd1666d907f98c497050543a0c7f6590b84329131d6f1d2084b87e76eaf0f43d"
+  },
+  "playwrightCLI": {
+    "tool": "Playwright CLI",
+    "version": "1.61.1",
+    "command": ".\\node_modules\\.bin\\playwright.cmd test --config=playwright.local.config.js",
+    "status": "passed",
+    "stats": {
+      "startTime": "2026-10-26T08:49:23.381Z",
+      "duration": 43725.257000000005,
+      "expected": 45,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "retries": 0,
+    "projects": [
+      "phone-layout",
+      "xiaomi-tablet-layout",
+      "samsung-tablet-layout"
+    ],
+    "screenshots": 45,
+    "htmlReport": "android-app/app/build/reports/playwright-cli/report/index.html",
+    "rawResults": "android-app/app/build/reports/playwright-cli/results.json",
+    "scope": "Prepared local frontend with Android presentation and isolated APIs/IndexedDB. Browser layouts; no native installation or physical hardware certification.",
+    "merchantWrites": 0,
+    "releasePublished": false
+  },
+  "apiInventory": {
+    "routes": 130,
+    "unmatchedLiteralCalls": 0,
+    "dynamicCallsRequiringManualReview": 2,
+    "evidence": "android-app/app/build/reports/inventory-fixes/api-inventory.json"
+  },
+  "publishedApk": {
+    "version": "1.2.6",
+    "versionCode": 11,
+    "unchanged": true,
+    "sha256": "11da42cc1a7cc02e5afa02313a6136c5206851b15553952aca63be03ffd83b53"
+  },
+  "merchantWrites": 0,
+  "providerChargesOrMessages": 0,
+  "releaseReadiness": "local_signed_candidate_ready; device_and_deployed_candidate_checks_pending",
+  "notPerformed": [
+    "New signed APK installation/update checks",
+    "Physical tablet/printer tests",
+    "Live gateway settlement",
+    "TestSprite against a deployed preview/release URL"
+  ],
+  "rollout": "Deploy matching backend, including GET /reports/inventory/dead-stock, before a newly versioned/signed package; published 1.2.6 remains unchanged.",
+  "latestVerification": "CUSTOMER-FIXES.json"
+}

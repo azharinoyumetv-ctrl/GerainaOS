@@ -30,6 +30,8 @@ from routes_printer import router as printer_router
 from routes_edc import router as edc_router
 from routes_devices import router as devices_router
 from routes_offline import router as offline_router
+from routes_records import router as records_router
+from routes_stock import router as stock_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger("geraina")
@@ -77,6 +79,8 @@ app.include_router(printer_router)
 app.include_router(edc_router)
 app.include_router(devices_router)
 app.include_router(offline_router)
+app.include_router(records_router)
+app.include_router(stock_router)
 
 cors_origins = os.environ.get("CORS_ORIGINS", "").split(",")
 cors_origins = [o.strip() for o in cors_origins if o.strip()]
@@ -106,6 +110,12 @@ async def _ensure_indexes():
         ("upgrade_requests", [("store_id", 1), ("status", 1)]),
         ("subscription_orders", [("owner_id", 1), ("module", 1), ("status", 1), ("created_at", -1)]),
         ("expenses", [("store_id", 1), ("expense_date", -1)]),
+        ("products", [("store_id", 1), ("id", 1)]),
+        ("stock_movements", [("store_id", 1), ("created_at", -1), ("id", -1)]),
+        ("purchase_orders", [("store_id", 1), ("po_no", 1)]),
+        ("supplier_invoices", [("store_id", 1), ("invoice_no", 1)]),
+        ("orders", [("store_id", 1), ("created_at", -1), ("id", -1)]),
+        ("orders", [("store_id", 1), ("payment_status", 1), ("created_at", -1)]),
     ):
         try:
             await db[coll].create_index(keys)

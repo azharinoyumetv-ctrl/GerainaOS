@@ -1,49 +1,31 @@
+import useWorkspace from '@/hooks/useWorkspace';
+import WorkspaceState from '@/components/WorkspaceState';
+import useTablePage from '@/hooks/useTablePage';
+import TablePage from '@/components/TablePage';
+import useAction from '@/hooks/useAction';
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Trash2, Edit } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 export default function BranchManagement() {
-  const [branches, setBranches] = useState([]);
+  const query = useWorkspace(['/branches']);
+  const action = useAction();
+  const table = useTablePage(query.data['/branches'] || []);
+  const branches = table.rows;
+  const fetchBranches = query.retry;
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [editingId, setEditingId] = useState(null);
 
-  const fetchBranches = () => {
-    api.get("/branches").then((r) => setBranches(r.data)).catch(() => {});
-  };
-
-  useEffect(() => {
-    fetchBranches();
-  }, []);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     if (!name.trim()) return;
-
     const payload = { name, address, phone };
-
-    if (editingId) {
-      api.put(`/branches/${editingId}`, payload).then(() => {
-        setEditingId(null);
-        clearForm();
-        fetchBranches();
-      }).catch((err) => {
-        toast.error(err?.response?.data?.detail || "Gagal memperbarui cabang.");
-      });
-    } else {
-      api.post("/branches", payload).then(() => {
-        clearForm();
-        fetchBranches();
-      }).catch((err) => {
-        // Previously had no .catch() at all -- a failed create (e.g. the outlet-capacity
-        // cap from plan_limits.py) silently did nothing: no toast, form stayed filled,
-        // no indication anything went wrong. Same fake-silence bug class as the branch
-        // list's fetch swallow, just worse since this one is a user-initiated write.
-        toast.error(err?.response?.data?.detail || "Gagal menambahkan cabang.");
-      });
-    }
+    action.run(() => editingId ? api.put(`/branches/${editingId}`,payload) : api.post('/branches',payload), () => {
+      setEditingId(null); clearForm(); fetchBranches();
+    });
   };
 
   const clearForm = () => {
@@ -59,14 +41,15 @@ export default function BranchManagement() {
     setPhone(b.phone || "");
   };
 
-  const handleDelete = (id) => {
-    if (confirm("Apakah Anda yakin ingin menghapus cabang outlet ini?")) {
-      api.delete(`/branches/${id}`).then(() => fetchBranches());
-    }
+  const handleDelete = id => {
+    if (confirm('Hapus catatan ini?')) action.run(() => api.delete(`/branches/${id}`), fetchBranches);
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="branches-page">
+      <WorkspaceState query={query}>
+      {action.busy && <p role="status">Menyimpan perubahan…</p>}
+      {action.error && <p role="alert" className="text-red-800">{action.error}</p>}
       <div>
         <span className="label-tiny">Outlet Cabang</span>
         <h1 className="font-display text-3xl font-bold mt-1">Manajemen Multi-Cabang</h1>
@@ -108,7 +91,7 @@ export default function BranchManagement() {
             />
           </div>
 
-          <button type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2">
+          <button disabled={action.busy} type="submit" className="btn-primary w-full py-2 flex items-center justify-center gap-2">
             {editingId ? "Simpan Perubahan" : <><Plus size={16} /> Tambah Cabang</>}
           </button>
           {editingId && (
@@ -152,9 +135,11 @@ export default function BranchManagement() {
                 ))}
               </tbody>
             </table>
+            <TablePage label="cabang" value={table} />
           </div>
         </div>
       </div>
+      </WorkspaceState>
     </div>
   );
 }

@@ -3,42 +3,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { ShieldAlert, Lock } from "lucide-react";
 import { canAccessPath } from "@/auth/permissions";
 
-// SYNC: KEEP IN SYNC with the minPlan annotations on MENU_STRUCTURE in layouts/AppLayout.jsx.
-// That nav lock icon only stops nav-clicks -- this is what actually stops a direct URL (typed,
-// bookmarked, or deep-linked) from reaching a plan-locked page regardless of how the request
-// got there. Ordered most-specific-to-least-specific; the first matching suffix wins, so a
-// more specific rule (e.g. "/integrations/whatsapp") must come before a broader one that would
-// also match the same path (e.g. "/integrations").
-const PLAN_RANK = { expired: -1, starter: 0, pro: 1, business: 2, trial: 2 };
-const PLAN_LABEL = { starter: "Starter", pro: "Pro", business: "Business" };
-const PLAN_ROUTES = [
-  ["/products/stock-transfer", "business"],
-  ["/inventory/movement", "pro"],
-  ["/inventory/valuation", "pro"],
-  ["/inventory/dead-stock", "pro"],
-  ["/purchase", "pro"],
-  ["/suppliers", "pro"],
-  ["/customers/membership", "business"],
-  ["/customers/loyalty", "business"],
-  ["/debt", "pro"],
-  ["/reports", "pro"],
-  ["/staff/roles", "business"],
-  ["/staff/permissions", "business"],
-  ["/staff/attendance", "business"],
-  ["/attendance", "business"],
-  ["/branches", "business"],
-  ["/integrations/whatsapp", "business"],
-  ["/integrations", "pro"],
-];
-
-function planRank(plan) {
-  return PLAN_RANK[plan] ?? 0;
-}
-
-function minPlanForPath(pathname) {
-  const hit = PLAN_ROUTES.find(([suffix]) => pathname.includes(suffix));
-  return hit ? hit[1] : null;
-}
+import { minPlanForPath, isPlanLocked, PLAN_LABEL } from "@/navigation/sections";
 
 export default function RoleGuard({ children }) {
   const { user, loading } = useAuth();
@@ -75,7 +40,7 @@ export default function RoleGuard({ children }) {
   // Plan gate runs for every role, including Owner -- direct-URL access to a plan-locked page
   // must be blocked the same way a nav click would be.
   const requiredPlan = minPlanForPath(location.pathname);
-  if (requiredPlan && planRank(user.plan) < planRank(requiredPlan)) {
+  if (isPlanLocked(requiredPlan, user.plan)) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center space-y-4" data-testid="plan-locked-page">
         <div className="w-16 h-16 rounded-full bg-[hsl(38,90%,50%,0.12)] text-[hsl(38,90%,42%)] grid place-items-center">

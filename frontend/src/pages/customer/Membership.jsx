@@ -1,3 +1,4 @@
+import { readCollection } from '@/api/records';
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Check } from "lucide-react";
@@ -11,7 +12,7 @@ export default function Membership() {
   const [desc, setDesc] = useState("");
 
   const fetchMemberships = () => {
-    api.get("/customers/memberships").then((r) => setMemberships(r.data)).catch(() => {});
+    readCollection("/customers/memberships").then((r) => setMemberships(r.data)).catch(() => {});
   };
 
   useEffect(() => {

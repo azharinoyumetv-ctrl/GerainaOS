@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 from typing import List, Optional, Any, Annotated, Literal
 import uuid
-from pydantic import BaseModel, EmailStr, Field, BeforeValidator, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, BeforeValidator, ConfigDict, model_validator, AliasChoices
 
 
 def _to_str(v: Any) -> str:
@@ -52,11 +52,11 @@ class UserPublic(BaseModel):
 
 # ---------- Products ----------
 class ProductBase(BaseModel):
-    name: str
-    sku: Optional[str] = None
-    price: float = Field(ge=0)
-    cost: float = Field(default=0, ge=0)
-    stock: int = Field(default=0, ge=0)
+    name: str = Field(min_length=1, max_length=200)
+    sku: Optional[str] = Field(default=None, max_length=200)
+    price: float = Field(ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    cost: float = Field(default=0, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    stock: int = Field(default=0, ge=0, le=1000000000)
     category: Optional[str] = "Umum"
     unit: Optional[str] = "pcs"
     image_url: Optional[str] = None
@@ -71,9 +71,10 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
     sku: Optional[str] = None
-    price: Optional[float] = None
-    cost: Optional[float] = None
-    stock: Optional[int] = None
+    price: Optional[float] = Field(default=None, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    cost: Optional[float] = Field(default=None, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    stock: Optional[int] = Field(default=None, ge=0)
+    expected_stock: Optional[int] = None
     category: Optional[str] = None
     unit: Optional[str] = None
     image_url: Optional[str] = None
@@ -91,24 +92,41 @@ class Product(ProductBase):
 
 # ---------- POS / Orders ----------
 class OrderLineItem(BaseModel):
-    product_id: str
-    name: str
-    price: float
-    quantity: int = Field(ge=1)
-    subtotal: float
+    product_id: str = Field(min_length=1, max_length=200)
+    name: str = Field(min_length=1, max_length=200)
+    price: float = Field(ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    quantity: int = Field(ge=1, le=100000)
+    subtotal: float = Field(ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    unit_cost: Optional[float] = Field(default=None, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+
+    @model_validator(mode='after')
+    def consistent_subtotal(self):
+        from decimal import Decimal, ROUND_HALF_UP
+        calculated = (Decimal(str(self.price)) * self.quantity).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        if abs(Decimal(str(self.subtotal)) - calculated) > Decimal('0.000001'):
+            raise ValueError('Subtotal produk tidak cocok dengan harga dan jumlah.')
+        self.subtotal = float(calculated)
+        return self
 
 
 class OrderCreate(BaseModel):
-    items: List[OrderLineItem]
-    payment_method: str  # cash | qris_bank (static/manual) | qris (legacy gateway) | ewallet
-    ewallet_channel: Optional[str] = None  # OVO | DANA | SHOPEEPAY | LINKAJA (Xendit v3, no ID_ prefix)
-    customer_name: Optional[str] = None
-    customer_phone: Optional[str] = None
-    customer_email: Optional[str] = None
-    discount: float = 0
-    tax_percent: float = 0
-    cash_received: Optional[float] = None
-    note: Optional[str] = None
+    items: List[OrderLineItem] = Field(min_length=1, max_length=500)
+    payment_method: str
+    ewallet_channel: Optional[str] = None
+    customer_id: Optional[str] = Field(default=None, max_length=200)
+    customer_name: Optional[str] = Field(default=None, max_length=200)
+    customer_phone: Optional[str] = Field(default=None, max_length=64)
+    customer_email: Optional[str] = Field(default=None, max_length=254)
+    discount: float = Field(default=0, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    tax_percent: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
+    cash_received: Optional[float] = Field(default=None, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    note: Optional[str] = Field(default=None, max_length=1000)
+
+    @model_validator(mode='after')
+    def cash_amount_required(self):
+        if self.payment_method == 'cash' and self.cash_received is None:
+            raise ValueError('Nominal tunai diterima wajib diisi.')
+        return self
 
 
 class Order(BaseModel):
@@ -185,12 +203,14 @@ class Unit(UnitBase):
     updated_at: str = Field(default_factory=utcnow_iso)
 
 class StockAdjustmentCreate(BaseModel):
-    product_name: str
-    sku: Optional[str] = None
-    adjustment_qty: int
-    type: str  # add | sub
-    reason: str
-    created_by: str
+    product_id: Optional[str] = Field(default=None, max_length=200)
+    product_name: str = Field(default='', max_length=200)
+    sku: Optional[str] = Field(default=None, max_length=200)
+    adjustment_qty: int = Field(ge=1, le=100000)
+    type: Literal['add', 'sub']
+    reason: str = Field(min_length=1, max_length=1000)
+    created_by: str = Field(default='', max_length=200)
+    request_id: Optional[str] = Field(default=None, min_length=1, max_length=200)
 
 class StockAdjustment(StockAdjustmentCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -198,18 +218,27 @@ class StockAdjustment(StockAdjustmentCreate):
     created_at: str = Field(default_factory=utcnow_iso)
 
 class StockTransferItem(BaseModel):
-    name: str
-    qty: int
+    product_id: str = Field(min_length=1, max_length=200)
+    name: str = Field(default='', max_length=200)
+    qty: int = Field(ge=1, le=100000)
 
 class StockTransferCreate(BaseModel):
+    from_branch: str = Field(min_length=1, max_length=200)
+    to_branch: str = Field(min_length=1, max_length=200)
+    items: List[StockTransferItem] = Field(min_length=1, max_length=500)
+    status: Literal['Shipped'] = 'Shipped'
+    request_id: Optional[str] = Field(default=None, min_length=1, max_length=200)
+
+class StockTransfer(BaseModel):
+    id: str
+    store_id: str
     from_branch: str
     to_branch: str
-    items: List[StockTransferItem]
-    status: str = "Shipped"
-
-class StockTransfer(StockTransferCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    store_id: str
+    from_branch_id: Optional[str] = None
+    to_branch_id: Optional[str] = None
+    items: list[dict]
+    status: str
+    inventory_applied: bool = False
     created_at: str = Field(default_factory=utcnow_iso)
 
 class SupplierBase(BaseModel):
@@ -224,50 +253,73 @@ class Supplier(SupplierBase):
     created_at: str = Field(default_factory=utcnow_iso)
     updated_at: str = Field(default_factory=utcnow_iso)
 
+class PurchaseLine(BaseModel):
+    product_id: str = Field(min_length=1, max_length=200)
+    name: str = Field(default='', max_length=200)
+    qty: int = Field(ge=1, le=100000, validation_alias=AliasChoices('qty', 'quantity'))
+    cost: float = Field(ge=0, le=1_000_000_000_000, allow_inf_nan=False, validation_alias=AliasChoices('cost', 'price'))
+    received_qty: int = Field(default=0, ge=0)
+
 class PurchaseOrderCreate(BaseModel):
-    po_no: str
+    po_no: str = Field(min_length=1, max_length=200)
     supplier_id: str
-    supplier_name: str
-    total: float
-    status: str = "Ordered"
+    supplier_name: str = ''
+    items: List[PurchaseLine] = Field(default_factory=list)
+    total: float = Field(ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    status: str = 'Ordered'
 
 class PurchaseOrder(PurchaseOrderCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     store_id: str
     created_at: str = Field(default_factory=utcnow_iso)
 
+class ReceivingLine(BaseModel):
+    product_id: str = Field(min_length=1, max_length=200)
+    qty: int = Field(ge=1, le=100000)
+
 class GoodsReceivingCreate(BaseModel):
+    po_no: str = Field(min_length=1, max_length=200)
+    gr_no: str = Field(default='', max_length=200)
+    received_by: str = Field(default='', max_length=200)
+    received_at: str = Field(default_factory=utcnow_iso)
+    items: Optional[List[ReceivingLine]] = Field(default=None, min_length=1, max_length=500)
+    request_id: Optional[str] = Field(default=None, min_length=1, max_length=200)
+
+class GoodsReceiving(BaseModel):
+    id: str
+    store_id: str
     po_no: str
     gr_no: str
     received_by: str
-    received_at: str = Field(default_factory=utcnow_iso)
-
-class GoodsReceiving(GoodsReceivingCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    store_id: str
+    received_at: str
+    items: list[dict] = Field(default_factory=list)
+    inventory_applied: bool = False
 
 class SupplierInvoiceCreate(BaseModel):
-    invoice_no: str
-    po_no: str
-    amount: float
-    status: str = "Unpaid"
+    invoice_no: str = Field(min_length=1, max_length=200)
+    po_no: str = Field(default='', max_length=200)
+    supplier_id: Optional[str] = None
+    amount: float = Field(gt=0, le=1_000_000_000_000, allow_inf_nan=False)
+    status: Literal['Unpaid','Paid'] = 'Unpaid'
     due_date: str
 
 class SupplierInvoice(SupplierInvoiceCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     store_id: str
+    status: str = 'Unpaid'
+    paid_amount: float = 0
     created_at: str = Field(default_factory=utcnow_iso)
 
 class SupplierInvoiceUpdate(BaseModel):
-    """Partial update -- used to mark an invoice paid without re-submitting the full record."""
-    status: Optional[str] = None
+    status: Literal['Unpaid','Paid']
 
 class CustomerBase(BaseModel):
     name: str
     phone: Optional[str] = None
     email: Optional[str] = None
     membership_tier: Optional[str] = "Bronze"
-    loyalty_points: int = 0
+    loyalty_points: int = Field(default=0, ge=0, le=1000000000)
+    expected_loyalty_points: Optional[int] = Field(default=None, ge=0)
     notes: Optional[str] = None
 
 class Customer(CustomerBase):
@@ -286,16 +338,16 @@ class Membership(MembershipBase):
     store_id: str
 
 class LoyaltyRules(BaseModel):
-    conversion_rate: int = 10000
-    point_value: int = 100
-    min_redeem_points: int = 50
+    conversion_rate: int = Field(default=10000, ge=1, le=1000000000)
+    point_value: int = Field(default=100, ge=1, le=1000000)
+    min_redeem_points: int = Field(default=50, ge=1, le=1000000)
 
 class DebtReceivableCreate(BaseModel):
     customer_name: str
     phone: Optional[str] = None
     order_no: str
-    amount: float
-    paid_amount: float = 0
+    amount: float = Field(gt=0, le=1_000_000_000_000, allow_inf_nan=False)
+    paid_amount: float = Field(default=0, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
     due_date: str
     status: str = "Unpaid"  # Unpaid | Partial | Paid
 
@@ -306,14 +358,15 @@ class DebtReceivable(DebtReceivableCreate):
 class DebtReceivableUpdate(BaseModel):
     """Partial update -- used to record a payment/settlement against an existing
     receivable without re-submitting the full record."""
-    paid_amount: Optional[float] = None
+    paid_amount: Optional[float] = Field(default=None, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    expected_paid_amount: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
     status: Optional[str] = None
 
 class DebtPayableCreate(BaseModel):
     supplier_name: str
     invoice_no: str
-    amount: float
-    paid_amount: float = 0
+    amount: float = Field(gt=0, le=1_000_000_000_000, allow_inf_nan=False)
+    paid_amount: float = Field(default=0, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
     due_date: str
     status: str = "Unpaid"
 
@@ -322,7 +375,8 @@ class DebtPayable(DebtPayableCreate):
     store_id: str
 
 class DebtPayableUpdate(BaseModel):
-    paid_amount: Optional[float] = None
+    paid_amount: Optional[float] = Field(default=None, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
+    expected_paid_amount: Optional[float] = Field(default=None, ge=0, allow_inf_nan=False)
     status: Optional[str] = None
 
 class StaffBase(BaseModel):

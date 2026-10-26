@@ -10,9 +10,9 @@ export const canViewTeamAttendance = role => ["Owner", "Manager"].includes(canon
 
 export const ROLE_MODULES = {
   Owner: ["*"],
-  Manager: ["dashboard", "pos", "kds", "products", "inventory", "purchase", "suppliers", "customers", "debt", "reports", "sales", "staff", "attendance", "about"],
-  Cashier: ["dashboard", "pos", "kds", "products", "customers", "sales", "attendance", "about"],
-  Warehouse: ["products", "ingredients", "inventory", "purchase", "suppliers", "attendance", "about"],
+  Manager: ["dashboard", "pos", "products", "inventory", "purchase", "suppliers", "customers", "debt", "reports", "sales", "staff", "attendance", "about"],
+  Cashier: ["dashboard", "pos", "products", "customers", "sales", "attendance", "about"],
+  Warehouse: ["products", "inventory", "purchase", "suppliers", "attendance", "about"],
 };
 
 const ownerPaths = ["/staff/roles", "/staff/permissions", "/settings", "/integrations", "/payments", "/branches", "/billing", "/license"];

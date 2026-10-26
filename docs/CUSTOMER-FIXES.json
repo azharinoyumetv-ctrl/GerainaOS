@@ -1,0 +1,337 @@
+{
+  "status": "21_findings_fixed_and_verified_locally",
+  "published": false,
+  "items": [
+    {
+      "id": "AUD-001",
+      "title": "Online sale amount validation is incomplete",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "invalid_sale_does_not_change_stock_or_create_order; line_subtotals_cannot_drift_by_a_cent_or_pollute_sales_totals",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Server totals validate finite amounts, sufficient cash, tax, discounts and normalized line subtotals."
+    },
+    {
+      "id": "AUD-002",
+      "title": "Online sale accepts unavailable or foreign product references",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "checkout_cannot_reference_a_missing_or_foreign_product; unavailable_or_changed_product_is_rejected",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Checkout requires an active, current-price product owned by the authenticated store."
+    },
+    {
+      "id": "AUD-003",
+      "title": "Online checkout silently oversells stock",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "unavailable_or_changed_product_is_rejected; existing offline-sale regressions",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Online stock reservations check availability atomically. Known offline cash shortages require an explicit warning/attestation; collected offline cash remains reconcilable."
+    },
+    {
+      "id": "AUD-004",
+      "title": "Online checkout has no retry idempotency",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "retry_and_concurrent_void_are_exactly_once; online_gateway_retry_reuses_the_durable_payment_intent; gateway_timeout_preserves_intent_and_retry_never_charges_again",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "A durable store/actor checkout key reuses the order and provider intent; uncertain timeouts never repeat a provider request."
+    },
+    {
+      "id": "AUD-005",
+      "title": "Order storage failure leaves stock deducted",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "failed_insert_rolls_back_and_retry_can_succeed",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Order, inventory, ledger and customer benefits commit in a Mongo transaction. Storage failures roll back local effects."
+    },
+    {
+      "id": "AUD-006",
+      "title": "Concurrent void restores stock repeatedly",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "retry_and_concurrent_void_are_exactly_once; signed_doku_notifications_require_exact_amount_and_handle_cancel_once",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Concurrent voids restore inventory once; provider cancellation/failure also releases stock once."
+    },
+    {
+      "id": "AUD-007",
+      "title": "Voided orders can be marked paid again",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "failed_provider_release_and_late_paid_do_not_corrupt_inventory; signed_doku_notifications_require_exact_amount_and_handle_cancel_once",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Terminal orders cannot become paid through manual actions or late callbacks. Late funds require explicit merchant review."
+    },
+    {
+      "id": "AUD-008",
+      "title": "Purchase order product lines are discarded",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "receiving_is_itemized_atomic_and_exactly_once; browser: Creating a purchase preserves its selected product and quantity",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "PO lines retain validated product IDs, quantities, costs and received quantities. Legacy missing lines require explicit repair."
+    },
+    {
+      "id": "AUD-009",
+      "title": "Receiving changes status but does not add inventory",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "receiving_is_itemized_atomic_and_exactly_once; browser: Merchant creates an itemized PO, receives it and sees the actual stock movement",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Receiving validates the PO and remaining lines, adds stock and a real ledger event atomically, and deduplicates retries."
+    },
+    {
+      "id": "AUD-010",
+      "title": "Supplier invoice and payable statuses diverge",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "linked_invoice_payment_and_reopening_are_consistent; browser: A partial supplier payment and final invoice settlement agree on both screens",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Invoice and payable share transactional partial/full/reopened settlement; UI waits for the persisted status."
+    },
+    {
+      "id": "AUD-011",
+      "title": "Stock adjustments can succeed without changing the selected product",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "SKU-less adjustment regression; browser: An SKU-less product can be adjusted through its actual product ID",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Adjustments use product IDs, require positive quantities/reasons, and derive the author from authentication."
+    },
+    {
+      "id": "AUD-012",
+      "title": "Debt endpoints allow overpayment",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "linked_invoice_payment_and_reopening_are_consistent",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Debt payments validate bounds and derive status; stale cumulative balances cannot overwrite a concurrent payment."
+    },
+    {
+      "id": "AUD-013",
+      "title": "Stock movement shows invented business transactions",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "complete_record_pages_and_real_movements_are_store_scoped; product_stock_compare_and_set_and_import_ledger_and_capacity; browser receiving/adjustment/transfer journeys",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Demo movements are removed. Real sales, reversals, product changes, receipts, adjustments and transfers write ledger events. Legacy incompleteness is disclosed."
+    },
+    {
+      "id": "AUD-014",
+      "title": "Load errors still look like empty or healthy data on eight screens",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "browser: A failed read on each audited route is visible to the customer",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Required reads distinguish loading, error, empty and success, with retry and stale-request protection."
+    },
+    {
+      "id": "AUD-015",
+      "title": "Adjustment, transfer and purchase selectors still stop at product 500",
+      "priority": "P2",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "browser: Large catalogue selectors (501 products across three workflows and three layouts)",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Adjustment, transfer and PO selectors enumerate the complete catalogue; tables page separately."
+    },
+    {
+      "id": "AUD-016",
+      "title": "Customer, supplier and unpaid invoice lists silently truncate",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "complete_record_pages_and_real_movements_are_store_scoped; older_suppliers_and_unpaid_invoices_have_complete_pages (201/106/101 records)",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Cursor APIs expose total counts and complete store-scoped customer, supplier and invoice collections; current clients enumerate them."
+    },
+    {
+      "id": "AUD-017",
+      "title": "Warehouse stock movement requests a forbidden POS endpoint",
+      "priority": "P2",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "complete_record_pages_and_real_movements_are_store_scoped; browser Warehouse role audit",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Inventory movement uses inventory.read instead of requesting the forbidden POS order endpoint."
+    },
+    {
+      "id": "AUD-018",
+      "title": "Today totals use UTC instead of the store timezone",
+      "priority": "P1",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "today_uses_the_store_day_and_chart_matches_same_boundary (WIB/WITA/WIT)",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Today and seven-day chart boundaries use the configured store timezone."
+    },
+    {
+      "id": "AUD-019",
+      "title": "Historical profit changes when current product cost changes",
+      "priority": "P2",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "historical_profit_uses_immutable_cost_and_flags_missing_legacy_cost; browser recorded-profit journey",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "New sales freeze unit cost; historical profit never reads current product cost. Unknown legacy costs produce an explicit incomplete report."
+    },
+    {
+      "id": "AUD-020",
+      "title": "Saved loyalty earning rules do not award sale points",
+      "priority": "P2",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "loyalty_awards_once_and_void_reverses_once; manual_loyalty_correction_requires_authority_and_current_balance; browser earning journey",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Paid sales award customer points exactly once; void/refund reverses once. Redemption is explicitly unavailable. Manual correction requires authority and a current balance."
+    },
+    {
+      "id": "AUD-021",
+      "title": "Transfers are record-only and lack basic validation",
+      "priority": "P2",
+      "status": "fixed_verified_locally",
+      "verification": [
+        "branch_transfers_reserve_receive_and_cancel_exactly_once; browser: Branch shipment and receipt change only the correct branch balances",
+        "backend.xml and e2e/results.json in customer-fixes report"
+      ],
+      "implementation": "Transfers validate owned distinct branches and product IDs; shipping, receiving and cancellation update the correct branch balances once. Legacy record-only transfers are labelled."
+    }
+  ],
+  "notes": [
+    "All 21 items remain subject to final browser verification.",
+    "No public APK or production backend has been published.",
+    "Preserve historical audit evidence; dashboard already displayed an unknown/error state, with the wrong accessibility role."
+  ],
+  "verifiedAt": "2026-10-26T13:03:27.298883+00:00",
+  "sourceHead": "08b5624e8d49c8af37804e9d2023ff385c0649d3",
+  "sourceIncludesUncommittedChanges": true,
+  "sourceDigest": "87e5aaea3111beccd5edb06dc45335ebadac2ff36caedc1e03f7cbd50226faf8",
+  "backend": {
+    "tests": 313,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "browser": {
+    "startTime": "2026-10-26T12:47:10.742Z",
+    "duration": 340402.853,
+    "expected": 294,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "posInventory": {
+    "startTime": "2026-10-26T12:34:55.254Z",
+    "duration": 75425.426,
+    "expected": 45,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "androidUnit": {
+    "tests": 24,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontendUnit": {
+    "tests": 38,
+    "suites": 4,
+    "status": "passed"
+  },
+  "navigationChecks": 30,
+  "releaseLint": {
+    "errors": 0,
+    "warnings": 55
+  },
+  "package": {
+    "version": "1.2.7",
+    "versionCode": 12,
+    "applicationId": "com.dagangos.geraina",
+    "minSdk": 34,
+    "targetSdk": 36,
+    "signatureVerified": true,
+    "signatureScheme": "v2",
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "sha256": "f63e22a8577c5ccc33042c4f9439b90e4f1396cd5bb0b7715aae536e1f981e52",
+    "bytes": 17207111,
+    "bundleManifestEntriesVerified": 18,
+    "browserAssetMatches": 17,
+    "expectedPackageTransform": "Remote font imports and remote font/analytics HTML tags removed by bundle-frontend.cjs. Native presentation assets injected at document start.",
+    "published": false,
+    "deviceInstalled": false,
+    "candidatePath": "android-app/releases/candidates/1.2.7/Geraina-POS-1.2.7-candidate.apk",
+    "candidateCopiedAndHashVerified": true
+  },
+  "bundle": {
+    "name": "main.35a59407.js",
+    "sha256": "df8f5d7c57c67555027f1a81d2b2d7b2543ca57cc55f9383d61cdae695114b3c"
+  },
+  "apiInventory": {
+    "backendRoutes": 136,
+    "literalCalls": 81,
+    "unmatchedLiteralCalls": 0,
+    "dynamicCallsReviewed": 9
+  },
+  "productionMerchantWrites": 0,
+  "providerChargesOrMessages": 0,
+  "notVerified": [
+    "Physical Android installation/update from 1.2.6 to 1.2.7, including Xiaomi and Samsung devices; no device was connected.",
+    "Physical Bluetooth pairing/printing and real camera capture; browser callbacks do not certify hardware.",
+    "Real merchant Xendit/DOKU settlement, cancellation/refunds and bank receipt verification. Provider calls were stubbed/blocked; signed callback contracts were tested locally.",
+    "Production-network launch/navigation performance and representative merchant data latency.",
+    "TestSprite against a deployed candidate: no preview/release URL containing this candidate exists."
+  ],
+  "dashboardAuditCorrection": "The native dashboard already displayed unknown data plus Retry using role=status. The initial alert-only audit misclassified that case. The other swallowed-read failures were real. It now exposes role=alert, validates reads and uses the server store day.",
+  "releaseReadiness": "local_signed_candidate_ready; device_and_deployed_candidate_checks_pending",
+  "rollout": "Deploy the matching backend (Mongo replica set/transactions required) and frontend before distributing the new APK. Keep published 1.2.6 immutable. Do not invent missing historical cost or inventory data.",
+  "primaryProviderSources": [
+    "https://developers.doku.com/get-started-with-doku-api/notification/best-practice",
+    "https://developers.doku.com/get-started-with-doku-api/notification/http-notification-sample-non-snap"
+  ],
+  "expandedInvoiceForm": {
+    "startTime": "2026-10-26T13:02:51.486Z",
+    "duration": 18250.179,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

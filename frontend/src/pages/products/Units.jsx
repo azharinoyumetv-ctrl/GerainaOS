@@ -1,3 +1,4 @@
+import { readCollection } from '@/api/records';
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Trash2, Edit } from "lucide-react";
@@ -12,7 +13,7 @@ export default function Units() {
   const [notice, setNotice] = useState("");
 
   const fetchUnits = () => {
-    return api.get("/products/units").then((r) => setUnits(r.data)).catch(() => setError("Daftar satuan belum dapat dimuat. Coba muat ulang."));
+    return readCollection("/products/units").then((r) => setUnits(r.data)).catch(() => setError("Daftar satuan belum dapat dimuat. Coba muat ulang."));
   };
 
   useEffect(() => {

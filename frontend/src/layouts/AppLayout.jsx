@@ -7,12 +7,15 @@ import {
   LayoutDashboard, ShoppingCart, Package, Warehouse, ClipboardList,
   Truck, Users, Landmark, CreditCard, BarChart3, UserCheck,
   GitBranch, Cpu, Settings, Info, ChevronDown, ChevronRight,
-  LogOut, Sparkles, Crown, Shield, Menu, X, Lock, Clock, UserRound
+  LogOut, Sparkles, Crown, Shield, Menu, X, Lock, Clock, UserRound, ReceiptText
 } from "lucide-react";
 
-const MENU_STRUCTURE = [
+import { sectionMenu, isPlanLocked as isLocked, PLAN_LABEL } from "@/navigation/sections";
+
+export const MENU_STRUCTURE = [
   { to: "/geraina/app/dashboard", icon: LayoutDashboard, label: "Dasbor", key: "dashboard" },
   { to: "/geraina/app/pos", icon: ShoppingCart, label: "Kasir", key: "pos" },
+  { to: "/geraina/app/sales", icon: ReceiptText, label: "Riwayat Penjualan", key: "sales" },
   { to: "/geraina/app/attendance", icon: Clock, label: "Absensi saya", key: "attendance", minPlan: "business" },
   {
     label: "Produk",
@@ -75,28 +78,14 @@ const MENU_STRUCTURE = [
     label: "Pembayaran",
     icon: CreditCard,
     key: "payments",
-    sub: [
-      { to: "/geraina/app/payments/cash", label: "Tunai" },
-      { to: "/geraina/app/payments/qris", label: "QRIS" },
-      { to: "/geraina/app/payments/ewallet", label: "E-Wallet" },
-      { to: "/geraina/app/payments/va", label: "Virtual Account" },
-      { to: "/geraina/app/payments/credit-card", label: "Kartu Kredit" },
-      { to: "/geraina/app/payments/bank-transfer", label: "Transfer Bank" }
-    ]
+    sub: sectionMenu("payments")
   },
   {
     label: "Laporan",
     icon: BarChart3,
     key: "reports",
     minPlan: "pro",
-    sub: [
-      { to: "/geraina/app/reports/sales", label: "Penjualan" },
-      { to: "/geraina/app/reports/product", label: "Produk" },
-      { to: "/geraina/app/reports/inventory", label: "Stok / Inventaris" },
-      { to: "/geraina/app/reports/profit", label: "Laba Rugi" },
-      { to: "/geraina/app/reports/cashflow", label: "Arus Kas" },
-      { to: "/geraina/app/reports/tax", label: "Pajak" }
-    ]
+    sub: sectionMenu("reports")
   },
   {
     label: "Staf & Karyawan",
@@ -114,46 +103,16 @@ const MENU_STRUCTURE = [
     label: "Integrasi",
     icon: Cpu,
     key: "integrations",
-    minPlan: "pro",
-    sub: [
-      { to: "/geraina/app/integrations/qris", label: "QRIS" },
-      { to: "/geraina/app/integrations/xendit", label: "Xendit" },
-      { to: "/geraina/app/integrations/midtrans", label: "Midtrans" },
-      { to: "/geraina/app/integrations/whatsapp", label: "WhatsApp", minPlan: "business" },
-    ]
+    sub: sectionMenu("integrations")
   },
   {
     label: "Pengaturan",
     icon: Settings,
     key: "settings",
-    sub: [
-      { to: "/geraina/app/settings/general", label: "Umum" },
-      { to: "/geraina/app/settings/store", label: "Toko" },
-      { to: "/geraina/app/settings/billing", label: "Langganan & Tagihan" },
-      { to: "/geraina/app/settings/receipt", label: "Struk" },
-      { to: "/geraina/app/settings/printer", label: "Printer" },
-      { to: "/geraina/app/settings/users", label: "Pengguna" },
-      { to: "/geraina/app/settings/license", label: "Lisensi" }
-    ]
+    sub: sectionMenu("settings")
   },
   { to: "/geraina/app/about", icon: Info, label: "Tentang", key: "about" }
 ];
-
-// Plan-gated nav (cosmetic only -- there is no backend enforcement behind this yet; every
-// endpoint is still reachable regardless of plan). This just shows what each tier unlocks and
-// nudges upgrades, per the Starter/Pro/Business repackaging. "trial" ranks as Business since
-// the 14-day trial now grants full Business-level access.
-const PLAN_RANK = { expired: -1, starter: 0, pro: 1, business: 2, trial: 2 };
-const PLAN_LABEL = { starter: "Starter", pro: "Pro", business: "Business" };
-
-function planRank(plan) {
-  return PLAN_RANK[plan] ?? 0;
-}
-
-function isLocked(minPlan, userPlan) {
-  if (!minPlan || minPlan === "starter") return false;
-  return planRank(userPlan) < planRank(minPlan);
-}
 
 function notifyLocked(minPlan) {
   toast.error(`Fitur ini tersedia dalam paket ${PLAN_LABEL[minPlan] || "Pro"}.`, {
@@ -357,7 +316,7 @@ export default function AppLayout() {
                     onClick={() => {
                       toggleMenu(item.key);
                       // Android drawers must stay open until a destination is chosen.
-                      if (!window.__gerainaAndroid) nav(`/geraina/app/${item.key}`);
+
                     }}
                     aria-expanded={!!isOpen}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--secondary))] transition-colors text-left"

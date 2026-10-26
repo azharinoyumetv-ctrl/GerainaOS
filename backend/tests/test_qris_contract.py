@@ -33,10 +33,10 @@ class Collection:
                 return False
         return True
 
-    async def find_one(self, query, projection=None):
+    async def find_one(self, query, projection=None, **options):
         return next((copy.deepcopy(row) for row in self.rows if self.matches(row, query)), None)
 
-    async def update_one(self, query, changes):
+    async def update_one(self, query, changes, **options):
         for row in self.rows:
             if self.matches(row, query):
                 row.update(changes["$set"])
@@ -46,6 +46,10 @@ class Collection:
 
 @pytest.fixture
 def database(monkeypatch):
+    import transactions
+    async def execute(db, operation):
+        return await operation(None)
+    monkeypatch.setattr(transactions, 'run_transaction', execute)
     db = SimpleNamespace(
         integrations=Collection([
             {"store_id": "store-a", "xendit": {"is_active": True, "webhook_token": "isolated-token-a"}},
