@@ -1,4 +1,4 @@
-param([int]$VersionCode = 13, [string]$VersionName = '1.2.8')
+param([int]$VersionCode = 14, [string]$VersionName = '1.2.9')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($VersionCode -lt 1 -or $VersionName -notmatch '^\d+\.\d+\.\d+$') { throw 'Use a positive version code and a version such as 1.0.0.' }

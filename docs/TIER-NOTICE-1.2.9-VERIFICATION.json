@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 5,
+  "status": "passed",
+  "version": "1.2.9",
+  "versionCode": 14,
+  "applicationId": "com.dagangos.geraina",
+  "minimumSdk": 34,
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "apkSha256": "fafda4e10e305ed5e0616fbdf69289b9982e7c9d83db2d7827a64019f46dbee8",
+  "bytes": 17208131,
+  "backendChanged": false,
+  "baseRelease": {
+    "version": "1.2.8",
+    "published": true
+  },
+  "publicationAuthorized": true,
+  "published": false,
+  "verifiedAt": "2026-10-26T23:05:27.318736+00:00",
+  "tierBrowser": {
+    "status": "passed",
+    "results": [
+      {
+        "name": "phone-trial",
+        "plan": "trial",
+        "height": 36,
+        "width": 276,
+        "scroll": 276,
+        "text": "Trial\u00b712 hari tersisa"
+      },
+      {
+        "name": "phone-starter",
+        "plan": "starter",
+        "height": 36,
+        "width": 276,
+        "scroll": 276,
+        "text": "Starter"
+      },
+      {
+        "name": "phone-pro",
+        "plan": "pro",
+        "height": 36,
+        "width": 276,
+        "scroll": 276,
+        "text": "Pro"
+      },
+      {
+        "name": "phone-business",
+        "plan": "business",
+        "height": 36,
+        "width": 276,
+        "scroll": 276,
+        "text": "Business"
+      },
+      {
+        "name": "xiaomi-trial",
+        "plan": "trial",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Trial\u00b712 hari tersisa"
+      },
+      {
+        "name": "xiaomi-starter",
+        "plan": "starter",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Starter"
+      },
+      {
+        "name": "xiaomi-pro",
+        "plan": "pro",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Pro"
+      },
+      {
+        "name": "xiaomi-business",
+        "plan": "business",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Business"
+      },
+      {
+        "name": "samsung-trial",
+        "plan": "trial",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Trial\u00b712 hari tersisa"
+      },
+      {
+        "name": "samsung-starter",
+        "plan": "starter",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Starter"
+      },
+      {
+        "name": "samsung-pro",
+        "plan": "pro",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Pro"
+      },
+      {
+        "name": "samsung-business",
+        "plan": "business",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Business"
+      }
+    ],
+    "merchantWrites": 0
+  },
+  "tierAndroid": {
+    "status": "passed",
+    "installed": {
+      "versionName": "1.2.9",
+      "versionCode": 14,
+      "androidVersion": "16",
+      "model": "unknown Android SDK built for x86_64"
+    },
+    "results": [
+      {
+        "name": "native-trial",
+        "plan": "trial",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Trial\u00b712 hari tersisa"
+      },
+      {
+        "name": "native-starter",
+        "plan": "starter",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Starter"
+      },
+      {
+        "name": "native-pro",
+        "plan": "pro",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Pro"
+      },
+      {
+        "name": "native-business",
+        "plan": "business",
+        "height": 36,
+        "width": 215,
+        "scroll": 215,
+        "text": "Business"
+      }
+    ],
+    "merchantWrites": 0,
+    "apkSha256": "fafda4e10e305ed5e0616fbdf69289b9982e7c9d83db2d7827a64019f46dbee8"
+  },
+  "package": {
+    "signatureVerified": true,
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "bundleManifestEntriesVerified": 18,
+    "androidUnits": 24,
+    "lintErrors": 0
+  },
+  "scope": "Cosmetic tier notice only. Trial, Starter, Pro, Business each render in one 36px row; no payment or subscription processing changes."
+}

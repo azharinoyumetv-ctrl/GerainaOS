@@ -7,7 +7,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Warehouse, ClipboardList,
   Truck, Users, Landmark, CreditCard, BarChart3, UserCheck,
   GitBranch, Cpu, Settings, Info, ChevronDown, ChevronRight,
-  LogOut, Sparkles, Crown, Shield, Menu, X, Lock, Clock, UserRound, ReceiptText
+  LogOut, Crown, Shield, Menu, X, Lock, Clock, UserRound, ReceiptText
 } from "lucide-react";
 
 import { sectionMenu, isPlanLocked as isLocked, PLAN_LABEL } from "@/navigation/sections";
@@ -123,6 +123,7 @@ function notifyLocked(minPlan) {
 function trialDaysLeft(iso) {
   if (!iso) return null;
   const ms = new Date(iso).getTime() - Date.now();
+  if (!Number.isFinite(ms)) return null;
   return Math.max(0, Math.ceil(ms / 86400000));
 }
 
@@ -135,6 +136,8 @@ export default function AppLayout() {
 
   const role = canonicalRole(user?.role);
   const permissions = ROLE_MODULES[role] || [];
+  const TierNotice = role === "Owner" ? Link : "div";
+  const tierLabel = isTrial ? "Trial" : PLAN_LABEL[user?.plan] || "Paket berakhir";
 
   const [openMenus, setOpenMenus] = useState({});
   const [showEcosystemSwitcher, setShowEcosystemSwitcher] = useState(false);
@@ -400,21 +403,13 @@ export default function AppLayout() {
           })}
         </nav>
 
-        {isTrial && (
-          <div className="m-3 p-4 rounded-lg bg-gradient-to-br from-[hsl(151,39%,17%)] to-[hsl(151,39%,12%)] text-white" data-testid="trial-upgrade-card">
-            <div className="flex items-center gap-2 mb-2">
-              <Crown size={16} className="text-[hsl(9,65%,62%)]" />
-              <p className="label-tiny" style={{ color: "hsl(9,65%,75%)" }}>Trial Aktif</p>
-            </div>
-            <p className="font-display text-2xl font-bold num-display" data-testid="trial-days-left">
-              {days !== null ? `${days} hari` : "—"}
-            </p>
-            <p className="text-xs text-white/70 mt-0.5">tersisa</p>
-            <Link to="/geraina/pricing" className="btn-accent w-full mt-3 text-xs text-center block" data-testid="trial-upgrade-cta">
-              <Sparkles size={14} /> Upgrade Sekarang
-            </Link>
-          </div>
-        )}
+        <TierNotice {...(role === "Owner" ? { to: "/geraina/app/settings/billing", title: "Informasi paket" } : {})}
+          className="mx-3 my-2 flex h-9 shrink-0 items-center gap-1.5 rounded-md px-2 text-[11px] font-medium whitespace-nowrap bg-white/5"
+          data-testid="tier-notice">
+          <Crown size={14} className="shrink-0" aria-hidden="true" />
+          <span className="font-semibold" data-testid="tier-name">{tierLabel}</span>
+          {isTrial && days !== null && <><span aria-hidden="true">·</span><span data-testid="trial-days-left">{days > 0 ? `${days} hari tersisa` : "Berakhir"}</span></>}
+        </TierNotice>
 
         <div className="p-3 border-t border-[hsl(var(--border))] space-y-3 bg-[hsl(var(--background))]/30">
           <div className="flex items-center justify-between px-2">
