@@ -37,6 +37,8 @@ assert local['expected'] == 45 and not any(local[k] for k in ('unexpected', 'ski
 navigation = read(ROOT / 'android-app/app/build/reports/navigation-audit/verification.json')
 assert navigation['status'] == 'passed' and len(navigation['results']) == 30
 package = read(OUT / 'package.json')
+publication_file = DOCS / 'GERAINA-1.2.7-PUBLICATION.json'
+publication = read(publication_file) if publication_file.exists() else None
 assert package['signatureVerified'] and package['bundleManifestEntriesVerified'] == 18
 lint = ET.parse(ROOT / 'android-app/app/build/reports/lint-results-release.xml').getroot()
 assert not [i for i in lint.findall('issue') if i.get('severity') in ('Error', 'Fatal')]
@@ -91,12 +93,16 @@ source_hash = hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdig
 api = read(OUT / 'api-inventory.json')
 assert not api['unmatchedCalls']
 limitations = [
-    'Physical Android installation/update from 1.2.6 to 1.2.7, including Xiaomi and Samsung devices; no device was connected.',
+    'Physical Xiaomi/Samsung hardware verification remains outstanding; the AOSP tablet upgrade is recorded separately when performed.',
     'Physical Bluetooth pairing/printing and real camera capture; browser callbacks do not certify hardware.',
     'Real merchant Xendit/DOKU settlement, cancellation/refunds and bank receipt verification. Provider calls were stubbed/blocked; signed callback contracts were tested locally.',
     'Production-network launch/navigation performance and representative merchant data latency.',
     'TestSprite against a deployed candidate: no preview/release URL containing this candidate exists.',
 ]
+if publication:
+    assert publication['status'] == 'passed' and publication['version'] == '1.2.7'
+    limitations = [item for item in limitations if not item.startswith('TestSprite')]
+    package.update(published=True, deviceInstalled=True)
 checklist.update(status='21_findings_fixed_and_verified_locally', verifiedAt=now, published=False,
     sourceHead=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
     sourceIncludesUncommittedChanges=True, sourceDigest=source_hash, backend=backend, browser=e2e,
@@ -109,6 +115,9 @@ checklist.update(status='21_findings_fixed_and_verified_locally', verifiedAt=now
     releaseReadiness='local_signed_candidate_ready; device_and_deployed_candidate_checks_pending',
     rollout='Deploy the matching backend (Mongo replica set/transactions required) and frontend before distributing the new APK. Keep published 1.2.6 immutable. Do not invent missing historical cost or inventory data.',
     primaryProviderSources=['https://developers.doku.com/get-started-with-doku-api/notification/best-practice','https://developers.doku.com/get-started-with-doku-api/notification/http-notification-sample-non-snap'])
+if publication:
+    checklist.update(published=True, publication=publication, releaseReadiness='published_and_live_verified',
+                     rollout='Matching backend and frontend are deployed; 1.2.7 is published. Existing 1.2.6 URLs remain immutable.')
 write(DOCS / 'CUSTOMER-FIXES.json', checklist)
 write(OUT / 'verification.json', checklist)
 write(OUT / 'source-hashes.json', source)
@@ -159,6 +168,11 @@ Use the disposable local audit server documented in [the original audit](CUSTOME
 
 DOKU callback policy follows [notification best practices]({checklist['primaryProviderSources'][0]}) and [notification samples]({checklist['primaryProviderSources'][1]}). These are protocol tests, not provider certification.
 """
+if publication:
+    md = md.replace('This is a signed **1.2.7 / build 12 candidate**, not a published release. The public **1.2.6 / build 11** remains unchanged.',
+                    '**1.2.7 / build 12 is published**, with the matching backend and frontend deployed. See [publication verification](GERAINA-1.2.7-PUBLICATION.json). The previous 1.2.6 download remains immutable.')
+    md = md.replace('Device installation/update and deployed-candidate verification remain release gates. No production push or publication happened in this repair pass.',
+                    'The public download and in-app Android upgrade are verified in the publication record. Physical hardware and live settlement remain outside the verified scope.')
 (DOCS / 'CUSTOMER-FIXES.md').write_text(md, encoding='utf-8')
 cards = ''.join(f"<article><span>{html.escape(i['id'])} · VERIFIED LOCALLY</span><h2>{html.escape(i['title'])}</h2><p>{html.escape(i['implementation'])}</p><details><summary>Evidence</summary><p>{html.escape(i['verification'][0])}</p></details></article>" for i in checklist['items'])
 page = f"""<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Geraina — verified repairs</title><style>
@@ -169,6 +183,10 @@ page = f"""<!doctype html><html lang="en"><meta charset="utf-8"><meta name="view
 <div class="note"><b>Release checks still pending</b><ul>{''.join('<li>'+html.escape(x)+'</li>' for x in limitations)}</ul><p>Browser viewports are not physical Android tests. {html.escape(checklist['rollout'])}</p></div>
 <section class="grid">{cards}</section><div class="note"><b>Correction to the original audit</b><p>{html.escape(checklist['dashboardAuditCorrection'])}</p></div>
 <footer><p>38 frontend unit tests and 30 navigation checks pass. Release lint: 0 errors / {len(lint.findall('issue'))} warnings. Verified {html.escape(now)}. Source digest {source_hash[:16]}…</p></footer></main></html>"""
+if publication:
+    page = page.replace('Signed 1.2.7 candidate · Public download remains 1.2.6', 'Published 1.2.7 · Backend and website deployed')
+    page = page.replace('Release checks still pending', 'Verification scope')
+    page = page.replace('<nav>', '<nav><a href="https://dagangos.com/geraina/android">Official 1.2.7 download</a>', 1)
 (OUT / 'index.html').write_text(page, encoding='utf-8')
 
 # Retain the original failures as historical evidence; link their resolution.

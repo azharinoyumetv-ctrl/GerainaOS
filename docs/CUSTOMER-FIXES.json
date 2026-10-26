@@ -1,6 +1,6 @@
 {
   "status": "21_findings_fixed_and_verified_locally",
-  "published": false,
+  "published": true,
   "items": [
     {
       "id": "AUD-001",
@@ -239,8 +239,8 @@
     "No public APK or production backend has been published.",
     "Preserve historical audit evidence; dashboard already displayed an unknown/error state, with the wrong accessibility role."
   ],
-  "verifiedAt": "2026-10-26T13:03:27.298883+00:00",
-  "sourceHead": "08b5624e8d49c8af37804e9d2023ff385c0649d3",
+  "verifiedAt": "2026-10-26T14:15:23.610007+00:00",
+  "sourceHead": "9c4cbb71d07120a4fadd0e7256b30a88a8aa1420",
   "sourceIncludesUncommittedChanges": true,
   "sourceDigest": "87e5aaea3111beccd5edb06dc45335ebadac2ff36caedc1e03f7cbd50226faf8",
   "backend": {
@@ -295,10 +295,11 @@
     "bundleManifestEntriesVerified": 18,
     "browserAssetMatches": 17,
     "expectedPackageTransform": "Remote font imports and remote font/analytics HTML tags removed by bundle-frontend.cjs. Native presentation assets injected at document start.",
-    "published": false,
-    "deviceInstalled": false,
+    "published": true,
+    "deviceInstalled": true,
     "candidatePath": "android-app/releases/candidates/1.2.7/Geraina-POS-1.2.7-candidate.apk",
-    "candidateCopiedAndHashVerified": true
+    "candidateCopiedAndHashVerified": true,
+    "publicationUrl": "https://dagangos.com/geraina/android"
   },
   "bundle": {
     "name": "main.35a59407.js",
@@ -313,15 +314,14 @@
   "productionMerchantWrites": 0,
   "providerChargesOrMessages": 0,
   "notVerified": [
-    "Physical Android installation/update from 1.2.6 to 1.2.7, including Xiaomi and Samsung devices; no device was connected.",
+    "Physical Xiaomi/Samsung hardware verification remains outstanding; the AOSP tablet upgrade is recorded separately when performed.",
     "Physical Bluetooth pairing/printing and real camera capture; browser callbacks do not certify hardware.",
     "Real merchant Xendit/DOKU settlement, cancellation/refunds and bank receipt verification. Provider calls were stubbed/blocked; signed callback contracts were tested locally.",
-    "Production-network launch/navigation performance and representative merchant data latency.",
-    "TestSprite against a deployed candidate: no preview/release URL containing this candidate exists."
+    "Production-network launch/navigation performance and representative merchant data latency."
   ],
   "dashboardAuditCorrection": "The native dashboard already displayed unknown data plus Retry using role=status. The initial alert-only audit misclassified that case. The other swallowed-read failures were real. It now exposes role=alert, validates reads and uses the server store day.",
-  "releaseReadiness": "local_signed_candidate_ready; device_and_deployed_candidate_checks_pending",
-  "rollout": "Deploy the matching backend (Mongo replica set/transactions required) and frontend before distributing the new APK. Keep published 1.2.6 immutable. Do not invent missing historical cost or inventory data.",
+  "releaseReadiness": "published_and_live_verified",
+  "rollout": "Matching backend and frontend are deployed; 1.2.7 is published. Existing 1.2.6 URLs remain immutable.",
   "primaryProviderSources": [
     "https://developers.doku.com/get-started-with-doku-api/notification/best-practice",
     "https://developers.doku.com/get-started-with-doku-api/notification/http-notification-sample-non-snap"
@@ -333,5 +333,203 @@
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
+  },
+  "publication": {
+    "status": "passed",
+    "published": true,
+    "version": "1.2.7",
+    "versionCode": 12,
+    "verifiedAt": "2026-10-26T14:15:21.956902+00:00",
+    "publicationUrl": "https://dagangos.com/geraina/android",
+    "downloadUrl": "https://dagangos.com/downloads/geraina/Geraina-POS-1.2.7.apk",
+    "sha256": "f63e22a8577c5ccc33042c4f9439b90e4f1396cd5bb0b7715aae536e1f981e52",
+    "bytes": 17207111,
+    "androidSourceCommit": "50f17dc8f32511cfd5f8f79e27dbba9d20707786",
+    "releaseCommit": "1d35793fef42fdf7e46ca9b5a28b62d075d71093",
+    "smokeTestFixCommit": "9c4cbb7",
+    "backendDeployment": {
+      "status": "passed",
+      "sourceCommit": "50f17dc8f32511cfd5f8f79e27dbba9d20707786",
+      "checks": [
+        {
+          "path": "/api/auth/me",
+          "status": 200
+        },
+        {
+          "path": "/api/orders/stats",
+          "status": 200
+        },
+        {
+          "path": "/api/orders/history?limit=5",
+          "status": 200
+        },
+        {
+          "path": "/api/inventory/movements",
+          "status": 200
+        },
+        {
+          "path": "/api/inventory/branches",
+          "status": 200
+        },
+        {
+          "path": "/api/records/customers",
+          "status": 200
+        },
+        {
+          "path": "/api/records/suppliers",
+          "status": 200
+        },
+        {
+          "path": "/api/records/purchase-orders",
+          "status": 200
+        },
+        {
+          "path": "/api/records/receiving",
+          "status": 200
+        },
+        {
+          "path": "/api/records/invoices",
+          "status": 200
+        },
+        {
+          "path": "/api/records/payables",
+          "status": 200
+        },
+        {
+          "path": "/api/records/receivables",
+          "status": 200
+        },
+        {
+          "path": "/api/reports/profit",
+          "status": 200
+        },
+        {
+          "path": "/api/payments/options",
+          "status": 200
+        },
+        {
+          "path": "/api/records/customers",
+          "status": 401
+        },
+        {
+          "path": "/api/inventory/movements",
+          "status": 401
+        }
+      ],
+      "merchantWrites": 0,
+      "providerChargesOrMessages": 0,
+      "verifiedAt": "2026-10-26T13:47:18.941Z"
+    },
+    "deployment": {
+      "runId": 40335171037,
+      "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40335171037",
+      "status": "passed",
+      "jobs": [
+        {
+          "name": "e2e-geraina",
+          "conclusion": "success"
+        },
+        {
+          "name": "cloudflare-zone-audit",
+          "conclusion": "success"
+        },
+        {
+          "name": "public-accessibility",
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "website": {
+      "status": "passed",
+      "base": "https://dagangos.com",
+      "version": "1.2.7",
+      "checks": [
+        "Listing, images and verified download links fit 1440px",
+        "Listing, images and verified download links fit 768px",
+        "Listing, images and verified download links fit 393px",
+        "Listing, images and verified download links fit 320px",
+        "Clicking Download saves the exact verified APK bytes",
+        "Unavailable release metadata leaves download buttons safely disabled"
+      ]
+    },
+    "inAppUpgrade": {
+      "status": "passed",
+      "profile": "tablet7",
+      "mode": "real-system-upgrade",
+      "apkSha256": "11da42cc1a7cc02e5afa02313a6136c5206851b15553952aca63be03ffd83b53",
+      "checks": [
+        {
+          "name": "Published 1.2.6 checks for a newer official update without forcing installation",
+          "status": "passed"
+        },
+        {
+          "name": "Postponing the update leaves the installed version unchanged",
+          "status": "passed"
+        },
+        {
+          "name": "Official APK downloads and is verified before requesting installation permission",
+          "status": "passed"
+        },
+        {
+          "name": "Denying installation permission leaves the current app usable",
+          "status": "passed"
+        },
+        {
+          "name": "Permission settings return to the standard Android update confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "Android installs the newer package over the existing app",
+          "status": "passed"
+        },
+        {
+          "name": "The update preserves stored preferences and the pending offline-sale record",
+          "status": "passed"
+        }
+      ],
+      "merchantWrites": 0,
+      "targetVersion": "1.2.7",
+      "targetVersionCode": 12,
+      "fromVersionCode": 11,
+      "sentinelId": "bbfc29c2-dc05-4e0c-acbc-0965d7b61d77",
+      "finishedAt": "2026-10-26T14:04:11.552Z",
+      "targetApkSha256": "f63e22a8577c5ccc33042c4f9439b90e4f1396cd5bb0b7715aae536e1f981e52",
+      "installedApkMatchesPublicDownload": true
+    },
+    "testsprite": [
+      {
+        "testId": "e8c8bbdd-63d4-4197-ae73-43b27c686e60",
+        "runId": "19ff32b6-6b4c-4155-a1db-efd014a0c3be",
+        "status": "passed",
+        "codeVersion": "v-d1c0fe865efc",
+        "apiOutput": "geraina: backend session rejection reached; selected package preserved; no payment created\ndapuros: backend session rejection reached; selected package preserved; no payment created\n"
+      },
+      {
+        "testId": "6aeabb04-2f07-46ac-ab0e-b5d7a715ae0c",
+        "runId": "1af626ed-ea46-412f-9349-20165584a7f3",
+        "status": "passed",
+        "codeVersion": "v-6fd913a3effe",
+        "apiOutput": "{\"status\": \"passed\", \"version\": \"1.2.7\", \"sha256\": \"f63e22a8577c5ccc33042c4f9439b90e4f1396cd5bb0b7715aae536e1f981e52\", \"merchantWrites\": 0}\n"
+      }
+    ],
+    "counts": {
+      "backend": 313,
+      "customerBrowser": 294,
+      "posInventory": 45,
+      "frontendUnit": 38,
+      "androidUnit": 24,
+      "navigation": 30,
+      "worker": 25,
+      "liveBackend": 16,
+      "publicWebsite": 6,
+      "publicUpgrade": 7
+    },
+    "productionMerchantWritesInManualVerification": 0,
+    "providerChargesOrMessages": 0,
+    "scope": "Phone/Xiaomi/Samsung browser layouts; AOSP tablet installed the actual public APK through the Android updater. Physical Xiaomi/Samsung hardware, camera/printer output and live financial settlement are not certified."
   }
 }

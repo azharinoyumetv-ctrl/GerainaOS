@@ -1,8 +1,8 @@
 # Geraina customer audit repairs
 
-All 21 findings from the original audit are fixed and verified locally. This is a signed **1.2.7 / build 12 candidate**, not a published release. The public **1.2.6 / build 11** remains unchanged.
+All 21 findings from the original audit are fixed and verified locally. **1.2.7 / build 12 is published**, with the matching backend and frontend deployed. See [publication verification](GERAINA-1.2.7-PUBLICATION.json). The previous 1.2.6 download remains immutable.
 
-Verified: 2026-10-26T13:03:27.298883+00:00. Source includes uncommitted changes; normalized production source digest `87e5aaea3111beccd5edb06dc45335ebadac2ff36caedc1e03f7cbd50226faf8`.
+Verified: 2026-10-26T14:15:23.610007+00:00. Source includes uncommitted changes; normalized production source digest `87e5aaea3111beccd5edb06dc45335ebadac2ff36caedc1e03f7cbd50226faf8`.
 
 ## Evidence
 
@@ -45,17 +45,16 @@ Interactive report: [customer-fixes/index.html](../android-app/app/build/reports
 
 ## Limits and release gates
 
-- Physical Android installation/update from 1.2.6 to 1.2.7, including Xiaomi and Samsung devices; no device was connected.
+- Physical Xiaomi/Samsung hardware verification remains outstanding; the AOSP tablet upgrade is recorded separately when performed.
 - Physical Bluetooth pairing/printing and real camera capture; browser callbacks do not certify hardware.
 - Real merchant Xendit/DOKU settlement, cancellation/refunds and bank receipt verification. Provider calls were stubbed/blocked; signed callback contracts were tested locally.
 - Production-network launch/navigation performance and representative merchant data latency.
-- TestSprite against a deployed candidate: no preview/release URL containing this candidate exists.
 
 No production merchant records, real payment charges or third-party messages were changed. Bank QRIS remains staff-confirmed; Geraina does not independently verify the bank receipt. Electronic void does not automatically refund money; the UI warns staff to handle refunds in the merchant provider account.
 
 Historical records are not fabricated: old missing costs remain unknown, old non-executing receipts/transfers remain labelled, and legacy POs without lines require explicit repair. Offline collected cash remains preservable and synchronizable, even if stock/catalogue changed after collection.
 
-Deploy the matching backend and frontend before the APK; MongoDB transactions require a replica set. Device installation/update and deployed-candidate verification remain release gates. No production push or publication happened in this repair pass.
+Deploy the matching backend and frontend before the APK; MongoDB transactions require a replica set. The public download and in-app Android upgrade are verified in the publication record. Physical hardware and live settlement remain outside the verified scope.
 
 ## Audit correction
 

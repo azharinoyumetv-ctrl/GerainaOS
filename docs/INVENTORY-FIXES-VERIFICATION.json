@@ -85,7 +85,7 @@
   },
   "merchantWrites": 0,
   "providerChargesOrMessages": 0,
-  "releaseReadiness": "local_signed_candidate_ready; device_and_deployed_candidate_checks_pending",
+  "releaseReadiness": "published_and_live_verified",
   "notPerformed": [
     "New signed APK installation/update checks",
     "Physical tablet/printer tests",
