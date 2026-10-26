@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api, { fmtIDR, API_BASE } from "@/api/client";
+import { useAuth } from "@/auth/AuthContext";
+import { canManageProducts } from "@/auth/permissions";
 import { Plus, Upload, Search, Edit3, Trash2, X, Download, FileSpreadsheet, CheckCircle2, AlertCircle, ScanBarcode } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
@@ -289,7 +291,17 @@ function ImportDialog({ onClose, onDone }) {
 }
 
 export default function Products() {
+  const { user } = useAuth();
+  const identity = `${user?.id || ""}:${user?.store_id || ""}`;
+  const editable = canManageProducts(user?.role);
+  const identityRef = useRef(identity);
+  identityRef.current = identity;
   const [items, setItems] = useState([]);
+  const [loadedIdentity, setLoadedIdentity] = useState("");
+  const [catalogue, setCatalogue] = useState(null);
+  const [catalogueIdentity, setCatalogueIdentity] = useState("");
+  const [page, setPage] = useState(0);
+  const [dialogIdentity, setDialogIdentity] = useState("");
   const [q, setQ] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -298,6 +310,11 @@ export default function Products() {
   const [categories, setCategories] = useState([]);
   const [filterCat, setFilterCat] = useState("all");
   const [loadError, setLoadError] = useState("");
+  useEffect(() => {
+    const guard = event => { if (editable && dialogIdentity === identity && (showForm || showImport)) event.preventDefault(); };
+    window.addEventListener("geraina-before-account-switch", guard);
+    return () => window.removeEventListener("geraina-before-account-switch", guard);
+  }, [editable, dialogIdentity, identity, showForm, showImport]);
   // Monotonic request id: search-as-you-type + category filter can both fire load()
   // in quick succession (each keystroke debounces its own call, but the debounce only
   // cancels the pending *timeout*, not a request already in flight). Two overlapping
@@ -308,19 +325,52 @@ export default function Products() {
   // Attendance.jsx; guard here by only applying a response if it's still the latest
   // request issued.
   const loadReqIdRef = useRef(0);
+  const summaryReqIdRef = useRef(0);
+  const requestControllerRef = useRef(null);
+  const requestIsUnfilteredRef = useRef(false);
+  const controllersRef = useRef(new Set());
+  const listRef = useRef(null);
 
-  const load = async () => {
+  const load = async ({ refreshSummary = false } = {}) => {
     setLoading(true);
     setLoadError("");
     const reqId = ++loadReqIdRef.current;
+    const requestIdentity = identity;
+    const unfiltered = !q && filterCat === "all";
+    const summaryReqId = unfiltered || refreshSummary ? ++summaryReqIdRef.current : null;
+    // Keep a useful initial whole-catalogue response alive if search starts
+    // before it finishes. Superseded filtered results can be cancelled.
+    if (!requestIsUnfilteredRef.current || unfiltered) requestControllerRef.current?.abort();
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+    requestIsUnfilteredRef.current = unfiltered;
+    controllersRef.current.add(controller);
+    if (refreshSummary) setCatalogue(null);
+    const applySummary = products => {
+      if (identityRef.current === requestIdentity && summaryReqId === summaryReqIdRef.current) {
+        setCatalogue({
+          total: products.length,
+          categories: new Set(products.map(product => product.category).filter(Boolean)).size,
+          low: products.filter(product => Number(product.stock) <= 5).length,
+        });
+        setCatalogueIdentity(requestIdentity);
+      }
+    };
+    // A filtered edit/import can change the whole-catalogue counts. Ordinary
+    // page entry uses the same unfiltered response for rows and summary once.
+    if (refreshSummary && !unfiltered) {
+      api.get("/products").then(r => { if (Array.isArray(r.data)) applySummary(r.data); }).catch(() => {});
+    }
     try {
-      const r = await api.get("/products", { params: { q: q || undefined, category: filterCat !== "all" ? filterCat : undefined } });
+      const r = await api.get("/products", { signal: controller.signal, params: { q: q || undefined, category: filterCat !== "all" ? filterCat : undefined } });
       if (!Array.isArray(r.data)) throw new Error("Jawaban katalog tidak valid.");
-      if (reqId === loadReqIdRef.current) setItems(r.data);
+      if (unfiltered) applySummary(r.data);
+      if (reqId === loadReqIdRef.current && identityRef.current === requestIdentity) { setItems(r.data); setLoadedIdentity(requestIdentity); }
     } catch {
-      if (reqId === loadReqIdRef.current) setLoadError("Produk belum dapat dimuat. Periksa koneksi lalu coba lagi.");
+      if (reqId === loadReqIdRef.current && identityRef.current === requestIdentity) setLoadError("Produk belum dapat dimuat. Periksa koneksi lalu coba lagi.");
     } finally {
-      if (reqId === loadReqIdRef.current) setLoading(false);
+      controllersRef.current.delete(controller);
+      if (reqId === loadReqIdRef.current && identityRef.current === requestIdentity) setLoading(false);
     }
   };
 
@@ -329,34 +379,53 @@ export default function Products() {
   // Kategori collection -- that collection is often empty even when products exist,
   // which left the dropdown stuck on "Semua Kategori" only.
   const loadCategories = () => {
-    api.get("/products/category-names").then((r) => setCategories(r.data || [])).catch(() => {});
+    const requestIdentity = identity;
+    api.get("/products/category-names").then((r) => { if (identityRef.current === requestIdentity) setCategories(Array.isArray(r.data) ? r.data : []); }).catch(() => {});
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { loadCategories(); return () => { loadReqIdRef.current++; }; }, []);
+  useEffect(() => {
+    setItems([]); setCatalogue(null); setCategories([]); setPage(0); setQ(""); setFilterCat("all");
+    setShowForm(false); setShowImport(false); setEditing(null); setLoading(true); setLoadError("");
+    loadCategories();
+    return () => { loadReqIdRef.current++; summaryReqIdRef.current++; controllersRef.current.forEach(controller => controller.abort()); controllersRef.current.clear(); };
+  }, [identity]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { const t = setTimeout(load, q ? 200 : 0); return () => clearTimeout(t); }, [q, filterCat]);
+  useEffect(() => { const t = setTimeout(load, q ? 200 : 0); return () => clearTimeout(t); }, [q, filterCat, identity]);
+
+  const currentItems = loadedIdentity === identity ? items : [];
+  const pages = Math.max(1, Math.ceil(currentItems.length / 25));
+  const currentPage = Math.min(page, pages - 1);
+  const visibleItems = currentItems.slice(currentPage * 25, currentPage * 25 + 25);
+  const summary = catalogueIdentity === identity ? catalogue : null;
+  const showPage = next => { setPage(next); requestAnimationFrame(() => listRef.current?.scrollIntoView({ block: "start" })); };
 
   const remove = async (p) => {
+    if (!editable) return;
     if (!window.confirm(`Hapus "${p.name}"?`)) return;
-    try { await api.delete(`/products/${p.id}`); load(); } catch { toast.error("Produk belum dapat dihapus. Periksa koneksi lalu coba lagi."); }
+    try { await api.delete(`/products/${p.id}`); load({ refreshSummary: true }); } catch { toast.error("Produk belum dapat dihapus. Periksa koneksi lalu coba lagi."); }
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5" data-testid="products-page">
+      {window.__gerainaAndroid && <div className="ga-product-summary" data-testid="mobile-product-summary">
+        <div><p>Produk dimuat</p><b data-ga-stat="total">{summary?.total ?? "—"}</b></div>
+        <div><p>Kategori</p><b data-ga-stat="categories">{summary?.categories ?? "—"}</b></div>
+        <div><p>Stok menipis</p><b data-ga-stat="low">{summary?.low ?? "—"}</b></div>
+      </div>}
       <div className="flex items-end justify-between">
         <div>
           <span className="label-tiny">Manajemen</span>
           <h1 className="font-display text-3xl font-bold mt-1">Produk</h1>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowImport(true)} className="btn-outline" data-testid="open-import-btn">
+        {editable && <div className="flex gap-2">
+          <button onClick={() => { setDialogIdentity(identity); setShowImport(true); }} className="btn-outline" data-testid="open-import-btn">
             <Upload size={16} /> Impor Excel/CSV
           </button>
-          <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn-primary" data-testid="new-product-btn">
+          <button onClick={() => { setDialogIdentity(identity); setEditing(null); setShowForm(true); }} className="btn-primary" data-testid="new-product-btn">
             <Plus size={16} /> Produk Baru
           </button>
-        </div>
+        </div>}
       </div>
 
       <div className="card-surface p-4">
@@ -367,13 +436,13 @@ export default function Products() {
               className="input-field pl-9"
               placeholder="Cari nama produk…"
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => { setPage(0); setQ(e.target.value); }}
               data-testid="products-search"
             />
           </div>
           <select
             value={filterCat}
-            onChange={(e) => setFilterCat(e.target.value)}
+            onChange={(e) => { setPage(0); setFilterCat(e.target.value); }}
             className="input-field w-48"
             data-testid="products-category-filter"
           >
@@ -387,7 +456,7 @@ export default function Products() {
       </div>
 
       {loadError && <div role="alert" data-testid="products-error" className="card-surface p-4"><p>{loadError}</p><button className="btn-outline mt-2" data-testid="products-retry" onClick={load}>Coba lagi</button></div>}
-      <div className="card-surface overflow-x-auto">
+      <div ref={listRef} className="card-surface overflow-x-auto">
         <table className="w-full text-sm" data-testid="products-table">
           <thead className="bg-[hsl(var(--background))] border-b border-[hsl(var(--border))]">
             <tr className="text-left">
@@ -403,15 +472,15 @@ export default function Products() {
             {loading && (
               <tr><td colSpan={6} className="px-5 py-10 text-center text-[hsl(var(--muted))]" data-testid="products-loading">Memuat…</td></tr>
             )}
-            {!loading && !loadError && items.length === 0 && (
+            {!loading && !loadError && currentItems.length === 0 && (
               <tr><td colSpan={6} className="px-5 py-10 text-center text-[hsl(var(--muted))]" data-testid="products-empty">Belum ada produk.</td></tr>
             )}
-            {items.map((p) => (
+            {visibleItems.map((p) => (
               <tr key={p.id} className="hover:bg-[hsl(var(--background))]" data-testid={`product-row-${p.id}`}>
                 <td className="px-5 py-3 font-medium">
                   <div className="flex items-center gap-2.5">
                     {p.image_url ? (
-                      <img src={p.image_url} alt="" className="w-8 h-8 rounded-md object-cover border border-slate-200 shrink-0" />
+                      <img src={p.image_url} alt="" loading="lazy" decoding="async" className="w-8 h-8 rounded-md object-cover border border-slate-200 shrink-0" />
                     ) : (
                       <span className="w-8 h-8 rounded-md bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center text-slate-300 text-[10px]">—</span>
                     )}
@@ -423,8 +492,10 @@ export default function Products() {
                 <td className="px-5 py-3 text-right font-display font-bold num-display">{fmtIDR(p.price)}</td>
                 <td className="px-5 py-3 text-right num-display">{p.stock} <span className="text-xs text-[hsl(var(--muted))]">{p.unit}</span></td>
                 <td className="px-5 py-3 text-right">
-                  <button onClick={() => { setEditing(p); setShowForm(true); }} className="btn-ghost p-1.5" data-testid={`edit-product-${p.id}`}><Edit3 size={15} /></button>
-                  <button onClick={() => remove(p)} className="btn-ghost p-1.5 text-[hsl(var(--destructive))]" data-testid={`delete-product-${p.id}`}><Trash2 size={15} /></button>
+                  {editable && <>
+                    <button onClick={() => { setDialogIdentity(identity); setEditing(p); setShowForm(true); }} className="btn-ghost p-1.5" data-testid={`edit-product-${p.id}`}><Edit3 size={15} /></button>
+                    <button onClick={() => remove(p)} className="btn-ghost p-1.5 text-[hsl(var(--destructive))]" data-testid={`delete-product-${p.id}`}><Trash2 size={15} /></button>
+                  </>}
                 </td>
               </tr>
             ))}
@@ -432,8 +503,19 @@ export default function Products() {
         </table>
       </div>
 
-      {showForm && <ProductForm product={editing} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); loadCategories(); }} />}
-      {showImport && <ImportDialog onClose={() => setShowImport(false)} onDone={() => { load(); loadCategories(); }} />}
+      {!loading && !loadError && <div className="flex flex-wrap items-center justify-between gap-3 text-sm" data-testid="products-pagination">
+        <div><p data-testid="products-result-count">{currentItems.length ? `${currentPage * 25 + 1}–${Math.min((currentPage + 1) * 25, currentItems.length)}` : "0"} dari {currentItems.length} hasil dimuat</p>
+          {currentItems.length >= 500 && <p className="text-xs text-[hsl(var(--muted))]">Gunakan pencarian atau kategori untuk mempersempit hasil dari seluruh katalog.</p>}
+        </div>
+        <div className="flex gap-2 items-center">
+          <button type="button" className="btn-outline disabled:opacity-50" disabled={currentPage === 0} onClick={() => showPage(currentPage - 1)} data-testid="products-page-prev">Sebelumnya</button>
+          <span className="text-xs" data-testid="products-page-position">{currentPage + 1} / {pages}</span>
+          <button type="button" className="btn-outline disabled:opacity-50" disabled={currentPage + 1 >= pages} onClick={() => showPage(currentPage + 1)} data-testid="products-page-next">Berikutnya</button>
+        </div>
+      </div>}
+
+      {editable && showForm && dialogIdentity === identity && <ProductForm product={editing} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load({ refreshSummary: true }); loadCategories(); }} />}
+      {editable && showImport && dialogIdentity === identity && <ImportDialog onClose={() => setShowImport(false)} onDone={() => { load({ refreshSummary: true }); loadCategories(); }} />}
     </div>
   );
 }

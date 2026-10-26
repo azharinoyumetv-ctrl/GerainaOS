@@ -10,7 +10,7 @@ dengan backend DapurOS agar SSO lintas modul tetap bekerja.
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from database import get_db, utcnow, trial_end_iso
 from models import UserRegister, UserLogin, Token
@@ -18,8 +18,9 @@ from subscription_state import apply_subscription
 from billing_subscriptions import reconcile_pending
 from auth import (
     hash_password, verify_password, create_access_token,
-    get_current_user, get_identity,
+    get_current_user, get_identity, resolve_user_context, account_is_active, employee_password_error,
 )
+from permissions import EMPLOYEE_ROLES
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -32,8 +33,14 @@ class AddStore(BaseModel):
     store_name: str
 
 
+class ChangeEmployeePassword(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    current_password: str = Field(min_length=1, max_length=1024)
+    new_password: str = Field(min_length=10, max_length=72)
+
+
 def _norm_module(m: str) -> str:
-    m = (m or DEFAULT_MODULE).lower()
+    m = (m if isinstance(m, str) else DEFAULT_MODULE).lower()
     return m if m in VALID_MODULES else DEFAULT_MODULE
 
 
@@ -50,6 +57,11 @@ def _user_public(user: dict) -> dict:
         "trial_expired_at": user.get("trial_expired_at"),
         "plan": user.get("plan", "trial"),
         "subscription": user.get("subscription"),
+        "must_change_password": user.get("must_change_password") is True,
+        "credential_version": user.get("credential_version", 0),
+        "staff_id": user.get("staff_id"),
+        "is_store_owner": user.get("is_store_owner") is True,
+        "capabilities": user.get("capabilities", []),
     }
 
 
@@ -123,37 +135,78 @@ async def register(payload: UserRegister, x_dagangos_module: str = Header(defaul
     await db.users.insert_one(user_doc)
 
     token = create_access_token(user_id, store_doc["id"], "Owner", payload.email)
-    return Token(access_token=token, user=_user_public(user_doc))
+    return Token(access_token=token, user=_user_public(await resolve_user_context(user_doc, module)))
+
+
+async def _login_user(email: str, password: str, module: str) -> Token:
+    db = get_db()
+    user = await db.users.find_one({"email": email})
+    if not user or not verify_password(password, user.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="Email atau password salah")
+    if not account_is_active(user):
+        raise HTTPException(status_code=403, detail="Akun staf tidak aktif. Hubungi Owner.")
+    context = await resolve_user_context(user, module)
+    if context.get("role") in EMPLOYEE_ROLES and verify_password("geraina123", user.get("password_hash", "")):
+        # Knowing the former universal password cannot be used to claim an employee account.
+        raise HTTPException(status_code=403, detail="Akun staf lama memerlukan kata sandi unik baru dari Owner.")
+    token = create_access_token(user["id"], context.get("store_id"), context["role"], user["email"], user.get("credential_version", 0))
+    return Token(access_token=token, user=_user_public(context))
 
 
 @router.post("/login", response_model=Token)
-async def login(payload: UserLogin):
-    db = get_db()
-    user = await db.users.find_one({"email": payload.email})
-    if not user or not verify_password(payload.password, user.get("password_hash", "")):
-        raise HTTPException(status_code=401, detail="Email atau password salah")
-    token = create_access_token(user["id"], user.get("store_id"), user.get("role", "Owner"), user["email"])
-    return Token(access_token=token, user=_user_public(user))
+async def login(payload: UserLogin, x_dagangos_module: str = Header(default="geraina", alias="X-DagangOS-Module")):
+    return await _login_user(payload.email, payload.password, _norm_module(x_dagangos_module))
 
 
 @router.post("/token", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), x_dagangos_module: str = Header(default="geraina", alias="X-DagangOS-Module")):
+    return await _login_user(form_data.username, form_data.password, _norm_module(x_dagangos_module))
+
+
+@router.post("/change-password", response_model=Token)
+async def change_employee_password(payload: ChangeEmployeePassword, user: dict = Depends(get_identity)):
+    if user.get("role") not in EMPLOYEE_ROLES or not user.get("staff_id"):
+        raise HTTPException(status_code=403, detail="Pengaturan ini khusus kredensial akun staf.")
+    error = employee_password_error(payload.new_password)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    if payload.new_password == payload.current_password:
+        raise HTTPException(status_code=400, detail="Gunakan kata sandi baru yang berbeda dari kata sandi sementara.")
     db = get_db()
-    user = await db.users.find_one({"email": form_data.username})
-    if not user or not verify_password(form_data.password, user.get("password_hash", "")):
-        raise HTTPException(status_code=401, detail="Email atau password salah")
-    token = create_access_token(user["id"], user.get("store_id"), user.get("role", "Owner"), user["email"])
-    return Token(access_token=token, user=_user_public(user))
+    current = await db.users.find_one({"id": user["id"]})
+    if not current or not account_is_active(current) or not verify_password(payload.current_password, current.get("password_hash", "")):
+        raise HTTPException(status_code=400, detail="Kata sandi saat ini tidak sesuai.")
+    version = current.get("credential_version")
+    if version != user.get("credential_version"):
+        raise HTTPException(status_code=409, detail="Kredensial berubah. Silakan masuk ulang.")
+    updated = await db.users.find_one_and_update(
+        {"id": user["id"], "credential_version": version},
+        {"$set": {"password_hash": hash_password(payload.new_password), "must_change_password": False, "password_changed_at": utcnow().isoformat()}, "$inc": {"credential_version": 1}},
+        return_document=True,
+    )
+    if not updated:
+        raise HTTPException(status_code=409, detail="Kredensial berubah. Silakan masuk ulang.")
+    context = await resolve_user_context(updated, user["current_module"])
+    token = create_access_token(updated["id"], context["store_id"], context["role"], updated["email"], updated["credential_version"])
+    return Token(access_token=token, user=_user_public(context))
 
 
 @router.get("/me")
 async def me(user: dict = Depends(get_identity)):
     """Identitas akun + daftar toko (per modul) yang dimiliki. Suite switcher render dari sini."""
     db = get_db()
+    if user.get("role") in EMPLOYEE_ROLES:
+        # get_identity already resolved the active membership and current owner entitlement.
+        # Re-reading the raw employee snapshot would replace that entitlement with stale data.
+        return {**_user_public(user), "stores": []}
     stores = await db.stores.find({"owner_user_id": user["id"]}, {"_id": 0}).to_list(length=100)
-    await reconcile_pending(user, user["current_module"])
+    if user.get("is_store_owner"):
+        await reconcile_pending(user, user["current_module"])
     fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password_hash": 0})
-    pub = _user_public({**fresh, "current_module": user["current_module"], "subscriptions": {**user.get("subscriptions", {}), **fresh.get("subscriptions", {})}})
+    if not fresh:
+        raise HTTPException(status_code=401, detail="Akun tidak lagi tersedia. Silakan masuk ulang.")
+    # Re-resolve after reconciliation without replacing server-derived staff authority/plan.
+    pub = _user_public(await resolve_user_context(fresh, user["current_module"]))
     pub["stores"] = [
         {"store_id": s["id"], "name": s.get("name"), "module": s.get("module")} for s in stores
     ]
@@ -173,6 +226,8 @@ async def list_stores(user: dict = Depends(get_identity)):
 async def add_store(payload: AddStore, user: dict = Depends(get_identity)):
     """Tambah toko baru untuk modul lain di bawah akun yang sama (aktivasi modul)."""
     db = get_db()
+    if user.get("role") != "Owner":
+        raise HTTPException(status_code=403, detail="Peran Owner diperlukan untuk membuat toko.")
     module = _norm_module(payload.module)
     name = (payload.store_name or "").strip()
     if not name:

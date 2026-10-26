@@ -7,6 +7,7 @@ from models import Branch, BranchBase
 from auth import get_current_user, require_admin
 from plan_limits import require_plan, plan_rank
 from bank_qris import BankQrisSetup, inspect_static_qris, public_bank_qris
+from permissions import require_permission, canonical_role
 
 router = APIRouter(tags=["settings"])
 
@@ -22,9 +23,18 @@ async def get_settings(user: dict = Depends(get_current_user)):
             "receipt": { "header_text": "Terima Kasih Telah Berkunjung!", "footer_text": "Powered by DagangOS - Struk Resmi", "show_logo": True, "show_cashier": True },
             "printer": { "mode": "local", "default_printer": "Bluetooth 80mm", "paper_size": "80mm", "auto_print": True, "printer_ip": "", "printer_port": 9100, "bridge_port": 9899 }
         }
-    return res
+    if canonical_role(user.get("role")) == "Owner":
+        return res
+    # Receipt/cache consumers need these display settings, never arbitrary owner settings.
+    public_fields = {
+        "general": {"store_name", "currency", "timezone", "language", "address", "phone", "logo_url"},
+        "receipt": {"header_text", "footer_text", "show_logo", "show_cashier", "show_customer", "paper_size"},
+        "printer": {"mode", "default_printer", "paper_size", "auto_print", "printer_ip", "printer_port", "bridge_port"},
+    }
+    return {section: {key: value for key, value in (res.get(section) or {}).items() if key in fields}
+            for section, fields in public_fields.items() if isinstance(res.get(section), dict)}
 
-@router.post("/api/settings")
+@router.post("/api/settings", dependencies=[Depends(require_permission("settings.write"))])
 async def save_settings(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
     db = get_db()
     update_data = {k: v for k, v in payload.items() if k not in ("_id", "store_id")}
@@ -45,7 +55,7 @@ async def get_bank_qris(user: dict = Depends(get_current_user)):
     return public_bank_qris(saved)
 
 
-@router.post("/api/payments/bank-qris")
+@router.post("/api/payments/bank-qris", dependencies=[Depends(require_permission("payments.configure"))])
 async def save_bank_qris(payload: BankQrisSetup, user: dict = Depends(require_admin)):
     name = payload.bank_name.strip()
     if payload.is_active and (not name or payload.merchant_confirmed is not True):
@@ -62,7 +72,7 @@ async def save_bank_qris(payload: BankQrisSetup, user: dict = Depends(require_ad
     return public_bank_qris(saved)
 
 
-@router.get("/api/payments/config")
+@router.get("/api/payments/config", dependencies=[Depends(require_permission("payments.configure"))])
 async def get_payments_config(user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.payments_config.find_one({"store_id": user["store_id"]}, {"_id": 0})
@@ -93,7 +103,7 @@ async def get_payments_config(user: dict = Depends(get_current_user)):
         }
     return res
 
-@router.post("/api/payments/config")
+@router.post("/api/payments/config", dependencies=[Depends(require_permission("payments.configure"))])
 async def save_payments_config(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
     qris = payload.get("qris")
     if qris and qris.get("is_active"):
@@ -122,7 +132,7 @@ async def integration_owner(user: dict = Depends(require_plan("pro"))):
     return user
 
 
-@router.get("/api/integrations/qris/status")
+@router.get("/api/integrations/qris/status", dependencies=[Depends(require_permission("integrations.manage"))])
 async def qris_setup_status(user: dict = Depends(integration_owner)):
     """Read-only configuration status, never a claim of a successful payment/provider connection."""
     saved = await get_db().integrations.find_one({"store_id": user["store_id"]}, {"_id": 0})
@@ -136,7 +146,7 @@ async def qris_setup_status(user: dict = Depends(integration_owner)):
     }
 
 
-@router.get("/api/integrations")
+@router.get("/api/integrations", dependencies=[Depends(require_permission("integrations.manage"))])
 async def get_integrations(user: dict = Depends(integration_owner)):
     db = get_db()
     res = await db.integrations.find_one({"store_id": user["store_id"]}, {"_id": 0})
@@ -153,7 +163,7 @@ async def get_integrations(user: dict = Depends(integration_owner)):
         }
     return res
 
-@router.post("/api/integrations")
+@router.post("/api/integrations", dependencies=[Depends(require_permission("integrations.manage"))])
 async def save_integrations(payload: Dict[str, Any], user: dict = Depends(integration_owner)):
     if plan_rank(user.get("plan")) < plan_rank("pro"):
         raise HTTPException(status_code=403, detail="Integrasi pihak ketiga tersedia mulai paket Pro. Upgrade paket untuk mengakses fitur ini.")
@@ -214,7 +224,7 @@ async def save_integrations(payload: Dict[str, Any], user: dict = Depends(integr
     )
     return res
 
-@router.post("/api/integrations/whatsapp/test")
+@router.post("/api/integrations/whatsapp/test", dependencies=[Depends(require_permission("integrations.manage"))])
 async def test_whatsapp(payload: Dict[str, Any], user: dict = Depends(require_admin)):
     """Kirim pesan tes WhatsApp memakai kredensial yang sedang diisi (tak perlu simpan dulu).
 
@@ -236,13 +246,13 @@ async def test_whatsapp(payload: Dict[str, Any], user: dict = Depends(require_ad
     return await send_meta_message(cfg, target, template_name="hello_world", params=[], lang="en_US")
 
 # ---------- Branches (Business-tier feature -- see AppLayout.jsx minPlan) ----------
-@router.get("/api/branches", response_model=List[Branch])
+@router.get("/api/branches", response_model=List[Branch], dependencies=[Depends(require_permission("branches.manage"))])
 async def list_branches(user: dict = Depends(require_plan("business"))):
     db = get_db()
     cursor = db.branches.find({"store_id": user["store_id"]}, {"_id": 0}).sort("name", 1)
     return await cursor.to_list(length=100)
 
-@router.post("/api/branches", response_model=Branch)
+@router.post("/api/branches", response_model=Branch, dependencies=[Depends(require_permission("branches.manage"))])
 async def create_branch(payload: BranchBase, user: dict = Depends(require_plan("business"))):
     db = get_db()
     from plan_limits import check_outlet_capacity
@@ -262,7 +272,7 @@ async def create_branch(payload: BranchBase, user: dict = Depends(require_plan("
     doc.pop("_id", None)
     return doc
 
-@router.put("/api/branches/{branch_id}", response_model=Branch)
+@router.put("/api/branches/{branch_id}", response_model=Branch, dependencies=[Depends(require_permission("branches.manage"))])
 async def update_branch(branch_id: str, payload: BranchBase, user: dict = Depends(require_plan("business"))):
     db = get_db()
     res = await db.branches.find_one_and_update(
@@ -279,7 +289,7 @@ async def update_branch(branch_id: str, payload: BranchBase, user: dict = Depend
         raise HTTPException(status_code=404, detail="Cabang tidak ditemukan")
     return res
 
-@router.delete("/api/branches/{branch_id}")
+@router.delete("/api/branches/{branch_id}", dependencies=[Depends(require_permission("branches.manage"))])
 async def delete_branch(branch_id: str, user: dict = Depends(require_plan("business"))):
     db = get_db()
     res = await db.branches.delete_one({"id": branch_id, "store_id": user["store_id"]})

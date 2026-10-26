@@ -1,41 +1,45 @@
 import { createContext, useContext, useEffect, useMemo, useState, useRef, useCallback } from "react";
 import api from "@/api/client";
 import { offlineAvailable, scopeFor, synchronize } from "@/offline/posStore";
+import { canonicalRole } from "./permissions";
 
 const AuthCtx = createContext(null);
 const sessionToken = () => localStorage.getItem("geraina_token") || localStorage.getItem("dagangos_token") || localStorage.getItem("dapuros_token");
-const clearSession = () => { for (const prefix of ["geraina", "dagangos", "dapuros"]) { localStorage.removeItem(`${prefix}_token`); localStorage.removeItem(`${prefix}_user`); } };
-
-const getRoleFromEmail = (email) => {
-  if (!email) return "Owner";
-  const em = email.toLowerCase();
-  if (em.includes("owner")) return "Owner";
-  if (em.includes("manager")) return "Manager";
-  if (em.includes("cashier")) return "Cashier";
-  if (em.includes("warehouse")) return "Warehouse";
-  return localStorage.getItem("geraina_selected_role") || "Owner";
-};
+const clearSession = () => { for (const prefix of ["geraina", "dagangos", "dapuros"]) { localStorage.removeItem(`${prefix}_token`); localStorage.removeItem(`${prefix}_user`); } localStorage.removeItem("geraina_selected_role"); };
+const serverUser = value => value?.id && canonicalRole(value.role) ? { ...value, role: canonicalRole(value.role) } : null;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const validation = useRef({ token: null, promise: null, checkedAt: 0 });
+  const sessionAttempt = useRef(0);
 
   // Replay is tied to the authenticated app session, including dashboard/restart,
   // rather than requiring the cashier screen to remain mounted.
   useEffect(() => {
     const scope = scopeFor(user);
-    if (!scope || !offlineAvailable()) return;
+    if (!scope || user?.must_change_password || !offlineAvailable()) return;
     const sync = () => synchronize(scope, api).catch(() => {});
     sync(); window.addEventListener("online", sync); window.addEventListener("focus", sync);
     const timer = setInterval(sync, 30000);
     return () => { clearInterval(timer); window.removeEventListener("online", sync); window.removeEventListener("focus", sync); };
-  }, [user?.id, user?.store_id]);
+  }, [user?.id, user?.store_id, user?.must_change_password]);
 
   const enrichUser = (usr) => {
-    if (!usr) return null;
-    const role = localStorage.getItem("geraina_selected_role") || getRoleFromEmail(usr.email);
-    return { ...usr, role };
+    return serverUser(usr);
+  };
+
+  const acceptSession = payload => {
+    const next = serverUser(payload.user);
+    if (!next || !payload.access_token) throw new Error("Sesi tidak valid. Silakan masuk kembali.");
+    localStorage.removeItem("geraina_selected_role");
+    localStorage.setItem("geraina_token", payload.access_token);
+    localStorage.setItem("dagangos_token", payload.access_token);
+    localStorage.setItem("geraina_user", JSON.stringify(next));
+    localStorage.setItem("dagangos_user", JSON.stringify(next));
+    validation.current = { token: payload.access_token, promise: null, checkedAt: Date.now() };
+    setUser(next);
+    return next;
   };
 
   const validateSession = useCallback((force = false) => {
@@ -47,8 +51,11 @@ export function AuthProvider({ children }) {
     const current = { token, promise: null, checkedAt: 0 };
     current.promise = api.get("/auth/me", { timeout: 8000 }).then(r => {
       if (sessionToken() !== token) return;
-      localStorage.setItem("geraina_user", JSON.stringify(r.data)); localStorage.setItem("dagangos_user", JSON.stringify(r.data));
-      setUser(enrichUser(r.data)); current.checkedAt = Date.now();
+      const next = serverUser(r.data);
+      if (!next) { clearSession(); setUser(null); throw new Error("Sesi tidak valid."); }
+      localStorage.removeItem("geraina_selected_role");
+      localStorage.setItem("geraina_user", JSON.stringify(next)); localStorage.setItem("dagangos_user", JSON.stringify(next));
+      setUser(next); current.checkedAt = Date.now();
     }).catch(error => {
       if (sessionToken() === token && error.response?.status === 401) { clearSession(); setUser(null); }
       throw error;
@@ -59,6 +66,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const t = sessionToken();
+    localStorage.removeItem("geraina_selected_role");
     const savedUserStr = localStorage.getItem("geraina_user") || localStorage.getItem("dagangos_user") || localStorage.getItem("dapuros_user");
     let savedUser = null;
     if (savedUserStr) {
@@ -94,31 +102,38 @@ export function AuthProvider({ children }) {
       validateSession().catch(() => {});
     };
     window.addEventListener("focus", sync);
+    window.addEventListener("online", sync);
     window.addEventListener("pageshow", sync);
     document.addEventListener("visibilitychange", sync);
     return () => {
       window.removeEventListener("focus", sync);
+      window.removeEventListener("online", sync);
       window.removeEventListener("pageshow", sync);
       document.removeEventListener("visibilitychange", sync);
     };
   }, []);
+  useEffect(() => {
+    const changed = event => {
+      if (!event.key || !/^(geraina|dagangos|dapuros)_(token|user)$/.test(event.key)) return;
+      const expected = sessionToken();
+      sessionAttempt.current++; setUser(null);
+      if (!expected) { setLoading(false); return; }
+      setLoading(true);
+      validateSession(true).catch(() => {}).finally(() => { if (sessionToken() === expected) setLoading(false); });
+    };
+    window.addEventListener("storage", changed);
+    return () => window.removeEventListener("storage", changed);
+  }, [validateSession]);
   const login = async (email, password) => {
     // Clear any existing stale session tokens first
     clearSession();
     setUser(null);
+    const attempt = ++sessionAttempt.current;
 
     try {
       const r = await api.post("/auth/login", { email, password });
-      localStorage.setItem("geraina_token", r.data.access_token);
-      localStorage.setItem("dagangos_token", r.data.access_token);
-      localStorage.setItem("dagangos_user", JSON.stringify(r.data.user));
-      localStorage.setItem("geraina_user", JSON.stringify(r.data.user));
-      validation.current = { token: r.data.access_token, promise: null, checkedAt: Date.now() };
-      const rname = getRoleFromEmail(email);
-      localStorage.setItem("geraina_selected_role", rname);
-      const enriched = enrichUser(r.data.user);
-      setUser(enriched);
-      return enriched;
+      if (attempt !== sessionAttempt.current) throw new Error("Permintaan masuk dibatalkan.");
+      return acceptSession(r.data);
     } catch (err) {
       throw new Error(
         err?.response?.data?.detail ||
@@ -129,19 +144,14 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (email, password, store_name) => {
+    const attempt = ++sessionAttempt.current;
     const r = await api.post("/auth/register", { email, password, store_name });
-    localStorage.setItem("geraina_token", r.data.access_token);
-    localStorage.setItem("dagangos_token", r.data.access_token);
-    localStorage.setItem("geraina_selected_role", "Owner");
-    localStorage.setItem("geraina_user", JSON.stringify(r.data.user));
-    localStorage.setItem("dagangos_user", JSON.stringify(r.data.user));
-    validation.current = { token: r.data.access_token, promise: null, checkedAt: Date.now() };
-    const enriched = enrichUser(r.data.user);
-    setUser(enriched);
-    return enriched;
+    if (attempt !== sessionAttempt.current) throw new Error("Permintaan masuk dibatalkan.");
+    return acceptSession(r.data);
   };
 
   const logout = () => {
+    sessionAttempt.current++;
     clearSession();
     validation.current = { token: null, promise: null, checkedAt: 0 };
     localStorage.removeItem("geraina_selected_role");
@@ -159,17 +169,15 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const setPlan = (plan) => {
-    setUser((prev) => (prev ? { ...prev, plan } : null));
-  };
-
-  const changeRole = (newRole) => {
-    localStorage.setItem("geraina_selected_role", newRole);
-    setUser((prev) => (prev ? { ...prev, role: newRole } : null));
+  const changePassword = async (current_password, new_password) => {
+    const expected = sessionToken();
+    const response = await api.post("/auth/change-password", { current_password, new_password });
+    if (!expected || sessionToken() !== expected) throw new Error("Sesi berubah. Silakan masuk kembali.");
+    return acceptSession(response.data);
   };
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refresh, setPlan, changeRole }),
+    () => ({ user, loading, login, register, logout, refresh, changePassword }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [user, loading]
   );

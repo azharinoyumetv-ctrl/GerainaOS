@@ -1,4 +1,5 @@
 """Purchase management routes (Suppliers, Purchase Orders, Goods Receiving, Invoices)."""
+from permissions import require_permission
 import uuid
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,13 +15,13 @@ from plan_limits import require_plan
 router = APIRouter(tags=["purchase"])
 
 # ---------- Suppliers (Pro-tier feature -- see AppLayout.jsx minPlan) ----------
-@router.get("/api/suppliers", response_model=List[Supplier])
+@router.get("/api/suppliers", response_model=List[Supplier], dependencies=[Depends(require_permission("suppliers.read"))])
 async def list_suppliers(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.suppliers.find({"store_id": user["store_id"]}, {"_id": 0}).sort("name", 1)
     return await cursor.to_list(length=100)
 
-@router.post("/api/suppliers", response_model=Supplier)
+@router.post("/api/suppliers", response_model=Supplier, dependencies=[Depends(require_permission("suppliers.write"))])
 async def create_supplier(payload: SupplierBase, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     existing = await db.suppliers.find_one({"store_id": user["store_id"], "name": payload.name})
@@ -40,7 +41,7 @@ async def create_supplier(payload: SupplierBase, user: dict = Depends(require_pl
     doc.pop("_id", None)
     return doc
 
-@router.put("/api/suppliers/{sup_id}", response_model=Supplier)
+@router.put("/api/suppliers/{sup_id}", response_model=Supplier, dependencies=[Depends(require_permission("suppliers.write"))])
 async def update_supplier(sup_id: str, payload: SupplierBase, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     res = await db.suppliers.find_one_and_update(
@@ -59,7 +60,7 @@ async def update_supplier(sup_id: str, payload: SupplierBase, user: dict = Depen
         raise HTTPException(status_code=404, detail="Supplier tidak ditemukan")
     return res
 
-@router.delete("/api/suppliers/{sup_id}")
+@router.delete("/api/suppliers/{sup_id}", dependencies=[Depends(require_permission("suppliers.write"))])
 async def delete_supplier(sup_id: str, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     res = await db.suppliers.delete_one({"id": sup_id, "store_id": user["store_id"]})
@@ -68,13 +69,13 @@ async def delete_supplier(sup_id: str, user: dict = Depends(require_plan("pro"))
     return {"ok": True}
 
 # ---------- Purchase Orders (Pro-tier feature -- see AppLayout.jsx minPlan) ----------
-@router.get("/api/purchase/orders", response_model=List[PurchaseOrder])
+@router.get("/api/purchase/orders", response_model=List[PurchaseOrder], dependencies=[Depends(require_permission("purchase.read"))])
 async def list_purchase_orders(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.purchase_orders.find({"store_id": user["store_id"]}, {"_id": 0}).sort("created_at", -1)
     return await cursor.to_list(length=100)
 
-@router.post("/api/purchase/orders", response_model=PurchaseOrder)
+@router.post("/api/purchase/orders", response_model=PurchaseOrder, dependencies=[Depends(require_permission("purchase.write"))])
 async def create_purchase_order(payload: PurchaseOrderCreate, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     doc = {
@@ -116,13 +117,13 @@ async def create_purchase_order(payload: PurchaseOrderCreate, user: dict = Depen
     return doc
 
 # ---------- Goods Receiving (Pro-tier feature -- see AppLayout.jsx minPlan) ----------
-@router.get("/api/purchase/receiving", response_model=List[GoodsReceiving])
+@router.get("/api/purchase/receiving", response_model=List[GoodsReceiving], dependencies=[Depends(require_permission("purchase.read"))])
 async def list_receiving(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.goods_receiving.find({"store_id": user["store_id"]}, {"_id": 0}).sort("received_at", -1)
     return await cursor.to_list(length=100)
 
-@router.post("/api/purchase/receiving", response_model=GoodsReceiving)
+@router.post("/api/purchase/receiving", response_model=GoodsReceiving, dependencies=[Depends(require_permission("purchase.write"))])
 async def create_receiving(payload: GoodsReceivingCreate, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     doc = {
@@ -145,13 +146,13 @@ async def create_receiving(payload: GoodsReceivingCreate, user: dict = Depends(r
     return doc
 
 # ---------- Supplier Invoices (Pro-tier feature -- see AppLayout.jsx minPlan) ----------
-@router.get("/api/purchase/invoices", response_model=List[SupplierInvoice])
+@router.get("/api/purchase/invoices", response_model=List[SupplierInvoice], dependencies=[Depends(require_permission("purchase.read"))])
 async def list_supplier_invoices(user: dict = Depends(require_plan("pro"))):
     db = get_db()
     cursor = db.supplier_invoices.find({"store_id": user["store_id"]}, {"_id": 0}).sort("created_at", -1)
     return await cursor.to_list(length=100)
 
-@router.post("/api/purchase/invoices", response_model=SupplierInvoice)
+@router.post("/api/purchase/invoices", response_model=SupplierInvoice, dependencies=[Depends(require_permission("purchase.write"))])
 async def create_supplier_invoice(payload: SupplierInvoiceCreate, user: dict = Depends(require_plan("pro"))):
     db = get_db()
     doc = {
@@ -185,7 +186,7 @@ async def create_supplier_invoice(payload: SupplierInvoiceCreate, user: dict = D
     doc.pop("_id", None)
     return doc
 
-@router.put("/api/purchase/invoices/{invoice_id}", response_model=SupplierInvoice)
+@router.put("/api/purchase/invoices/{invoice_id}", response_model=SupplierInvoice, dependencies=[Depends(require_permission("purchase.write"))])
 async def update_supplier_invoice(invoice_id: str, payload: SupplierInvoiceUpdate, user: dict = Depends(require_plan("pro"))):
     """Mark a supplier invoice paid/unpaid (or otherwise partially update it).
 

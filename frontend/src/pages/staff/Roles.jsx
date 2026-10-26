@@ -3,9 +3,9 @@ import { Shield } from "lucide-react";
 export default function Roles() {
   const defaultRoles = [
     { name: "Owner", desc: "Akses penuh tanpa batasan ke semua menu, laporan keuangan, dan pengaturan integrasi cloud." },
-    { name: "Manager", desc: "Akses operasional penuh, termasuk edit produk, inventaris, pelanggan, staf/karyawan, dan laporan harian. Tidak diizinkan mengakses menu integrasi API & lisensi perangkat." },
-    { name: "Cashier", desc: "Akses khusus layar penjualan POS Kasir, tambah pelanggan, dan riwayat transaksi retail. Produk bersifat Read-Only." },
-    { name: "Warehouse", desc: "Akses khusus modul logistik: Stok masuk, opname stok, transfer cabang, purchase order, dan list supplier." }
+    { name: "Manager", desc: "Mengelola produk, inventaris, pembelian, pelanggan dan laporan. Dapat melihat daftar staf serta kehadiran tim; perubahan peran, akun, kata sandi, pembayaran dan integrasi tetap milik Owner." },
+    { name: "Cashier", desc: "Kasir POS, pelanggan, riwayat transaksi dan absensi pribadi. Katalog produk hanya dapat dibaca; tidak dapat mengubah peran atau pengaturan toko." },
+    { name: "Warehouse", desc: "Operasional stok, pembelian dan supplier, serta absensi pribadi. Katalog produk dapat dibaca; akses kasir, laporan keuangan dan pengaturan akun tidak diberikan." }
   ];
 
   return (

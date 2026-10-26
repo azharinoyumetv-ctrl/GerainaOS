@@ -1,5 +1,6 @@
 """EDC (kartu debit/kredit via mesin EDC bank) endpoints. See edc_provider.py for the
 pluggable provider architecture and why no bank is actually wired in yet."""
+from permissions import require_permission
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import get_db, utcnow
@@ -9,14 +10,14 @@ from edc_provider import get_edc_provider, BANK_LABELS
 router = APIRouter(prefix="/api/edc", tags=["edc"])
 
 
-@router.get("/providers")
+@router.get("/providers", dependencies=[Depends(require_permission("pos.use"))])
 async def list_edc_providers(user: dict = Depends(get_current_user)):
     """Bank options available in Settings > Pembayaran > EDC. All currently unconfigured --
     see edc_provider.py docstring for why (each needs its own SDK + bank certification)."""
     return [{"id": pid, "label": label, "status": "not_configured"} for pid, label in BANK_LABELS.items()]
 
 
-@router.post("/orders/{order_id}/charge")
+@router.post("/orders/{order_id}/charge", dependencies=[Depends(require_permission("pos.use"))])
 async def charge_order_via_edc(order_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
     order = await db.orders.find_one({"id": order_id, "store_id": user["store_id"]})

@@ -1,4 +1,5 @@
 """Inventory and Product metadata routes (Categories, Brands, Units, Adjustments, Transfers)."""
+from permissions import require_permission
 import uuid
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,13 +14,13 @@ from plan_limits import require_plan
 router = APIRouter(prefix="/api/products", tags=["inventory"])
 
 # ---------- Categories ----------
-@router.get("/categories", response_model=List[Category])
+@router.get("/categories", response_model=List[Category], dependencies=[Depends(require_permission("products.read"))])
 async def list_categories(user: dict = Depends(get_current_user)):
     db = get_db()
     cursor = db.categories.find({"store_id": user["store_id"]}, {"_id": 0}).sort("name", 1)
     return await cursor.to_list(length=100)
 
-@router.post("/categories", response_model=Category)
+@router.post("/categories", response_model=Category, dependencies=[Depends(require_permission("products.write"))])
 async def create_category(payload: CategoryBase, user: dict = Depends(get_current_user)):
     db = get_db()
     # Check if exists
@@ -38,7 +39,7 @@ async def create_category(payload: CategoryBase, user: dict = Depends(get_curren
     doc.pop("_id", None)
     return doc
 
-@router.put("/categories/{cat_id}", response_model=Category)
+@router.put("/categories/{cat_id}", response_model=Category, dependencies=[Depends(require_permission("products.write"))])
 async def update_category(cat_id: str, payload: CategoryBase, user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.categories.find_one_and_update(
@@ -51,7 +52,7 @@ async def update_category(cat_id: str, payload: CategoryBase, user: dict = Depen
         raise HTTPException(status_code=404, detail="Kategori tidak ditemukan")
     return res
 
-@router.delete("/categories/{cat_id}")
+@router.delete("/categories/{cat_id}", dependencies=[Depends(require_permission("products.write"))])
 async def delete_category(cat_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.categories.delete_one({"id": cat_id, "store_id": user["store_id"]})
@@ -60,13 +61,13 @@ async def delete_category(cat_id: str, user: dict = Depends(get_current_user)):
     return {"ok": True}
 
 # ---------- Brands ----------
-@router.get("/brands", response_model=List[Brand])
+@router.get("/brands", response_model=List[Brand], dependencies=[Depends(require_permission("products.read"))])
 async def list_brands(user: dict = Depends(get_current_user)):
     db = get_db()
     cursor = db.brands.find({"store_id": user["store_id"]}, {"_id": 0}).sort("name", 1)
     return await cursor.to_list(length=100)
 
-@router.post("/brands", response_model=Brand)
+@router.post("/brands", response_model=Brand, dependencies=[Depends(require_permission("products.write"))])
 async def create_brand(payload: BrandBase, user: dict = Depends(get_current_user)):
     db = get_db()
     existing = await db.brands.find_one({"store_id": user["store_id"], "name": payload.name})
@@ -84,7 +85,7 @@ async def create_brand(payload: BrandBase, user: dict = Depends(get_current_user
     doc.pop("_id", None)
     return doc
 
-@router.put("/brands/{brand_id}", response_model=Brand)
+@router.put("/brands/{brand_id}", response_model=Brand, dependencies=[Depends(require_permission("products.write"))])
 async def update_brand(brand_id: str, payload: BrandBase, user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.brands.find_one_and_update(
@@ -97,7 +98,7 @@ async def update_brand(brand_id: str, payload: BrandBase, user: dict = Depends(g
         raise HTTPException(status_code=404, detail="Brand tidak ditemukan")
     return res
 
-@router.delete("/brands/{brand_id}")
+@router.delete("/brands/{brand_id}", dependencies=[Depends(require_permission("products.write"))])
 async def delete_brand(brand_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.brands.delete_one({"id": brand_id, "store_id": user["store_id"]})
@@ -106,13 +107,13 @@ async def delete_brand(brand_id: str, user: dict = Depends(get_current_user)):
     return {"ok": True}
 
 # ---------- Units ----------
-@router.get("/units", response_model=List[Unit])
+@router.get("/units", response_model=List[Unit], dependencies=[Depends(require_permission("products.read"))])
 async def list_units(user: dict = Depends(get_current_user)):
     db = get_db()
     cursor = db.units.find({"store_id": user["store_id"]}, {"_id": 0}).sort("name", 1)
     return await cursor.to_list(length=100)
 
-@router.post("/units", response_model=Unit)
+@router.post("/units", response_model=Unit, dependencies=[Depends(require_permission("products.write"))])
 async def create_unit(payload: UnitBase, user: dict = Depends(get_current_user)):
     db = get_db()
     existing = await db.units.find_one({"store_id": user["store_id"], "name": payload.name})
@@ -130,7 +131,7 @@ async def create_unit(payload: UnitBase, user: dict = Depends(get_current_user))
     doc.pop("_id", None)
     return doc
 
-@router.put("/units/{unit_id}", response_model=Unit)
+@router.put("/units/{unit_id}", response_model=Unit, dependencies=[Depends(require_permission("products.write"))])
 async def update_unit(unit_id: str, payload: UnitBase, user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.units.find_one_and_update(
@@ -143,7 +144,7 @@ async def update_unit(unit_id: str, payload: UnitBase, user: dict = Depends(get_
         raise HTTPException(status_code=404, detail="Unit tidak ditemukan")
     return res
 
-@router.delete("/units/{unit_id}")
+@router.delete("/units/{unit_id}", dependencies=[Depends(require_permission("products.write"))])
 async def delete_unit(unit_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.units.delete_one({"id": unit_id, "store_id": user["store_id"]})
@@ -152,13 +153,13 @@ async def delete_unit(unit_id: str, user: dict = Depends(get_current_user)):
     return {"ok": True}
 
 # ---------- Stock Adjustments ----------
-@router.get("/stock-adjustments", response_model=List[StockAdjustment])
+@router.get("/stock-adjustments", response_model=List[StockAdjustment], dependencies=[Depends(require_permission("inventory.read"))])
 async def list_adjustments(user: dict = Depends(get_current_user)):
     db = get_db()
     cursor = db.stock_adjustments.find({"store_id": user["store_id"]}, {"_id": 0}).sort("created_at", -1)
     return await cursor.to_list(length=100)
 
-@router.post("/stock-adjustments", response_model=StockAdjustment)
+@router.post("/stock-adjustments", response_model=StockAdjustment, dependencies=[Depends(require_permission("inventory.write"))])
 async def create_adjustment(payload: StockAdjustmentCreate, user: dict = Depends(get_current_user)):
     db = get_db()
     doc = {
@@ -186,13 +187,13 @@ async def create_adjustment(payload: StockAdjustmentCreate, user: dict = Depends
     return doc
 
 # ---------- Stock Transfers (Business-tier feature -- see AppLayout.jsx minPlan) ----------
-@router.get("/stock-transfers", response_model=List[StockTransfer])
+@router.get("/stock-transfers", response_model=List[StockTransfer], dependencies=[Depends(require_permission("inventory.read"))])
 async def list_transfers(user: dict = Depends(require_plan("business"))):
     db = get_db()
     cursor = db.stock_transfers.find({"store_id": user["store_id"]}, {"_id": 0}).sort("created_at", -1)
     return await cursor.to_list(length=100)
 
-@router.post("/stock-transfers", response_model=StockTransfer)
+@router.post("/stock-transfers", response_model=StockTransfer, dependencies=[Depends(require_permission("inventory.write"))])
 async def create_transfer(payload: StockTransferCreate, user: dict = Depends(require_plan("business"))):
     db = get_db()
     doc = {

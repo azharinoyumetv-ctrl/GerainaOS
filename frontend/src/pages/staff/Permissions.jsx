@@ -12,7 +12,11 @@ export default function Permissions() {
     { key: "debt", label: "Buku Hutang Piutang" },
     { key: "payments", label: "Konfigurasi Metode Bayar" },
     { key: "reports", label: "Laporan Profit & Laba Kotor" },
-    { key: "staff", label: "Kelola Karyawan & Absensi" },
+    { key: "staff", label: "Lihat daftar staf / kehadiran tim" },
+    { key: "staff_manage", label: "Ubah staf, peran dan kata sandi" },
+    { key: "attendance", label: "Absensi pribadi (sesuai paket toko)" },
+    { key: "sales", label: "Riwayat penjualan" },
+    { key: "products_write", label: "Tambah, ubah dan hapus produk" },
     { key: "branches", label: "Kelola Cabang Outlet" },
     { key: "settings", label: "Pengaturan Sistem" },
   ];
@@ -20,10 +24,10 @@ export default function Permissions() {
   const roles = ["Owner", "Manager", "Cashier", "Warehouse"];
 
   const matrix = {
-    Owner: ["dashboard", "pos", "products", "inventory", "purchase", "suppliers", "customers", "debt", "payments", "reports", "staff", "branches", "settings"],
-    Manager: ["dashboard", "pos", "products", "inventory", "purchase", "suppliers", "customers", "debt", "payments", "reports", "staff", "settings"],
-    Cashier: ["dashboard", "pos", "products", "customers"],
-    Warehouse: ["products", "inventory", "purchase", "suppliers"]
+    Owner: ["dashboard", "pos", "products", "products_write", "inventory", "purchase", "suppliers", "customers", "debt", "payments", "reports", "staff", "staff_manage", "attendance", "sales", "branches", "settings"],
+    Manager: ["dashboard", "pos", "products", "products_write", "inventory", "purchase", "suppliers", "customers", "debt", "reports", "staff", "attendance", "sales"],
+    Cashier: ["dashboard", "pos", "products", "customers", "sales", "attendance"],
+    Warehouse: ["products", "inventory", "purchase", "suppliers", "attendance"]
   };
 
   return (
@@ -38,7 +42,7 @@ export default function Permissions() {
           <Shield className="text-[hsl(var(--primary))]" size={20} /> Matriks Hak Akses Karyawan
         </h2>
         <p className="text-xs text-[hsl(var(--muted))] mb-6">
-          Berikut adalah matriks izin akses untuk masing-masing peran standar. (Versi Pro/Enterprise dapat merubah matriks hak akses ini secara dinamis).
+          Peran bawaan ditetapkan pada akun staf oleh Owner dan diperiksa oleh server. Tabel ini menjelaskan akses yang tersedia; ubah penugasan peran melalui Kelola Karyawan. Hak fitur juga mengikuti paket toko.
         </p>
 
         <div className="overflow-x-auto">

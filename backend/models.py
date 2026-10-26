@@ -1,6 +1,6 @@
 """Geraina POS by DagangOS - Backend Models."""
 from datetime import datetime, timezone
-from typing import List, Optional, Any, Annotated
+from typing import List, Optional, Any, Annotated, Literal
 import uuid
 from pydantic import BaseModel, EmailStr, Field, BeforeValidator, ConfigDict
 
@@ -335,17 +335,52 @@ class StaffBase(BaseModel):
 class Staff(StaffBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     store_id: str
+    user_id: Optional[str] = None
+    login_enabled: bool = False
+    must_change_password: bool = False
+    credential_reset_required: bool = False
+    is_owner_account: bool = False
     created_at: str = Field(default_factory=utcnow_iso)
 
+class StaffCreate(StaffBase):
+    model_config = ConfigDict(extra="forbid")
+    role: Literal["Manager", "Cashier", "Warehouse"]
+    status: Literal["Aktif", "Non-Aktif"] = "Aktif"
+    initial_password: str = Field(min_length=10, max_length=128)
+
+class StaffUpdate(StaffBase):
+    model_config = ConfigDict(extra="forbid")
+    role: Literal["Manager", "Cashier", "Warehouse"]
+    status: Literal["Aktif", "Non-Aktif"] = "Aktif"
+    initial_password: Optional[str] = Field(default=None, min_length=10, max_length=128)
+
 class AttendanceCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+class AttendanceCheckIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    request_id: uuid.UUID
+
+class AttendanceCheckOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    attendance_id: str = Field(min_length=1, max_length=100)
+
+class Attendance(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    store_id: str
     staff_name: str
     clock_in: str
     clock_out: Optional[str] = None
     status: str = "Hadir"
-
-class Attendance(AttendanceCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    store_id: str
+    user_id: Optional[str] = None
+    staff_id: Optional[str] = None
+    is_open: Optional[bool] = None
+    work_date: Optional[str] = None
+    timezone: Optional[str] = None
+    created_by: Optional[str] = None
+    check_in_request_id: Optional[str] = None
+    closed_by: Optional[str] = None
+    legacy_unassigned: bool = False
 
 class BranchBase(BaseModel):
     name: str

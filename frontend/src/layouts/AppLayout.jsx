@@ -1,31 +1,19 @@
 import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/auth/AuthContext";
+import { ROLE_MODULES, canAccessPath, canonicalRole } from "@/auth/permissions";
 import { toast } from "@/components/ui/sonner";
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse, ClipboardList,
   Truck, Users, Landmark, CreditCard, BarChart3, UserCheck,
   GitBranch, Cpu, Settings, Info, ChevronDown, ChevronRight,
-  LogOut, Sparkles, Crown, Shield, Menu, X, Lock
+  LogOut, Sparkles, Crown, Shield, Menu, X, Lock, Clock, UserRound
 } from "lucide-react";
-
-const ROLE_PERMISSIONS = {
-  Owner: ["*"],
-  Manager: [
-    "dashboard", "pos", "products", "inventory", "purchase",
-    "suppliers", "customers", "debt", "payments", "reports", "staff", "settings", "billing", "about"
-  ],
-  Cashier: [
-    "dashboard", "pos", "products", "customers", "about"
-  ],
-  Warehouse: [
-    "products", "inventory", "purchase", "suppliers", "about"
-  ]
-};
 
 const MENU_STRUCTURE = [
   { to: "/geraina/app/dashboard", icon: LayoutDashboard, label: "Dasbor", key: "dashboard" },
   { to: "/geraina/app/pos", icon: ShoppingCart, label: "Kasir", key: "pos" },
+  { to: "/geraina/app/attendance", icon: Clock, label: "Absensi saya", key: "attendance", minPlan: "business" },
   {
     label: "Produk",
     icon: Package,
@@ -180,18 +168,27 @@ function trialDaysLeft(iso) {
 }
 
 export default function AppLayout() {
-  const { user, logout, changeRole } = useAuth();
+  const { user, logout } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
   const days = trialDaysLeft(user?.trial_ends_at);
   const isTrial = (user?.plan || "trial") === "trial";
 
-  const role = user?.role || "Owner";
-  const permissions = ROLE_PERMISSIONS[role] || [];
+  const role = canonicalRole(user?.role);
+  const permissions = ROLE_MODULES[role] || [];
 
   const [openMenus, setOpenMenus] = useState({});
   const [showEcosystemSwitcher, setShowEcosystemSwitcher] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [handoff, setHandoff] = useState(false);
+  const beginHandoff = () => {
+    const event = new Event("geraina-before-account-switch", { cancelable: true });
+    window.dispatchEvent(event);
+    if (event.defaultPrevented) { toast.error("Selesaikan transaksi atau simpan/tutup draf sebelum mengganti akun."); return; }
+    if (!navigator.onLine) { toast.error("Ganti pengguna memerlukan internet. Akun saat ini tetap dapat mencatat penjualan tunai offline; Keluar tetap mengunci akun."); return; }
+    setMobileOpen(false);
+    setHandoff(true);
+  };
 
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -209,10 +206,9 @@ export default function AppLayout() {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
-  const filteredMenu = MENU_STRUCTURE.filter((item) => {
-    if (permissions.includes("*")) return true;
-    return permissions.includes(item.key);
-  });
+  const filteredMenu = MENU_STRUCTURE.filter(item => permissions.includes("*") || permissions.includes(item.key))
+    .map(item => item.sub ? { ...item, sub: item.sub.filter(sub => canAccessPath(role, sub.to)) } : item)
+    .filter(item => item.sub ? item.sub.length > 0 : canAccessPath(role, item.to));
 
   return (
     <div className="ecosystem-app-shell h-screen flex flex-col lg:flex-row overflow-hidden bg-[hsl(var(--background))]" data-testid="app-layout">
@@ -464,21 +460,12 @@ export default function AppLayout() {
         <div className="p-3 border-t border-[hsl(var(--border))] space-y-3 bg-[hsl(var(--background))]/30">
           <div className="flex items-center justify-between px-2">
             <div>
-              <p className="text-[10px] text-[hsl(var(--muted))]">Role Saat Ini</p>
+              <p className="text-[10px] text-[hsl(var(--muted))]">Peran akun</p>
               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[hsl(var(--primary))]/8 text-[hsl(var(--primary))] mt-0.5 inline-block">
                 {role}
               </span>
             </div>
-            <select
-              value={role}
-              onChange={(e) => changeRole(e.target.value)}
-              className="text-xs border border-[hsl(var(--border))] rounded px-1.5 py-1 bg-[hsl(var(--surface))] outline-none font-medium cursor-pointer"
-            >
-              <option value="Owner">Owner</option>
-              <option value="Manager">Manager</option>
-              <option value="Cashier">Cashier</option>
-              <option value="Warehouse">Warehouse</option>
-            </select>
+            <button type="button" onClick={beginHandoff} className="btn-outline text-xs" data-testid="account-switch-open"><UserRound size={14} /> Ganti pengguna</button>
           </div>
 
           <div className="px-2 pt-1 border-t border-[hsl(var(--border))]/50 flex items-center justify-between">
@@ -500,6 +487,14 @@ export default function AppLayout() {
       <main className="ecosystem-workspace flex-1 min-w-0 overflow-y-auto bg-[hsl(var(--background))]">
         <div key={location.pathname} className="route-stage">
           <Outlet />
+          {handoff && <div role="dialog" aria-modal="true" aria-labelledby="account-switch-title" className="fixed inset-0 z-[100] bg-black/50 grid place-items-center p-4" data-testid="account-switch-dialog">
+            <div className="card-surface bg-white p-6 space-y-4 w-full max-w-md">
+              <h2 id="account-switch-title" className="font-display text-xl font-bold">Ganti pengguna perangkat ini?</h2>
+              <p className="text-sm">Sesi {user?.name || user?.email} ({role}) akan diakhiri. Pengguna berikutnya wajib masuk dengan akun dan kata sandinya sendiri. Kembali ke Owner juga memerlukan login Owner.</p>
+              <p className="text-xs text-[hsl(var(--muted))]">Penjualan offline yang tersimpan tetap terikat pada akun ini. Masuk kembali dengan akun yang sama untuk menyinkronkannya.</p>
+              <div className="flex gap-3"><button type="button" onClick={() => setHandoff(false)} className="btn-outline flex-1" data-testid="account-switch-cancel">Batal</button><button type="button" onClick={() => { setHandoff(false); logout(); nav("/geraina/login?switch=1", { replace: true }); }} className="btn-primary flex-1" data-testid="account-switch-confirm">Keluar & ganti pengguna</button></div>
+            </div>
+          </div>}
         </div>
       </main>
     </div>

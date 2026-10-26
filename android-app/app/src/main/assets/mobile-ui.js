@@ -21,7 +21,7 @@
     close:'<path d="m6 6 12 12M6 18 18 6"/>',
   };
   const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${paths[name] || paths.box}</svg>`;
-  let scheduled = false, shellSignature = '', dashboardController;
+  let scheduled = false, shellSignature = '', dashboardController, dashboardIdentity = '';
   function openMenu() { $('[data-testid="mobile-menu-open-btn"]')?.click(); }
   function openSupport() {
     if(!$('.dagangos-support'))window.__gerainaInstallSupport?.();
@@ -32,6 +32,7 @@
   }
   function closeCart() { document.documentElement.removeAttribute('data-ga-cart'); }
   function back() {
+    if ($('[data-testid="account-switch-dialog"]')) { $('[data-testid="account-switch-cancel"]')?.click(); return true; }
     const support=$('.dagangos-support__panel:not([hidden])');
     if(support){$('.dagangos-support__close')?.click();return true;}
     if ($('[data-testid="receipt-dialog"]')) { $('[data-testid="receipt-done-btn"]')?.click(); return true; }
@@ -114,25 +115,19 @@
   }
   function decorateDashboard() {
     const page=$('[data-testid="dashboard-page"]');
-    if(!page) { if(dashboardController) {dashboardController.abort();dashboardController=null;} return; }
-    if($('.ga-dashboard',page)) return;
+    if(!page) { if(dashboardController) {dashboardController.abort();dashboardController=null;} dashboardIdentity=''; return; }
+    const currentUser=user(),identity=JSON.stringify([token(),currentUser.id,currentUser.store_id,currentUser.role]);
+    const existing=$('.ga-dashboard',page);
+    if(existing&&dashboardIdentity===identity) return;
+    if(existing)existing.remove();
+    dashboardIdentity=identity;
     const mount=document.createElement('section');mount.className='ga-dashboard';mount.dataset.testid='mobile-dashboard';
     page.append(mount);loadDashboard(mount);
   }
   function decorateProducts() {
     const page=$('[data-testid="products-page"]');if(!page)return;
-    if(!$('.ga-product-summary',page)) {
-      const overview=document.createElement('div');overview.className='ga-product-summary';overview.dataset.testid='mobile-product-summary';
-      overview.innerHTML='<div><p>Total produk</p><b data-ga-stat="total">—</b></div><div><p>Kategori</p><b data-ga-stat="categories">—</b></div><div><p>Stok menipis</p><b data-ga-stat="low">—</b></div>';
-      page.prepend(overview);
-      const authToken=token(),controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
-      read('/products',controller.signal,authToken).then(products=>{
-        if(!Array.isArray(products)||!overview.isConnected||authToken!==token())return;
-        text($('[data-ga-stat="total"]',overview),products.length);
-        text($('[data-ga-stat="categories"]',overview),new Set(products.map(product=>product.category).filter(Boolean)).size);
-        text($('[data-ga-stat="low"]',overview),products.filter(product=>Number(product.stock)<=5).length);
-      }).catch(()=>{overview.title='Ringkasan produk belum dapat dimuat';}).finally(()=>clearTimeout(timer));
-    }
+    // React owns the full-catalogue summary and paginated rows. Decoration must
+    // not fetch the catalogue again or remove React-owned DOM after writes.
     $$('[data-testid^="product-row-"]',page).forEach(row=>{
       const stock=row.children[4];if(stock)stock.classList.toggle('ga-stock-low',parseFloat(stock.textContent)<=5);
       const placeholder=$('td:first-child>div>span:first-child',row);
@@ -179,17 +174,6 @@
   for(const method of ['pushState','replaceState']){const original=history[method].bind(history);history[method]=(...args)=>{const result=original(...args);schedule();return result;};}
   addEventListener('popstate',schedule);
   addEventListener('resize',schedule);
-  // Keep the unfiltered overview current after the existing React CRUD succeeds.
-  const originalOpen=XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open=function(method,url,...rest){
-    if(/^(POST|PUT|PATCH|DELETE)$/i.test(method)){
-      let parsed;try{parsed=new URL(url,location.href);}catch{}
-      if(parsed?.origin===location.origin&&/^\/api\/products(?:\/|$)/.test(parsed.pathname))this.addEventListener('load',()=>{
-        if(this.status>=200&&this.status<300){$('.ga-product-summary')?.remove();schedule();}
-      },{once:true});
-    }
-    return originalOpen.call(this,method,url,...rest);
-  };
   document.addEventListener('click',event=>{
     window.GerainaNative.postMessage(JSON.stringify({type:'interaction'}));
     const action=event.target.closest?.('[data-ga-action]')?.dataset.gaAction;

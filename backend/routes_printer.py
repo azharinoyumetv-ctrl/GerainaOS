@@ -5,6 +5,7 @@ store's LAN (see escpos.py docstring for why). The frontend fetches the base64 p
 and forwards it to a local printer-bridge running on the store's own PC, which does the actual
 raw TCP write to the printer.
 """
+from permissions import require_permission
 import base64
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -23,7 +24,7 @@ async def printer_test_escpos(user: dict = Depends(get_current_user)):
     return {"data_base64": base64.b64encode(data).decode("ascii"), "byte_length": len(data)}
 
 
-@router.get("/orders/{order_id}/escpos")
+@router.get("/orders/{order_id}/escpos", dependencies=[Depends(require_permission("sales.read"))])
 async def order_receipt_escpos(order_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
     order = await db.orders.find_one({"id": order_id, "store_id": user["store_id"]}, {"_id": 0})

@@ -2,6 +2,7 @@ import "@/index.css";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
+import PasswordSetup from "@/auth/PasswordSetup";
 import { Toaster } from "@/components/ui/sonner";
 
 import DagangOS from "@/pages/DagangOS";
@@ -63,6 +64,7 @@ function Protected({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="p-10 text-sm text-center text-[hsl(var(--muted))]" data-testid="auth-loading">Memuat sesi…</div>;
   if (!user) return <Navigate to="/geraina/login" replace />;
+  if (user.must_change_password) return <PasswordSetup />;
   return children;
 }
 
@@ -158,6 +160,7 @@ function getGerainaAppSubRoutes() {
     <Route key="g-stfr" path="staff/roles" element={<RoleGuard><Roles /></RoleGuard>} />,
     <Route key="g-stfp" path="staff/permissions" element={<RoleGuard><Permissions /></RoleGuard>} />,
     <Route key="g-stfa" path="staff/attendance" element={<RoleGuard><Attendance /></RoleGuard>} />,
+    <Route key="g-myattendance" path="attendance" element={<RoleGuard><Attendance /></RoleGuard>} />,
     <Route key="g-stfw" path="staff/*" element={<RoleGuard><StaffManagement /></RoleGuard>} />,
     <Route key="g-stf" path="staff" element={<RoleGuard><StaffManagement /></RoleGuard>} />,
 
@@ -216,27 +219,27 @@ export default function App() {
             <Route path="register" element={<Register />} />
             <Route path="activate" element={<Protected><Activate /></Protected>} />
 
-            <Route path="app/*" element={<AppLayout />}>{appRoutes}</Route>
+            <Route path="app/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
 
             {/* Direct un-prefixed management routes & deep links */}
-            <Route path="dashboard/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="pos/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="products/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="inventory/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="purchase/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="suppliers/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="customers/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="debt/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="payments/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="reports/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="staff/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="branches/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="integrations/*" element={<AppLayout />}>{appRoutes}</Route>
-            <Route path="settings/*" element={<AppLayout />}>{appRoutes}</Route>
+            <Route path="dashboard/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="pos/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="products/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="inventory/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="purchase/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="suppliers/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="customers/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="debt/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="payments/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="reports/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="staff/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="branches/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="integrations/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
+            <Route path="settings/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
           </Route>
 
           {/* Root Fallback */}
-          <Route path="/app/*" element={<AppLayout />}>{appRoutes}</Route>
+          <Route path="/app/*" element={<Protected><AppLayout /></Protected>}>{appRoutes}</Route>
 
           <Route path="*" element={<GerainaRootComponent />} />
         </Routes>

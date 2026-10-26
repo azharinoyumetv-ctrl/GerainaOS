@@ -4,6 +4,7 @@ import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { ArrowRight } from "lucide-react";
 import PasswordInput from "@/components/PasswordInput";
+import { firstAllowedPath } from "@/auth/permissions";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -14,17 +15,17 @@ export default function Login() {
   const next = checkoutReturn("geraina");
   const { user, login } = useAuth();
 
-  useEffect(() => { if (user && next) window.location.replace(next); }, [user, next]);
-  if (user && next) return <p role="status">Melanjutkan ke pembayaran…</p>;
-  if (user) return <Navigate to="/geraina/app/dashboard" replace />;
+  useEffect(() => { if (user && !user.must_change_password && next) window.location.replace(next); }, [user, next]);
+  if (user && !user.must_change_password && next) return <p role="status">Melanjutkan ke pembayaran…</p>;
+  if (user) return <Navigate to={firstAllowedPath(user.role)} replace />;
 
   const submit = async (event) => {
     event.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
-      if (!next) nav("/geraina/app/dashboard");
+      const signedIn = await login(email, password);
+      if (!next || signedIn.must_change_password) nav(firstAllowedPath(signedIn.role));
     } catch (requestError) {
       setError(requestError?.response?.data?.detail || requestError.message || "Email atau kata sandi tidak valid.");
     } finally {

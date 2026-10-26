@@ -2,6 +2,7 @@
 
 DO NOT modify prices without explicit client approval.
 """
+from permissions import require_permission
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from auth import get_billing_user, require_billing_admin
@@ -169,7 +170,7 @@ async def upgrade_plan(payload: dict, user: dict = Depends(require_billing_admin
     }
 
 
-@router.get("/addons/my")
+@router.get("/addons/my", dependencies=[Depends(require_permission("billing.manage"))])
 async def list_my_addons(user: dict = Depends(get_billing_user)):
     """This store's addon purchase requests (pending/active/rejected), newest first. Uses
     get_billing_user (not get_current_user) so this stays reachable on an expired trial --

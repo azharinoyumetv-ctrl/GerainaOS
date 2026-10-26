@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
+import { canonicalRole } from "@/auth/permissions";
 import OfflineStatus from "@/offline/OfflineStatus";
 import { offlineAvailable, scopeFor, cached, cache, recordCashSale, localSales, synchronize } from "@/offline/posStore";
 import { QRCodeSVG } from "qrcode.react";
@@ -23,6 +24,10 @@ const EWALLET_CHANNELS = [
 ];
 
 export function ReceiptDialog({ order, onClose, onUpdated }) {
+  const { user } = useAuth();
+  const isOwner = canonicalRole(user?.role) === "Owner";
+  const [markingPaid, setMarkingPaid] = useState(false);
+  const markLock = useRef(false);
   const [poll, setPoll] = useState(order);
   const [edcProcessing, setEdcProcessing] = useState(false);
   useEffect(() => { setPoll(order); }, [order]);
@@ -46,9 +51,14 @@ export function ReceiptDialog({ order, onClose, onUpdated }) {
   const isPaid = o.payment_status === "paid";
 
   const simulatePaid = async () => {
-    await api.post(`/orders/${o.id}/mark-paid`);
-    const r = await api.get(`/orders/${o.id}`);
-    setPoll(r.data);
+    if (!isOwner || markLock.current) return;
+    markLock.current = true; setMarkingPaid(true);
+    try {
+      await api.post(`/orders/${o.id}/mark-paid`);
+      const r = await api.get(`/orders/${o.id}`);
+      setPoll(r.data); onUpdated?.(r.data);
+    } catch (error) { toast.error(error?.response?.data?.detail || "Pembayaran belum dapat dikonfirmasi. Periksa status lalu coba lagi."); }
+    finally { markLock.current = false; setMarkingPaid(false); }
   };
 
   const processEdc = async () => {
@@ -170,8 +180,8 @@ export function ReceiptDialog({ order, onClose, onUpdated }) {
           </button>
         </div>
 
-        {o.payment_status === "pending" && !["cash", "qris_bank"].includes(o.payment_method) && (
-          <button onClick={simulatePaid} className="btn-ghost w-full mt-2 text-xs" data-testid="receipt-mark-paid">
+        {isOwner && o.payment_status === "pending" && !["cash", "qris_bank"].includes(o.payment_method) && (
+          <button onClick={simulatePaid} disabled={markingPaid} className="btn-ghost w-full mt-2 text-xs" data-testid="receipt-mark-paid">
             <RefreshCw size={13} /> Tandai sudah dibayar
           </button>
         )}
@@ -203,9 +213,16 @@ export default function POS() {
   const [resumingBank, setResumingBank] = useState(false);
   const [categories, setCategories] = useState([]);
   const [activeCat, setActiveCat] = useState("all");
+  const [productPage, setProductPage] = useState(0);
+  useEffect(() => { setProductPage(0); }, [q, activeCat, user?.id, user?.store_id]);
   const [scannedProduct, setScannedProduct] = useState(null);
   const [customers, setCustomers] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  useEffect(() => {
+    const beforeSwitch = event => { if (cart.length || submitting) event.preventDefault(); };
+    window.addEventListener("geraina-before-account-switch", beforeSwitch);
+    return () => window.removeEventListener("geraina-before-account-switch", beforeSwitch);
+  }, [cart.length, submitting]);
 
   useEffect(() => {
     setReceipt(null);
@@ -317,6 +334,8 @@ export default function POS() {
     if (q) arr = arr.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()) || p.sku?.toLowerCase().includes(q.toLowerCase()));
     return arr;
   }, [products, activeCat, q]);
+  const productPages = Math.max(1, Math.ceil(filtered.length / 48));
+  const shownPage = Math.min(productPage, productPages - 1);
 
   const addToCart = (p) => {
     setCart((c) => {
@@ -450,14 +469,14 @@ export default function POS() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3" data-testid="pos-product-grid">
-          {filtered.map((p) => (
+          {filtered.slice(shownPage * 48, (shownPage + 1) * 48).map((p) => (
             <button key={p.id} onClick={() => addToCart(p)}
                     className="card-surface p-3 text-left hover:border-[hsl(var(--primary))] hover:shadow-sm transition-all flex flex-col justify-between"
                     data-testid={`pos-product-${p.id}`}>
               <div>
                 {/* Product Image */}
                 {p.image_url ? (
-                  <img src={p.image_url} alt={p.name} className="w-full h-32 object-cover rounded-md mb-2 bg-[hsl(var(--secondary))]" />
+                  <img src={p.image_url} alt={p.name} loading="lazy" decoding="async" className="w-full h-32 object-cover rounded-md mb-2 bg-[hsl(var(--secondary))]" />
                 ) : (
                   <div className="w-full h-32 bg-[hsl(var(--secondary))] flex flex-col items-center justify-center rounded-md mb-2 text-[hsl(var(--muted))] text-xs font-semibold gap-1">
                     <Barcode size={24} className="stroke-[1.5]" />
@@ -476,6 +495,10 @@ export default function POS() {
           ))}
           {filtered.length === 0 && <p className="col-span-full text-center text-[hsl(var(--muted))] py-10" data-testid="pos-no-products">Tidak ada produk.</p>}
         </div>
+        {filtered.length > 48 && <div className="flex flex-wrap items-center justify-between gap-3 mt-4" data-testid="pos-pagination">
+          <p className="text-xs text-[hsl(var(--muted))]">Halaman {shownPage + 1} dari {productPages} · {filtered.length} produk dimuat</p>
+          <div className="flex gap-2"><button className="btn-outline disabled:opacity-50" data-testid="pos-products-previous" disabled={shownPage === 0} onClick={() => setProductPage(Math.max(0, shownPage - 1))}>Sebelumnya</button><button className="btn-outline disabled:opacity-50" data-testid="pos-products-next" disabled={shownPage >= productPages - 1} onClick={() => setProductPage(shownPage + 1)}>Berikutnya</button></div>
+        </div>}
       </div>
 
       {/* Right: cart */}

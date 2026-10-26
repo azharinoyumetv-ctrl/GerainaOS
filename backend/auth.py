@@ -8,11 +8,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, status, Header
+from fastapi import Depends, HTTPException, status, Header, Request
 from fastapi.security import OAuth2PasswordBearer
 
 from database import get_db, utcnow
 from subscription_state import apply_store_subscription
+from permissions import canonical_role, capabilities_for, EMPLOYEE_ROLES
 
 JWT_SECRET = os.environ.get("JWT_SECRET_KEY", "change-me")
 if JWT_SECRET == "change-me" and os.environ.get("ENV") == "production":
@@ -35,17 +36,92 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
-def create_access_token(user_id: str, store_id: str, role: str, email: str) -> str:
+def create_access_token(user_id: str, store_id: str, role: str, email: str, credential_version: int = 0) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         "sub": user_id,
         "store_id": store_id,
         "role": role,
         "email": email,
+        "cv": credential_version,
         "iat": int(now.timestamp()),
         "exp": int((now + timedelta(minutes=JWT_EXPIRE_MIN)).timestamp()),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
+
+
+def employee_password_error(password: str) -> Optional[str]:
+    try:
+        size = len(password.encode("utf-8")) if isinstance(password, str) else 0
+    except UnicodeError:
+        return "Kata sandi mengandung karakter yang tidak valid."
+    if not isinstance(password, str) or len(password) < 10 or size > 72 or not any(char.isalpha() for char in password) or not any(char.isdigit() for char in password):
+        return "Gunakan 10 karakter atau lebih, dengan huruf dan angka (maksimal 72 byte)."
+    if password.casefold() == "geraina123":
+        return "Gunakan kata sandi unik, bukan kata sandi bersama lama."
+    return None
+
+
+def account_is_active(user: dict) -> bool:
+    status = str(user.get("status", "Aktif")).replace("-", "").replace(" ", "").casefold()
+    return user.get("is_active") is not False and user.get("disabled") is not True and not user.get("deleted_at") and status in ("aktif", "active")
+
+
+async def staff_membership(user: dict, store_id: str) -> Optional[dict]:
+    return await get_db().staff.find_one({"store_id": store_id, "$or": [{"user_id": user["id"]}, {"id": user["id"]}]}, {"_id": 0})
+
+
+async def resolve_user_context(user: dict, module: str) -> dict:
+    """Resolve store membership and authority from current records, never a selected UI role."""
+    if not account_is_active(user):
+        raise HTTPException(status_code=401, detail="Akun staf tidak aktif. Hubungi Owner.")
+    module = (module or "geraina").lower()
+    store = await _resolve_store(user, module)
+    result = dict(user)
+    result["current_module"] = module
+    result["is_store_owner"] = False
+    result["staff_id"] = None
+    if store is None:
+        # An established owner may sign into another product to activate/create its store.
+        owns_any = await get_db().stores.find_one({"owner_user_id": user["id"]}, {"_id": 0, "id": 1})
+        if not owns_any:
+            raise HTTPException(status_code=409, detail="no_store_for_module")
+        result = {**result, **await _maybe_expire_trial(user)}
+        result.update(role="Owner", store_id=None, store_name=None)
+    else:
+        is_owner = store.get("owner_user_id") == user["id"]
+        member = None if is_owner else await staff_membership(user, store["id"])
+        legacy_owner = not store.get("owner_user_id") and user.get("store_id") == store["id"] and canonical_role(user.get("role")) == "Owner" and member is None
+        if is_owner or legacy_owner:
+            result = {**result, **await _maybe_expire_trial(user)}
+            result.update(role="Owner", is_store_owner=True)
+        else:
+            if member is None or not account_is_active(member):
+                raise HTTPException(status_code=401, detail="Keanggotaan staf tidak aktif. Hubungi Owner.")
+            role = canonical_role(member.get("role"))
+            if role not in EMPLOYEE_ROLES:
+                raise HTTPException(status_code=403, detail="Peran staf tidak valid. Minta Owner memperbarui akun staf.")
+            if "credential_version" not in user:
+                raise HTTPException(status_code=403, detail="Akun staf lama memerlukan kata sandi unik baru dari Owner.")
+            if user.get("_token_has_cv") is False:
+                raise HTTPException(status_code=401, detail="Akun staf memerlukan masuk ulang dengan kredensial baru dari Owner.")
+            result.update(role=role, staff_id=member["id"], name=member.get("name") or user.get("name") or user.get("email"))
+            # Legacy employee snapshots must not preserve an expired/free/stale store plan.
+            owner = await get_db().users.find_one({"id": store.get("owner_user_id")}, {"_id": 0, "password_hash": 0}) if store.get("owner_user_id") else None
+            if owner:
+                owner = await _maybe_expire_trial(owner)
+                for key in ("plan", "trial_ends_at", "trial_expired_at", "subscriptions"):
+                    if key in owner:
+                        result[key] = owner[key]
+                    else:
+                        result.pop(key, None)
+        result.update(store_id=store["id"], store_name=store.get("name"))
+    result = apply_store_subscription(result, store, module)
+    result["capabilities"] = capabilities_for(result["role"])
+    result["must_change_password"] = result.get("must_change_password") is True
+    result.pop("password_hash", None)
+    result.pop("_token_has_cv", None)
+    return result
 
 
 async def _maybe_expire_trial(user: dict) -> dict:
@@ -115,7 +191,13 @@ async def _decode_identity(token: str) -> dict:
     user = await db.users.find_one({"id": payload.get("sub")}, {"_id": 0, "password_hash": 0})
     if not user:
         raise cred_exc
-    user = await _maybe_expire_trial(user)
+    if not account_is_active(user):
+        raise cred_exc
+    expected_version = user.get("credential_version", 0)
+    if not isinstance(expected_version, int) or payload.get("cv", 0) != expected_version:
+        raise cred_exc
+    # Store resolution decides authority; an old DB role is not proof of ownership.
+    user["_token_has_cv"] = "cv" in payload
     return user
 
 
@@ -126,7 +208,7 @@ async def get_identity(token: str = Depends(oauth2_scheme), x_dagangos_module: s
     detect the expired state or show the paywall in the first place."""
     user = await _decode_identity(token)
     module = x_dagangos_module.lower()
-    return apply_store_subscription(user, await _resolve_store(user, module), module)
+    return await resolve_user_context(user, module)
 
 
 async def _resolve_store(user: dict, module: str) -> Optional[dict]:
@@ -151,18 +233,16 @@ async def _resolve_current(token: str, module: str) -> dict:
     plan=="expired" -- callers decide whether that matters for them."""
     user = await _decode_identity(token)
     module = (module or "geraina").lower()
-    store = await _resolve_store(user, module)
-    if not store:
+    resolved = await resolve_user_context(user, module)
+    if not resolved.get("store_id"):
         raise HTTPException(status_code=409, detail="no_store_for_module")
-    user["store_id"] = store["id"]
-    user["store_name"] = store.get("name")
-    user["current_module"] = module
-    return apply_store_subscription(user, store, module)
+    return resolved
 
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     x_dagangos_module: str = Header(default="geraina", alias="X-DagangOS-Module"),
+    request: Request = None,
 ) -> dict:
     """Akun + toko aktif sesuai modul (header X-DagangOS-Module). Dipakai semua route data,
     sehingga data tetap ter-scope per toko (store_id). Jika akun belum punya toko untuk modul
@@ -173,7 +253,11 @@ async def get_current_user(
     free; the service stops until the account subscribes. Billing routes use get_billing_user
     / require_billing_admin instead of this dependency, precisely so an expired account can
     still reach /pricing/upgrade and /pricing/addons/purchase to pay and unlock itself again."""
+    if request is not None and x_dagangos_module.lower() != "geraina":
+        raise HTTPException(status_code=409, detail="wrong_backend_for_module")
     user = await _resolve_current(token, x_dagangos_module)
+    if user.get("must_change_password"):
+        raise HTTPException(status_code=403, detail="Ganti kata sandi sementara sebelum menggunakan aplikasi.")
     if user.get("plan") == "expired":
         raise HTTPException(
             status_code=402,
@@ -185,12 +269,18 @@ async def get_current_user(
 async def get_billing_user(
     token: str = Depends(oauth2_scheme),
     x_dagangos_module: str = Header(default="geraina", alias="X-DagangOS-Module"),
+    request: Request = None,
 ) -> dict:
     """Same resolution as get_current_user but WITHOUT the expired-trial block. Reserved for
     the billing endpoints (upgrade / addon purchase / addon history) in routes_pricing.py --
     those must stay reachable exactly when everything else is locked out, or an expired
     account could never pay to reactivate itself."""
-    return await _resolve_current(token, x_dagangos_module)
+    if request is not None and x_dagangos_module.lower() != "geraina":
+        raise HTTPException(status_code=409, detail="wrong_backend_for_module")
+    user = await _resolve_current(token, x_dagangos_module)
+    if user.get("must_change_password"):
+        raise HTTPException(status_code=403, detail="Ganti kata sandi sementara sebelum menggunakan aplikasi.")
+    return user
 
 
 async def require_admin(user: dict = Depends(get_current_user)) -> dict:

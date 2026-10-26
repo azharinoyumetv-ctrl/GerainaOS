@@ -1,4 +1,5 @@
 """POS / Orders routes."""
+from permissions import require_permission
 import os
 import uuid
 from typing import Optional
@@ -25,7 +26,7 @@ def _calc(order: OrderCreate) -> dict:
     return {"subtotal": subtotal, "discount": discount, "tax_amount": tax, "total": total}
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(require_permission("pos.use"))])
 async def create_order(payload: OrderCreate, user: dict = Depends(get_current_user)):
     if not payload.items:
         raise HTTPException(status_code=400, detail="Order kosong")
@@ -215,7 +216,7 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
     return doc
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(require_permission("pos.use"))])
 async def list_orders(
     user: dict = Depends(get_current_user),
     status: Optional[str] = None,
@@ -229,7 +230,7 @@ async def list_orders(
     return await cursor.to_list(length=limit)
 
 
-@router.get("/stats")
+@router.get("/stats", dependencies=[Depends(require_permission("pos.use"))])
 async def stats(user: dict = Depends(get_current_user)):
     db = get_db()
     from datetime import datetime, timezone, timedelta
@@ -264,7 +265,7 @@ async def stats(user: dict = Depends(get_current_user)):
     }
 
 
-@router.get("/product-sales")
+@router.get("/product-sales", dependencies=[Depends(require_permission("reports.read"))])
 async def product_sales(user: dict = Depends(require_plan("pro")), days: int = 30, limit: int = 10):
     """Laporan produk terjual REAL: agregasi qty + revenue per produk dari order LUNAS.
 
@@ -295,7 +296,7 @@ async def product_sales(user: dict = Depends(require_plan("pro")), days: int = 3
     ]
 
 
-@router.get("/{order_id}")
+@router.get("/{order_id}", dependencies=[Depends(require_permission("pos.use"))])
 async def get_order(order_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
     doc = await db.orders.find_one({"id": order_id, "store_id": user["store_id"]}, {"_id": 0})
@@ -304,7 +305,7 @@ async def get_order(order_id: str, user: dict = Depends(get_current_user)):
     return doc
 
 
-@router.post("/{order_id}/confirm-bank-qris")
+@router.post("/{order_id}/confirm-bank-qris", dependencies=[Depends(require_permission("pos.use"))])
 async def confirm_bank_qris(order_id: str, payload: BankQrisConfirmation, user: dict = Depends(get_current_user)):
     if user.get("role") not in ("Owner", "admin", "Manager", "Cashier"):
         raise HTTPException(status_code=403, detail="Peran kasir diperlukan untuk konfirmasi QRIS bank.")
@@ -338,7 +339,7 @@ async def confirm_bank_qris(order_id: str, payload: BankQrisConfirmation, user: 
     raise HTTPException(status_code=409, detail="Status transaksi berubah. Muat ulang transaksi terlebih dahulu.")
 
 
-@router.post("/{order_id}/mark-paid")
+@router.post("/{order_id}/mark-paid", dependencies=[Depends(require_permission("pos.use"))])
 async def mark_paid(order_id: str, user: dict = Depends(require_admin)):
     """Owner-only manual settle: confirm a pending non-cash order was actually received
     (e.g. paid via the merchant's own external EDC/QRIS). Not a payment simulator."""
@@ -357,7 +358,7 @@ async def mark_paid(order_id: str, user: dict = Depends(require_admin)):
     return res
 
 
-@router.post("/{order_id}/void")
+@router.post("/{order_id}/void", dependencies=[Depends(require_permission("pos.use"))])
 async def void_order(order_id: str, user: dict = Depends(require_admin)):
     """Batalkan order (owner-only): set payment_status 'voided' dan KEMBALIKAN stok/bahan
     yang sudah dipotong saat order dibuat. Idempotent."""

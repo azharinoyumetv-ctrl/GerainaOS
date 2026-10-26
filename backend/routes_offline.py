@@ -1,4 +1,5 @@
 """Durable replay of cash sales, with stock and the order in one MongoDB transaction."""
+from permissions import require_permission
 import hashlib
 import json
 from datetime import datetime, timezone, timedelta
@@ -71,7 +72,7 @@ def public_order(document):
     return {key: value for key, value in document.items() if key not in ("_id", "offline_request_hash")}
 
 
-@router.post("/orders")
+@router.post("/orders", dependencies=[Depends(require_permission("pos.use"))])
 async def synchronize_cash_sale(payload: OfflineCashSale, user: dict = Depends(get_current_user)):
     if payload.expected_store_id != user["store_id"] or payload.expected_cashier_id != user["id"]:
         raise HTTPException(403, "Masuk kembali ke akun dan toko asal transaksi untuk menyinkronkan")

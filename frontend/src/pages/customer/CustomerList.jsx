@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import api from "@/api/client";
 import { Plus, Trash2, Edit } from "lucide-react";
+import { useAuth } from "@/auth/AuthContext";
+import { canManageProducts } from "@/auth/permissions";
 
 export default function CustomerList() {
+  const { user } = useAuth();
+  const canDelete = canManageProducts(user?.role);
   const [customers, setCustomers] = useState([]);
   const [memberships, setMemberships] = useState([]);
 
@@ -71,6 +75,7 @@ export default function CustomerList() {
   };
 
   const handleDelete = (id) => {
+    if (!canDelete) return;
     if (confirm("Apakah Anda yakin ingin menghapus pelanggan ini?")) {
       api.delete(`/customers/${id}`).then(() => fetchData());
     }
@@ -205,9 +210,9 @@ export default function CustomerList() {
                       <button onClick={() => handleEdit(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit">
                         <Edit size={16} />
                       </button>
-                      <button onClick={() => handleDelete(c.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="Hapus">
+                      {canDelete && <button onClick={() => handleDelete(c.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="Hapus">
                         <Trash2 size={16} />
-                      </button>
+                      </button>}
                     </td>
                   </tr>
                 ))}

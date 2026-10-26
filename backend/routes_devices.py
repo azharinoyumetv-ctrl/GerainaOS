@@ -10,6 +10,7 @@ device_id (page reload, re-click) updates the existing row instead of consuming 
 capacity slot. Capacity is enforced via plan_limits.check_capacity against the tier's
 max_devices.
 """
+from permissions import require_permission
 import uuid
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
@@ -20,14 +21,14 @@ from auth import get_current_user
 router = APIRouter(prefix="/api/devices", tags=["devices"])
 
 
-@router.get("", response_model=List[Device])
+@router.get("", response_model=List[Device], dependencies=[Depends(require_permission("devices.manage"))])
 async def list_devices(user: dict = Depends(get_current_user)):
     db = get_db()
     cursor = db.devices.find({"store_id": user["store_id"]}, {"_id": 0}).sort("created_at", 1)
     return await cursor.to_list(length=200)
 
 
-@router.post("", response_model=Device)
+@router.post("", response_model=Device, dependencies=[Depends(require_permission("devices.manage"))])
 async def register_device(payload: DeviceCreate, user: dict = Depends(get_current_user)):
     db = get_db()
 
@@ -63,7 +64,7 @@ async def register_device(payload: DeviceCreate, user: dict = Depends(get_curren
     return doc
 
 
-@router.delete("/{device_id}")
+@router.delete("/{device_id}", dependencies=[Depends(require_permission("devices.manage"))])
 async def remove_device(device_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
     res = await db.devices.delete_one({"id": device_id, "store_id": user["store_id"]})

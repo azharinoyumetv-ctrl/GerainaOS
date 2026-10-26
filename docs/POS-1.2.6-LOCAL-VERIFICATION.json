@@ -1,0 +1,57 @@
+{
+  "status": "local_candidate_passed",
+  "version": "1.2.6",
+  "versionCode": 11,
+  "published": false,
+  "createdAt": "2026-10-26T04:40:44.736906+00:00",
+  "apk": {
+    "bytes": 17212963,
+    "sha256": "11da42cc1a7cc02e5afa02313a6136c5206851b15553952aca63be03ffd83b53",
+    "file": "Geraina-POS-1.2.6.apk"
+  },
+  "checks": {
+    "gerainaBackend": 210,
+    "sharedBackendContainmentAndSubscription": 27,
+    "androidUnit": 23,
+    "catalogueComponent": 9,
+    "browserCashierFlows": 24,
+    "installedPhoneCashierFlows": 12,
+    "installedXiaomiTabletCashierFlows": 12,
+    "bankQrisBrowser": 24,
+    "releaseBuildAndLint": "passed",
+    "signatureAndPackageVerification": "passed"
+  },
+  "performance": [
+    {
+      "cpuThrottle": 1,
+      "baselinePosReadyMs": 553,
+      "candidatePosReadyMs": 425,
+      "baselinePosCards": 500,
+      "candidatePosCards": 48,
+      "baselineCatalogueRequests": 3,
+      "candidateCatalogueRequests": 2
+    },
+    {
+      "cpuThrottle": 4,
+      "baselinePosReadyMs": 1488,
+      "candidatePosReadyMs": 720,
+      "baselinePosCards": 500,
+      "candidatePosCards": 48,
+      "baselineCatalogueRequests": 3,
+      "candidateCatalogueRequests": 2
+    }
+  ],
+  "performanceScope": "Controlled Chromium replay, 500 synthetic products, fixed 250ms API/1500ms auth latency. CPU throttle is simulated; this does not measure physical HyperOS, real device startup, or production backend response time.",
+  "productionMerchantWrites": 0,
+  "releaseNotes": [
+    "Server-assigned staff roles; individual account handoff; old shared employee passwords require Owner reset.",
+    "Personal attendance with server identity/time and retry-safe shift actions.",
+    "Cashiers open POS directly; 48 product cards per page with full loaded-catalogue search and barcode lookup.",
+    "Owner-only void/legacy manual-settlement controls; bank QRIS confirmation flow retained."
+  ],
+  "remainingBeforePublication": [
+    "Matching backend publication and live verification; candidate cannot be released separately from its auth/attendance backend.",
+    "Remaining Android release profiles and updater regressions.",
+    "TestSprite verification against the deployed candidate; production currently remains 1.2.5."
+  ]
+}

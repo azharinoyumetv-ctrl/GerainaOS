@@ -56,6 +56,12 @@ export default function Dashboard() {
     api.get("/branches").then((r) => setBranches(r.data)).catch(() => {});
   }, []);
 
+  // The Android presentation owns its compact dashboard and data requests.
+  // Do not mount hidden desktop charts/listeners underneath that presentation.
+  if (window.__gerainaAndroid) {
+    return <div key={`${user?.id}:${user?.store_id}:${user?.role}`} data-testid="dashboard-page" />;
+  }
+
   const days = user?.trial_ends_at ? Math.max(0, Math.ceil((new Date(user.trial_ends_at).getTime() - Date.now()) / 86400000)) : 14;
   const isTrial = (user?.plan || "trial") === "trial";
 

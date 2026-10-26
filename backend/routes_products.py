@@ -1,4 +1,5 @@
 """Product CRUD + bulk Excel/CSV import."""
+from permissions import require_permission
 import io
 import uuid
 from typing import List, Optional
@@ -16,7 +17,7 @@ def _strip_id(p: dict) -> dict:
     return p
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(require_permission("products.read"))])
 async def list_products(
     user: dict = Depends(get_current_user),
     q: Optional[str] = Query(None),
@@ -37,7 +38,7 @@ async def list_products(
     return await cursor.to_list(length=limit)
 
 
-@router.get("/category-names")
+@router.get("/category-names", dependencies=[Depends(require_permission("products.read"))])
 async def list_category_names(user: dict = Depends(get_current_user)):
     """Daftar nama kategori unik dari produk (untuk filter chip Kasir)."""
     db = get_db()
@@ -45,7 +46,7 @@ async def list_category_names(user: dict = Depends(get_current_user)):
     return [c for c in cats if c]
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(require_permission("products.write"))])
 async def create_product(payload: ProductCreate, user: dict = Depends(get_current_user)):
     db = get_db()
     from plan_limits import check_capacity
@@ -61,7 +62,7 @@ async def create_product(payload: ProductCreate, user: dict = Depends(get_curren
     return _strip_id(doc)
 
 
-@router.put("/{product_id}")
+@router.put("/{product_id}", dependencies=[Depends(require_permission("products.write"))])
 async def update_product(product_id: str, payload: ProductUpdate, user: dict = Depends(get_current_user)):
     db = get_db()
     update = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
@@ -87,7 +88,7 @@ async def update_product(product_id: str, payload: ProductUpdate, user: dict = D
     return res
 
 
-@router.delete("/{product_id}")
+@router.delete("/{product_id}", dependencies=[Depends(require_permission("products.write"))])
 async def delete_product(product_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
     
@@ -106,7 +107,7 @@ async def delete_product(product_id: str, user: dict = Depends(get_current_user)
     return {"ok": True}
 
 
-@router.post("/bulk-import", response_model=BulkImportResult)
+@router.post("/bulk-import", response_model=BulkImportResult, dependencies=[Depends(require_permission("products.write"))])
 async def bulk_import(
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user),
@@ -267,7 +268,7 @@ async def bulk_import(
     return BulkImportResult(inserted=inserted, updated=updated, skipped=skipped, errors=errors[:20])
 
 
-@router.get("/import-template.csv")
+@router.get("/import-template.csv", dependencies=[Depends(require_permission("products.write"))])
 async def import_template():
     """Plain CSV template for bulk import."""
     from fastapi.responses import PlainTextResponse

@@ -1,4 +1,5 @@
 """Server-side PDF generation: thermal receipt (80mm) + A4 invoice."""
+from permissions import require_permission
 import io
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
@@ -278,7 +279,7 @@ def _invoice_pdf(order: dict, store: dict) -> bytes:
 
 
 # ---------- Endpoints ----------
-@router.get("/receipt/{order_id}")
+@router.get("/receipt/{order_id}", dependencies=[Depends(require_permission("sales.read"))])
 async def receipt_pdf(order_id: str, user: dict = Depends(get_current_user)):
     data = await _load_order(order_id, user)
     pdf = _thermal_pdf(data["order"], data["store"])
@@ -287,7 +288,7 @@ async def receipt_pdf(order_id: str, user: dict = Depends(get_current_user)):
     })
 
 
-@router.get("/invoice/{order_id}")
+@router.get("/invoice/{order_id}", dependencies=[Depends(require_permission("sales.read"))])
 async def invoice_pdf(order_id: str, user: dict = Depends(get_current_user)):
     data = await _load_order(order_id, user)
     pdf = _invoice_pdf(data["order"], data["store"])

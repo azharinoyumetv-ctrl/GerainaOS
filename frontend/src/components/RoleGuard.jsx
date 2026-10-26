@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { ShieldAlert, Lock } from "lucide-react";
+import { canAccessPath } from "@/auth/permissions";
 
 // SYNC: KEEP IN SYNC with the minPlan annotations on MENU_STRUCTURE in layouts/AppLayout.jsx.
 // That nav lock icon only stops nav-clicks -- this is what actually stops a direct URL (typed,
@@ -24,6 +25,7 @@ const PLAN_ROUTES = [
   ["/staff/roles", "business"],
   ["/staff/permissions", "business"],
   ["/staff/attendance", "business"],
+  ["/attendance", "business"],
   ["/branches", "business"],
   ["/integrations/whatsapp", "business"],
   ["/integrations", "pro"],
@@ -37,46 +39,6 @@ function minPlanForPath(pathname) {
   const hit = PLAN_ROUTES.find(([suffix]) => pathname.includes(suffix));
   return hit ? hit[1] : null;
 }
-
-const ROLE_PERMISSIONS = {
-  Owner: ["*"],
-  admin: ["*"], // akun lama dengan peran "admin" setara Owner
-  Manager: [
-    "dashboard",
-    "pos",
-    "kds",
-    "products",
-    "ingredients",
-    "inventory",
-    "purchase",
-    "suppliers",
-    "customers",
-    "debt",
-    "payments",
-    "reports",
-    "staff",
-    "settings",
-    "billing",
-    "license",
-    "about"
-  ],
-  Cashier: [
-    "dashboard",
-    "pos",
-    "kds",
-    "products",
-    "customers",
-    "about"
-  ],
-  Warehouse: [
-    "products",
-    "ingredients",
-    "inventory",
-    "purchase",
-    "suppliers",
-    "about"
-  ]
-};
 
 export default function RoleGuard({ children }) {
   const { user, loading } = useAuth();
@@ -128,28 +90,15 @@ export default function RoleGuard({ children }) {
     );
   }
 
-  const role = user.role || "Owner";
-  const permissions = ROLE_PERMISSIONS[role] || [];
-
-  if (permissions.includes("*")) {
-    return children;
-  }
-
-  // Check if any part of the path matches allowed permissions
-  const pathParts = location.pathname.split("/").filter(Boolean);
-
-  // Allow about page for everyone
-  if (location.pathname.includes("about")) {
-    return children;
-  }
-
-  const hasAccess = pathParts.some((part) => permissions.includes(part)) || permissions.includes("products");
+  const role = user.role;
+  const hasAccess = canAccessPath(role, location.pathname);
 
   if (!hasAccess) {
     // First path segment after the app prefix is the closest thing to a "module name" here
     // (e.g. /geraina/app/branches -> "branches"). This was previously an undefined variable
     // (`moduleName`) that would throw a ReferenceError and crash this component the moment any
     // non-Owner role hit an access-denied page, instead of showing this message.
+    const pathParts = location.pathname.split("/").filter(Boolean);
     const moduleName = pathParts.find((p) => p !== "geraina" && p !== "app") || pathParts[pathParts.length - 1] || "";
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center space-y-4" data-testid="access-denied-page">

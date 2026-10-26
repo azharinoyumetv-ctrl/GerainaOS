@@ -3,8 +3,12 @@ import api, { fmtIDR, downloadPdf } from "@/api/client";
 import { Printer, FileDown, Search, RefreshCw, Ban } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { ReceiptDialog } from "./POS";
+import { useAuth } from "@/auth/AuthContext";
+import { canonicalRole } from "@/auth/permissions";
 
 export default function Sales() {
+  const { user } = useAuth();
+  const isOwner = canonicalRole(user?.role) === "Owner";
   const [items, setItems] = useState([]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
@@ -23,6 +27,7 @@ export default function Sales() {
   useEffect(() => { load(); }, [filter]);
 
   const voidOrder = async (o) => {
+    if (!isOwner) return;
     if (!window.confirm(`Batalkan order ${o.order_no}? Stok akan dikembalikan. Aksi ini tidak bisa dibatalkan.`)) return;
     try {
       await api.post(`/orders/${o.id}/void`);
@@ -102,7 +107,7 @@ export default function Sales() {
                           className="btn-ghost p-1.5" title="Invoice A4" data-testid={`sales-invoice-${o.id}`}>
                     <FileDown size={15} />
                   </button>
-                  {o.payment_status !== "voided" && (
+                  {isOwner && o.payment_status !== "voided" && (
                     <button onClick={() => voidOrder(o)}
                             className="btn-ghost p-1.5 text-red-600 hover:bg-red-50" title="Batalkan / Void (kembalikan stok)" data-testid={`sales-void-${o.id}`}>
                       <Ban size={15} />
