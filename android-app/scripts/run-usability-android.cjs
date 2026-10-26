@@ -9,7 +9,7 @@ const {keyboardBack}=require('./check-keyboard-back.cjs');
 const {loadTestConfig}=require('./test-config.cjs');
 const config=loadTestConfig(),root=join(__dirname,'..'),profiles=require('./android-device-profiles.json');
 const profileId=process.env.GERAINA_DEVICE_PROFILE||'xiaomi12',profile=profiles[profileId];assert.ok(profile);
-const version=process.env.GERAINA_RELEASE_VERSION||'1.2.5',versionCode=Number(process.env.GERAINA_RELEASE_CODE||10);
+const version=process.env.GERAINA_RELEASE_VERSION||'1.2.6',versionCode=Number(process.env.GERAINA_RELEASE_CODE||11);
 assert.match(version,/^\d+\.\d+\.\d+$/);
 const serial=`emulator-${profile.port}`,app='com.dagangos.geraina',apk=join(root,`releases/Geraina-POS-${version}.apk`);
 const out=join(root,'app/build/reports/android-usability',`${profileId}-${new Date().toISOString().replace(/[:.]/g,'-')}`);mkdirSync(out,{recursive:true});
@@ -31,6 +31,16 @@ async function attach(){
  if(!connected)throw lastError;
  page.setDefaultTimeout(30000);await checks.localFrontend(page);await checks.readOnly(page);
 }
+async function verifyAppearanceAfterRestart(){
+ for(let attempt=0;attempt<3;attempt++){
+  try{await attach();await checks.loginContrast(page);return;}
+  catch(error){
+   if(!/Target.*closed|has been closed/i.test(error.message)||attempt===2)throw error;
+   assert.ok(!adb(['logcat','-b','crash','-d']).includes(`Process: ${app},`),'A real application crash must not be treated as a theme restart');
+   report.themeReconnections=(report.themeReconnections||0)+1;await wait(700);
+  }
+ }
+}
 async function screenshot(name){writeFileSync(join(out,`${name}.png`),adb(['exec-out','screencap','-p'],true));}
 async function step(name,fn){await fn();report.checks.push({name,status:'passed'});writeFileSync(join(out,'verification.json'),JSON.stringify(report,null,2));console.log(`PASS: ${name}`);}
 (async()=>{try{
@@ -39,7 +49,7 @@ async function step(name,fn){await fn();report.checks.push({name,status:'passed'
  report.androidVersion=adb(['shell','getprop','ro.build.version.release']).trim();report.api=Number(adb(['shell','getprop','ro.build.version.sdk']).trim());
  const info=adb(['shell','dumpsys','package',app]);assert.match(info,new RegExp(`versionCode=${versionCode}\\b`));assert.match(info,/minSdk=34/);assert.doesNotMatch(info.match(/pkgFlags=\[([^\]]+)\]/)?.[1]||'',/DEBUGGABLE/);
  await step('Typed login text cursor and placeholders are readable',async()=>{report.login=await checks.loginContrast(page);await screenshot('login-readable');});
- await step('Dark system appearance retains readable login fields',async()=>{adb(['shell','cmd','uimode','night','yes']);await wait(1200);await attach();await checks.loginContrast(page);await screenshot('login-dark-system');adb(['shell','cmd','uimode','night','no']);await wait(1200);await attach();await checks.loginContrast(page);});
+ await step('Dark system appearance retains readable login fields',async()=>{adb(['shell','cmd','uimode','night','yes']);await wait(1200);await verifyAppearanceAfterRestart();await screenshot('login-dark-system');adb(['shell','cmd','uimode','night','no']);await wait(1200);await verifyAppearanceAfterRestart();});
  await step('Real account signs in to the correct store',async()=>{await checks.signIn(page);await page.waitForFunction(()=>document.querySelector('[data-testid="mobile-revenue"]')?.textContent.includes('Rp'));await screenshot('dashboard-visible');});
  await step('Navigation groups stay open and Suite labels are readable',async()=>{report.navigation=await checks.menuChecks(page,screenshot);});
  await step('Category brand and unit validate fail recover save and edit',async()=>{report.metadata=await checks.metadataChecks(page,screenshot);});

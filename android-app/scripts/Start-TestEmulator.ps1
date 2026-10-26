@@ -1,4 +1,4 @@
-param([ValidateSet('phone','tablet7','tablet10','tablet13','tablet146','xiaomi12','android14','android17')][string]$Profile = 'phone')
+param([ValidateSet('phone','tablet7','tablet10','tablet13','tablet146','xiaomi12','android14','android17')][string]$Profile = 'phone', [ValidateRange(2048,8192)][int]$MemoryMb = 2048)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $gerainaRoot = Split-Path -Parent $projectRoot
@@ -23,7 +23,7 @@ $state = & $adb -s $serial get-state 2>$null
 if ($state -ne 'device') {
     & (Join-Path $sdkRoot 'emulator\emulator-check.exe') accel
     if ($LASTEXITCODE -ne 0) { throw 'Android emulator hardware acceleration is unavailable. See the acceleration check output.' }
-    $process = Start-Process -FilePath $emulator -ArgumentList @('-avd',$deviceProfile.avd,'-port',[string]$deviceProfile.port,'-no-window','-no-audio','-no-boot-anim','-no-snapshot','-gpu','swiftshader','-memory','3072','-cores','4','-no-metrics') -WindowStyle Hidden -RedirectStandardOutput (Join-Path $logDir "$Profile-emulator-stdout.txt") -RedirectStandardError (Join-Path $logDir "$Profile-emulator-stderr.txt") -PassThru
+    $process = Start-Process -FilePath $emulator -ArgumentList @('-avd',$deviceProfile.avd,'-port',[string]$deviceProfile.port,'-no-window','-no-audio','-no-boot-anim','-no-snapshot','-gpu','swiftshader','-memory',[string]$MemoryMb,'-cores','4','-no-metrics') -WindowStyle Hidden -RedirectStandardOutput (Join-Path $logDir "$Profile-emulator-stdout.txt") -RedirectStandardError (Join-Path $logDir "$Profile-emulator-stderr.txt") -PassThru
     [IO.File]::WriteAllText((Join-Path $sdkRoot "$Profile-emulator.pid"), [string]$process.Id)
     Write-Output "Starting the headless $($deviceProfile.label) emulator…"
 }
@@ -38,6 +38,8 @@ do {
     Start-Sleep -Seconds 3
 } while ((Get-Date) -lt $deadline)
 if ($booted -ne '1') { throw 'Android did not finish booting within five minutes.' }
+& $adb -s $serial shell svc wifi enable
+& $adb -s $serial shell svc data enable
 $networkDeadline = (Get-Date).AddSeconds(60)
 do {
     & $adb -s $serial shell ping -c 1 -W 3 dagangos.com *> $null

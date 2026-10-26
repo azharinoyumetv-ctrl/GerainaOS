@@ -17,7 +17,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import routes_offline as offline
 
-USER = {"id": "cashier-a", "store_id": "store-a", "email": "cashier@example.invalid"}
+USER = {"id": "cashier-a", "store_id": "store-a", "email": "cashier@example.invalid", "role": "Cashier"}
 
 
 @pytest_asyncio.fixture
@@ -115,6 +115,8 @@ async def test_http_authentication_and_validation(db):
     app = FastAPI(); app.include_router(offline.router)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         assert (await client.post("/api/offline/orders", json=sale().model_dump(mode="json"))).status_code == 401
+        app.dependency_overrides[offline.get_current_user] = lambda: {**USER, "role": "Warehouse"}
+        assert (await client.post("/api/offline/orders", json=sale().model_dump(mode="json"))).status_code == 403
         app.dependency_overrides[offline.get_current_user] = lambda: USER
         assert (await client.post("/api/offline/orders", json={})).status_code == 422
         payload = sale().model_dump(mode="json")

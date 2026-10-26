@@ -6,8 +6,8 @@ const {join}=require('node:path');
 const {createHash,randomUUID}=require('node:crypto');
 const {_android}=require('../../frontend/node_modules/playwright');
 const root=join(__dirname,'..'),profileId=process.env.GERAINA_DEVICE_PROFILE||'phone',profile=require('./android-device-profiles.json')[profileId];
-const shipping=process.env.GERAINA_UPDATE_MODE==='shipping',upgrade=shipping||process.env.GERAINA_UPDATE_MODE==='upgrade',serial=`emulator-${profile.port}`,app='com.dagangos.geraina',fromCode=shipping?9:6;
-const apk=join(root,shipping?'releases/Geraina-POS-1.2.4.apk':upgrade?'build/update-tests/bootstrap.apk':'releases/Geraina-POS-1.2.5.apk');
+const shipping=process.env.GERAINA_UPDATE_MODE==='shipping',upgrade=shipping||process.env.GERAINA_UPDATE_MODE==='upgrade',serial=`emulator-${profile.port}`,app='com.dagangos.geraina',fromCode=shipping?10:6;
+const apk=join(root,shipping?'releases/Geraina-POS-1.2.5.apk':upgrade?'build/update-tests/bootstrap.apk':'releases/Geraina-POS-1.2.6.apk');
 const out=join(root,'app/build/reports/updater',shipping?'shipping':profileId);mkdirSync(out,{recursive:true});
 const report={status:'running',profile:profileId,mode:upgrade?'real-system-upgrade':'current-release',apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex'),checks:[],merchantWrites:0};
 const adbPath=join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe');
@@ -39,7 +39,7 @@ async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa p
  if(!upgrade){adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);}
  if(upgrade){
   const official=await(await fetch('https://dagangos.com/downloads/geraina/latest.json')).json();assert.ok(official.versionCode>fromCode);assert.match(official.version,/^\d+\.\d+\.\d+$/);report.targetVersion=official.version;report.targetVersionCode=official.versionCode;report.fromVersionCode=fromCode;
-  await step(shipping?'Published 1.2.4 checks for a newer official update without forcing installation':'Automatic check offers the newer official release without opening an installer',async()=>{if(shipping){await manual();await tree(/Unduh pembaruan/);tap(/text="Nanti"/);}await tree(new RegExp(`Geraina ${official.version.replaceAll('.','\\.')} tersedia`));assert.ok(!/packageinstaller|permissioncontroller:id\/permission/.test(xml()));capture('automatic-update-banner');});
+  await step(shipping?'Published 1.2.5 checks for a newer official update without forcing installation':'Automatic check offers the newer official release without opening an installer',async()=>{if(shipping){await manual();await tree(/Unduh pembaruan/);tap(/text="Nanti"/);}await tree(new RegExp(`Geraina ${official.version.replaceAll('.','\\.')} tersedia`));assert.ok(!/packageinstaller|permissioncontroller:id\/permission/.test(xml()));capture('automatic-update-banner');});
   await step('Postponing the update leaves the installed version unchanged',async()=>{tap(/content-desc="Perbarui Geraina"/);await tree(/Unduh pembaruan/);tap(/text="Nanti"/);assert.equal(installedCode(),fromCode);});
   const sentinel=randomUUID();report.sentinelId=sentinel;
   await page.evaluate(async value=>{
@@ -73,7 +73,7 @@ async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa p
     assert.match(first,/COBA LAGI/);report.initialConnectionRecovery=true;capture('initial-connection-error');
     await wait(12000);tap(/text="COBA LAGI"/);await tree(/Geraina sudah terbaru/);
    }
-   assert.match(xml(),/Versi terpasang: 1\.2\.5/);capture('current-release-check');tap(/text="Tutup"/);assert.equal((await page.evaluate(()=>GerainaDevice.appInfo)).versionCode,10);
+   assert.match(xml(),/Versi terpasang: 1\.2\.6/);capture('current-release-check');tap(/text="Tutup"/);assert.equal((await page.evaluate(()=>GerainaDevice.appInfo)).versionCode,11);
   });
   await step('Offline update check has a readable dismissible error',async()=>{adb(['shell','svc','wifi','disable']);adb(['shell','svc','data','disable']);await page.waitForFunction(()=>!navigator.onLine);await manual();await tree(/Pembaruan belum dapat diperiksa/);capture('offline-update-check');tap(/text="Tutup"/);await page.getByTestId('login-form').waitFor();});
   await step('About provides the user-initiated native update check',async()=>{

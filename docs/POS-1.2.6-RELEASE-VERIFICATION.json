@@ -1,0 +1,17 @@
+{
+  "version": "1.2.6",
+  "versionCode": 11,
+  "apkSha256": "11da42cc1a7cc02e5afa02313a6136c5206851b15553952aca63be03ffd83b53",
+  "checks": {
+    "usability": 50,
+    "offline": 32,
+    "bankQris": 32,
+    "staffPos": 48,
+    "server": 210,
+    "sharedBackend": 27,
+    "updaterControls": 12,
+    "tabletRotations": 24
+  },
+  "scope": "Signed APK on four AOSP profiles; isolated writes. Actual public installation verified after publication.",
+  "physicalPrinterOutput": "not tested"
+}

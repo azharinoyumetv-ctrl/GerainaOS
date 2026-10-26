@@ -13,7 +13,7 @@ let raw = field('00','01')+field('01','11')+field('26',field('00','ID.CO.QRIS.WW
 let crc = 0xffff; for(const byte of Buffer.from(raw)){crc ^= byte<<8;for(let bit=0;bit<8;bit++)crc=(crc&0x8000)?((crc<<1)^0x1021)&0xffff:(crc<<1)&0xffff;}
 const payload = raw+crc.toString(16).toUpperCase().padStart(4,'0');
 const profileId=process.env.GERAINA_DEVICE_PROFILE, profile=profileId&&require('./android-device-profiles.json')[profileId];
-const report={status:'running',version:'1.2.5',scope:'Synthetic QRIS image, isolated bank settings and orders; no bank payment or merchant writes',profiles:[],merchantWrites:0};
+const report={status:'running',version:'1.2.6',scope:'Synthetic QRIS image, isolated bank settings and orders; no bank payment or merchant writes',profiles:[],merchantWrites:0};
 const adbPath=path.join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe'), serial=profile&&`emulator-${profile.port}`, app='com.dagangos.geraina';
 function adb(args){const r=spawnSync(adbPath,['-s',serial,...args],{windowsHide:true,encoding:'utf8',timeout:90000});assert.equal(r.status,0,r.stderr);return r.stdout;}
 async function runChecks(page,label,png){
@@ -84,7 +84,7 @@ async function runChecks(page,label,png){
   try {
     const qrPage=await browser.newPage({viewport:{width:550,height:550}});await qrPage.setContent(`<body style="margin:0;background:white">${renderToStaticMarkup(React.createElement(QRCodeSVG,{value:payload,size:500,marginSize:4,level:'M'}))}</body>`);const png=await qrPage.locator('svg').screenshot();await qrPage.close();
     if(profile){
-      const apk=path.join(root,'releases/Geraina-POS-1.2.5.apk');report.apkSha256=createHash('sha256').update(fs.readFileSync(apk)).digest('hex');
+      const apk=path.join(root,'releases/Geraina-POS-1.2.6.apk');report.apkSha256=createHash('sha256').update(fs.readFileSync(apk)).digest('hex');
       adb(['install','-r',apk]);adb(['shell','am','force-stop',app]);adb(['shell','svc','wifi','disable']);adb(['shell','svc','data','disable']);adb(['shell','am','start','-n',`${app}/com.example.gerainapos.MainActivity`]);
       devices=await _android.devices({omitDriverInstall:true});const device=devices.find(d=>d.serial()===serial);assert.ok(device);const page=await(await device.webView({pkg:app},{timeout:20000})).page();await runChecks(page,profileId,png);
     }else for(const width of [393,1016,1524]){

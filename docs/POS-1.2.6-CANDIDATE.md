@@ -1,6 +1,6 @@
 # Geraina POS 1.2.6 candidate
 
-APK candidate, code 11. The source update is prepared for main; the website APK remains on 1.2.5 until the remaining Android release checks pass.
+Signed 1.2.6, code 11. Source is on main and all four Android release profiles passed. The verified package is prepared for website publication; the actual public upgrade is checked after publication.
 
 ## Changes
 
@@ -19,8 +19,8 @@ With 500 synthetic products, the controlled 4x CPU replay measured POS readiness
 
 The machine-readable evidence is `android-app/releases/pos-candidate-1.2.6-verification.json`. Detailed local flow results and screenshots are under `android-app/app/build/reports/pos-accounts/`; comparison results are under `android-app/app/build/reports/navigation-performance/`.
 
-## APK publication remains pending
+## Publication verification
 
-The matching server changes must deploy before distributing the new APK. Remaining Android release-profile/updater checks and deployed TestSprite verification have not yet run for 1.2.6. Local verification did not migrate staff, make real bank payments, or write production merchant records. Existing bank-issued QRIS, actor-scoped offline cash sales, camera and printer implementations are retained; this pass does not certify physical printer hardware.
+The matching server changes must deploy before distributing the new APK. Android 14/17 phones and Xiaomi/Samsung tablet profiles passed 50 usability, 32 offline, 32 bank QRIS, 48 staff/POS and 12 updater-control checks, plus 24 tablet rotations. Final public-download and system-installer verification follow publication. Local verification did not migrate staff, make real bank payments, or write production merchant records. Existing bank-issued QRIS, actor-scoped offline cash sales, camera and printer implementations are retained; this pass does not certify physical printer hardware.
 
 The broader Odoo comparison is paused at the user's request to focus on POS.
