@@ -17,7 +17,7 @@
     "published": true
   },
   "publicationAuthorized": true,
-  "published": false,
+  "published": true,
   "verifiedAt": "2026-10-26T23:05:27.318736+00:00",
   "tierBrowser": {
     "status": "passed",
@@ -173,5 +173,101 @@
     "androidUnits": 24,
     "lintErrors": 0
   },
-  "scope": "Cosmetic tier notice only. Trial, Starter, Pro, Business each render in one 36px row; no payment or subscription processing changes."
+  "scope": "Cosmetic tier notice only. Trial, Starter, Pro, Business each render in one 36px row; no payment or subscription processing changes.",
+  "sourceCommit": "51f4ab51e00f056dc5e85153bd8fe20b0a6a6fdb",
+  "releaseCommit": "a5389b34589aa5321134defcfaf17162108ea1dd",
+  "releaseVerifiedAt": "2026-10-26T23:12:40.458169+00:00",
+  "production": {
+    "website": {
+      "status": "passed",
+      "base": "https://dagangos.com",
+      "version": "1.2.9",
+      "checks": [
+        "Listing, images and verified download links fit 1440px",
+        "Listing, images and verified download links fit 768px",
+        "Listing, images and verified download links fit 393px",
+        "Listing, images and verified download links fit 320px",
+        "Clicking Download saves the exact verified APK bytes",
+        "Unavailable release metadata leaves download buttons safely disabled"
+      ]
+    },
+    "frontend": {
+      "status": "passed",
+      "source": "/geraina/static/js/main.29509927.js",
+      "tierNotice": true
+    },
+    "androidUpgrade": {
+      "status": "passed",
+      "profile": "xiaomi12",
+      "mode": "real-system-upgrade",
+      "checks": [
+        {
+          "name": "Published 1.2.8 checks for a newer official update without forcing installation",
+          "status": "passed"
+        },
+        {
+          "name": "Postponing the update leaves the installed version unchanged",
+          "status": "passed"
+        },
+        {
+          "name": "Official APK downloads and is verified before requesting installation permission",
+          "status": "passed"
+        },
+        {
+          "name": "Denying installation permission leaves the current app usable",
+          "status": "passed"
+        },
+        {
+          "name": "Permission settings return to the standard Android update confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "Android installs the newer package over the existing app",
+          "status": "passed"
+        },
+        {
+          "name": "The update preserves stored preferences and the pending offline-sale record",
+          "status": "passed"
+        }
+      ],
+      "merchantWrites": 0,
+      "targetVersion": "1.2.9",
+      "targetVersionCode": 14,
+      "fromVersionCode": 13,
+      "sentinelId": "06d94d5b-9ccd-40f8-a951-ec94d424fc33",
+      "finishedAt": "2026-10-26T23:10:02.164Z",
+      "sourceApkSha256": "aa66fc8d9088a29a96d3367f919f80cf9d8f0f962aa6de9bb4b83e416d55f1d7",
+      "apkSha256": "fafda4e10e305ed5e0616fbdf69289b9982e7c9d83db2d7827a64019f46dbee8"
+    },
+    "testSprite": {
+      "status": "passed",
+      "runId": "9b6587a3-67c7-45d8-83bc-5c113f738b2b",
+      "executionUrl": "https://www.testsprite.com/dashboard-v3/o/7468bfad-8578-53ea-8da7-d93ac8f0989d/projects/1466ba50-a196-4dc9-a160-f14658033239/execution/0d5b5ff5-3f21-4aea-a9d3-9edf3ca3d45e/test/9b6587a3-67c7-45d8-83bc-5c113f738b2b"
+    },
+    "ci": {
+      "conclusion": "success",
+      "databaseId": 40417424131,
+      "headSha": "a5389b34589aa5321134defcfaf17162108ea1dd",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "deploy"
+        },
+        {
+          "conclusion": "success",
+          "name": "cloudflare-zone-audit"
+        },
+        {
+          "conclusion": "success",
+          "name": "public-accessibility"
+        },
+        {
+          "conclusion": "success",
+          "name": "e2e-geraina"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40417424131"
+    }
+  }
 }
