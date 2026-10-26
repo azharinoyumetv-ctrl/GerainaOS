@@ -1,6 +1,6 @@
 {
   "schemaVersion": 4,
-  "status": "local_passed",
+  "status": "passed",
   "version": "1.2.8",
   "versionCode": 13,
   "applicationId": "com.dagangos.geraina",
@@ -12,8 +12,8 @@
   "apkSha256": "aa66fc8d9088a29a96d3367f919f80cf9d8f0f962aa6de9bb4b83e416d55f1d7",
   "bytes": 17208155,
   "verifiedAt": "2026-10-26T16:59:54.534Z",
-  "publicationAuthorized": false,
-  "published": false,
+  "publicationAuthorized": true,
+  "published": true,
   "backendChanged": true,
   "baseRelease": {
     "version": "1.2.7",
@@ -206,7 +206,126 @@
     "lintWarnings": 55
   },
   "backendDeployment": {
-    "status": "pending"
+    "status": "passed",
+    "paymentOptionsSchema": 2,
+    "checks": [
+      "payment-options-schema-2",
+      "cash-visibility-and-readiness",
+      "qris_bank-visibility-and-readiness",
+      "ewallet-visibility-and-readiness",
+      "va-visibility-and-readiness",
+      "credit_card-visibility-and-readiness",
+      "three-merchant-gateway-catalogue",
+      "payment-settings-and-options-share-policy",
+      "bank-qris-independent-setup",
+      "/api/payments/options-requires-session",
+      "/api/payments/config-requires-session",
+      "/api/payments/bank-qris-requires-session",
+      "backend-health"
+    ],
+    "merchantWrites": 0,
+    "origin": "https://dagangos.com",
+    "verifiedAt": "2026-10-26T17:10:21.310Z"
   },
-  "scope": "Prepared UI and installed AOSP Xiaomi-profile APK; isolated provider contracts and settlement tests. No live merchant payments, physical printer or physical barcode recognition certification."
+  "scope": "Prepared UI and installed AOSP Xiaomi-profile APK; isolated provider contracts and settlement tests. No live merchant payments, physical printer or physical barcode recognition certification.",
+  "sourceCommit": "6a1778886cb5af0d35f5a21c4249698acd2262d1",
+  "releaseCommit": "584d628af9844b5b1f3adaf63a24b0c053bd7eb6",
+  "releaseVerifiedAt": "2026-10-26T17:24:52.086921+00:00",
+  "production": {
+    "website": {
+      "status": "passed",
+      "base": "https://dagangos.com",
+      "version": "1.2.8",
+      "checks": [
+        "Listing, images and verified download links fit 1440px",
+        "Listing, images and verified download links fit 768px",
+        "Listing, images and verified download links fit 393px",
+        "Listing, images and verified download links fit 320px",
+        "Clicking Download saves the exact verified APK bytes",
+        "Unavailable release metadata leaves download buttons safely disabled"
+      ]
+    },
+    "androidUpgrade": {
+      "status": "passed",
+      "profile": "xiaomi12",
+      "mode": "real-system-upgrade",
+      "checks": [
+        {
+          "name": "Published 1.2.7 checks for a newer official update without forcing installation",
+          "status": "passed"
+        },
+        {
+          "name": "Postponing the update leaves the installed version unchanged",
+          "status": "passed"
+        },
+        {
+          "name": "Official APK downloads and is verified before requesting installation permission",
+          "status": "passed"
+        },
+        {
+          "name": "Denying installation permission leaves the current app usable",
+          "status": "passed"
+        },
+        {
+          "name": "Permission settings return to the standard Android update confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "Android installs the newer package over the existing app",
+          "status": "passed"
+        },
+        {
+          "name": "The update preserves stored preferences and the pending offline-sale record",
+          "status": "passed"
+        }
+      ],
+      "merchantWrites": 0,
+      "targetVersion": "1.2.8",
+      "targetVersionCode": 13,
+      "fromVersionCode": 12,
+      "sentinelId": "358ecde1-1bbb-497f-bce5-5a796212103f",
+      "finishedAt": "2026-10-26T17:19:32.987Z",
+      "sourceApkSha256": "f63e22a8577c5ccc33042c4f9439b90e4f1396cd5bb0b7715aae536e1f981e52",
+      "apkSha256": "aa66fc8d9088a29a96d3367f919f80cf9d8f0f962aa6de9bb4b83e416d55f1d7",
+      "fromVersion": "1.2.7",
+      "toVersion": "1.2.8",
+      "versionCode": 13,
+      "installedArtifact": {
+        "version": "1.2.8",
+        "versionCode": 13,
+        "status": "passed",
+        "installedApkSha256": "aa66fc8d9088a29a96d3367f919f80cf9d8f0f962aa6de9bb4b83e416d55f1d7"
+      }
+    },
+    "testSprite": {
+      "status": "passed",
+      "runId": "43a7b518-9bb7-4303-bfd1-6d940b6a3d9d",
+      "executionUrl": "https://www.testsprite.com/dashboard-v3/o/7468bfad-8578-53ea-8da7-d93ac8f0989d/projects/1466ba50-a196-4dc9-a160-f14658033239/execution/9aa2cd5e-e2ba-4df7-bc54-a5d1c3aa0de7/test/43a7b518-9bb7-4303-bfd1-6d940b6a3d9d"
+    },
+    "ci": {
+      "conclusion": "success",
+      "databaseId": 40366646934,
+      "headSha": "584d628af9844b5b1f3adaf63a24b0c053bd7eb6",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "deploy"
+        },
+        {
+          "conclusion": "success",
+          "name": "cloudflare-zone-audit"
+        },
+        {
+          "conclusion": "success",
+          "name": "public-accessibility"
+        },
+        {
+          "conclusion": "success",
+          "name": "e2e-geraina"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40366646934"
+    }
+  }
 }
