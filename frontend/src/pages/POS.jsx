@@ -18,6 +18,15 @@ import {
   Banknote, QrCode, Smartphone, RefreshCw, Barcode, CreditCard, Landmark,
 } from "lucide-react";
 
+const PAYMENT_METHODS = [
+  { id: 'cash', label: 'Tunai', testid: 'pm-cash', Icon: Banknote },
+  { id: 'qris_bank', label: 'QRIS bank', testid: 'pm-qris', Icon: QrCode },
+  { id: 'ewallet', label: 'E-Wallet', testid: 'pm-ewallet', Icon: Smartphone },
+  { id: 'va', label: 'Virtual Account', testid: 'pm-va', Icon: Landmark },
+  { id: 'credit_card', label: 'Kartu Kredit', testid: 'pm-credit-card', Icon: CreditCard },
+  { id: 'doku', label: 'Checkout gateway', testid: 'pm-gateway', Icon: Landmark },
+];
+
 export function ReceiptDialog({ order, onClose, onUpdated }) {
   const { user } = useAuth();
   const isOwner = canonicalRole(user?.role) === "Owner";
@@ -111,6 +120,11 @@ export function ReceiptDialog({ order, onClose, onUpdated }) {
 
         {o.payment_method === "qris_bank" && <BankQrisPayment key={o.id} order={o} onConfirmed={updated => { setPoll(updated); onUpdated?.(updated); }} />}
 
+        {o.gateway_checkout_url && !isPaid && <div className="text-center mb-4" data-testid="gateway-display">
+          <p className="text-sm mb-2">Lanjutkan pembayaran melalui akun gateway toko.</p>
+          <a href={o.gateway_checkout_url} target="_blank" rel="noreferrer" className="btn-accent" data-testid="gateway-open-link">Buka pembayaran {o.payment_provider === 'doku' ? 'DOKU' : o.payment_provider === 'midtrans' ? 'Midtrans' : 'Xendit'}</a>
+        </div>}
+
         {o.payment_method === "ewallet" && o.xendit_checkout_url && !isPaid && (
           <div className="text-center mb-4" data-testid="ewallet-display">
             <p className="text-sm mb-2">Lanjutkan pembayaran di:</p>
@@ -202,6 +216,10 @@ export default function POS() {
   const { products, setProducts, snapshot, findProduct } = catalogue;
   const payments = usePaymentOptions(scope, offline, online);
   const paymentEnabled = method => !!payments.options?.methods?.[method]?.enabled && (online || method === "cash");
+  const paymentChoices = PAYMENT_METHODS.filter(method => {
+    const option = payments.options?.methods?.[method.id];
+    return option?.displayed ?? option?.enabled;
+  });
   const [q, setQ] = useState("");
   const [barcodeInput, setBarcodeInput] = useState("");
   const [cart, setCart] = useState([]);
@@ -285,7 +303,7 @@ export default function POS() {
   }, []);
   useEffect(() => {
     if (!payments.options) return;
-    if (!paymentEnabled(paymentMethod)) setPaymentMethod(Object.keys(payments.options?.methods || {}).find(paymentEnabled) || "cash");
+    if (!paymentChoices.some(method => method.id === paymentMethod) || !paymentEnabled(paymentMethod)) setPaymentMethod(paymentChoices.find(method => paymentEnabled(method.id))?.id || "");
     const channels = payments.options?.ewallet_channels || [];
     if (!channels.some(channel => channel.code === ewallet) && channels.length) setEwallet(channels[0].code);
   }, [payments.options, online]);
@@ -390,7 +408,7 @@ export default function POS() {
       const payload = {
         items: cart,
         payment_method: paymentMethod,
-        ewallet_channel: paymentMethod === "ewallet" ? ewallet : undefined,
+        ewallet_channel: paymentMethod === "ewallet" && payments.options?.ewallet_channels?.length ? ewallet : undefined,
         discount: parseFloat(discount) || 0,
         tax_percent: parseFloat(taxPercent) || 0,
         cash_received: paymentMethod === "cash" ? parseFloat(cashReceived) : undefined,
@@ -460,7 +478,10 @@ export default function POS() {
         <ReadState loading={catalogue.loading && products.length === 0} error={catalogue.error} retry={catalogue.refresh} testid="pos-catalogue-state" />
         <p className="text-xs mb-3" data-testid="pos-catalogue-coverage">{catalogue.loading ? `Memuat katalog lengkap${catalogue.progress ? `: ${catalogue.progress.loaded}/${catalogue.progress.total}` : "…"}` : catalogue.complete ? `Katalog lengkap: ${products.length} produk.` : "Katalog offline belum terverifikasi lengkap. Muat ulang saat online."}</p>
         {offline && <OfflineStatus scope={scope} snapshot={snapshot} onReceipt={setReceipt} onRefresh={catalogue.refresh} />}
-        {window.GerainaDevice?.scanBarcode && <button type="button" className="btn-outline mb-4" onClick={() => window.GerainaDevice.scanBarcode()} data-testid="camera-scan"><Barcode size={16} /> Scan dengan kamera</button>}
+        {window.GerainaDevice?.scanBarcode && <div className="flex flex-wrap gap-2 mb-4">
+          <button type="button" className="btn-outline" onClick={() => window.GerainaDevice.scanBarcode("pos")} data-testid="camera-scan"><Barcode size={16} /> Scan dengan kamera</button>
+          <button type="button" className="btn-outline" onClick={() => { document.documentElement.classList.add("ga-barcode-open"); document.querySelector('[data-testid="pos-barcode-input"]')?.focus(); }} data-testid="manual-barcode">Ketik barcode</button>
+        </div>}
         <div className="flex gap-2 mb-4 overflow-x-auto" data-testid="pos-categories">
           <button onClick={() => setActiveCat("all")}
                   className={`px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap ${activeCat === "all" ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface))] border border-[hsl(var(--border))]"}`}
@@ -587,19 +608,13 @@ export default function POS() {
           <div>
             <label className="label-tiny mb-2 block">Metode Pembayaran</label>
             <div className="grid grid-cols-3 gap-1.5">
-              <button disabled={!paymentEnabled("cash")} title={payments.options?.methods?.cash?.reason || (!online && "Pembayaran elektronik memerlukan internet") || ""} onClick={() => setPaymentMethod("cash")}
-                      className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "cash" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
-                      data-testid="pm-cash"><Banknote size={14} className="mx-auto mb-1" />Tunai</button>
-              <button disabled={!paymentEnabled("qris_bank")} title={payments.options?.methods?.qris_bank?.reason || (!online && "Pembayaran elektronik memerlukan internet") || ""} onClick={() => setPaymentMethod("qris_bank")}
-                      className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "qris_bank" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
-                      data-testid="pm-qris"><QrCode size={14} className="mx-auto mb-1" />QRIS</button>
-              <button disabled={!paymentEnabled("ewallet")} title={payments.options?.methods?.ewallet?.reason || (!online && "Pembayaran elektronik memerlukan internet") || ""} onClick={() => setPaymentMethod("ewallet")}
-                      className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "ewallet" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
-                      data-testid="pm-ewallet"><Smartphone size={14} className="mx-auto mb-1" />E-Wallet</button>
-              <button disabled={!paymentEnabled("doku")} title={payments.options?.methods?.doku?.reason || (!online && "Pembayaran elektronik memerlukan internet") || ""} onClick={() => setPaymentMethod("doku")}
-                      className={`p-2.5 rounded-md text-xs font-semibold border transition-colors ${paymentMethod === "doku" ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`}
-                      data-testid="pm-doku"><Landmark size={14} className="mx-auto mb-1" />DOKU</button>
+              {paymentChoices.map(({id, label, testid, Icon}) => <button key={id} type="button" disabled={!paymentEnabled(id)} onClick={() => setPaymentMethod(id)} aria-pressed={paymentMethod === id}
+                className={`p-2.5 rounded-md text-xs font-semibold border transition-colors disabled:opacity-50 ${paymentMethod === id ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : "border-[hsl(var(--border))] bg-[hsl(var(--surface))]"}`} data-testid={testid}>
+                <Icon size={14} className="mx-auto mb-1" />{label}</button>)}
             </div>
+            {payments.options && paymentChoices.length === 0 && <p role="alert" className="text-sm mt-3" data-testid="pos-no-payments">Belum ada metode yang ditampilkan. Owner perlu memilih metode di Pembayaran.</p>}
+            {paymentChoices.filter(method => !paymentEnabled(method.id)).map(method => <p key={method.id} className="text-xs mt-2" data-testid={`payment-unready-${method.id}`}>{method.label}: {!online && method.id !== 'cash' ? 'Memerlukan koneksi internet.' : payments.options.methods[method.id].reason}{canonicalRole(user?.role) === 'Owner' && online && payments.options.methods[method.id].setup_path && <> <Link className="underline" to={payments.options.methods[method.id].setup_path}>Lengkapi pengaturan</Link></>}</p>)}
+            {canonicalRole(user?.role) === 'Owner' && payments.options && <Link to="/geraina/app/payments/cash" className="text-xs underline inline-block mt-3" data-testid="pos-payment-settings">Atur metode kasir</Link>}
           </div>
 
           <ReadState loading={!payments.options && !payments.error} error={payments.error} retry={payments.retry} testid="pos-payment-options-state" />
@@ -636,7 +651,7 @@ export default function POS() {
             </div>
           )}
 
-          {paymentMethod === "ewallet" && (
+          {paymentMethod === "ewallet" && payments.options?.ewallet_channels?.length > 0 && (
             <div data-testid="pm-ewallet-details">
               <label className="label-tiny">Pilih E-Wallet</label>
               <div className="grid grid-cols-2 gap-1.5 mt-1">

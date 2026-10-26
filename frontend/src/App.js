@@ -158,8 +158,6 @@ function getGerainaAppSubRoutes() {
     <Route key="g-debtp" path="debt/payable" element={<RoleGuard><AccountsPayable /></RoleGuard>} />,
 
     /* Payments */
-    <Route key="g-bankqris" path="payments/qris" element={<RoleGuard><BankQrisSettings /></RoleGuard>} />,
-    <Route key="g-bankqris-settings" path="settings/payments/qris" element={<RoleGuard><BankQrisSettings /></RoleGuard>} />,
     <Route key="g-payt" path="settings/payments/:type" element={<RoleGuard><KnownSection section="payments"><PaymentConfig /></KnownSection></RoleGuard>} />,
     <Route key="g-payw" path="settings/payments/*" element={<AppPageNotFound />} />,
     <Route key="g-pay" path="settings/payments" element={<RoleGuard><KnownSection section="payments"><PaymentConfig /></KnownSection></RoleGuard>} />,
@@ -185,7 +183,7 @@ function getGerainaAppSubRoutes() {
     <Route key="g-br" path="branches" element={<RoleGuard><BranchManagement /></RoleGuard>} />,
 
     /* Integrations */
-    <Route key="g-bankqris-integration" path="integrations/qris" element={<Navigate to="/geraina/app/payments/qris" replace />} />,
+    <Route key="g-bankqris-integration" path="integrations/qris" element={<RoleGuard><BankQrisSettings /></RoleGuard>} />,
     <Route key="g-intt" path="integrations/:type" element={<RoleGuard><KnownSection section="integrations"><Integrations /></KnownSection></RoleGuard>} />,
     <Route key="g-intw" path="integrations/*" element={<AppPageNotFound />} />,
     <Route key="g-int" path="integrations" element={<RoleGuard><KnownSection section="integrations"><Integrations /></KnownSection></RoleGuard>} />,

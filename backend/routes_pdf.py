@@ -17,6 +17,7 @@ from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
 
 from database import get_db
 from auth import get_current_user
+from payment_labels import payment_label
 
 router = APIRouter(prefix="/api/pdf", tags=["pdf"])
 
@@ -118,7 +119,7 @@ def _thermal_pdf(order: dict, store: dict) -> bytes:
     c.setFillColor(INK)
     c.setFont("Helvetica", 8)
 
-    pm = "QRIS bank" if order.get("payment_method") == "qris_bank" else (order.get("payment_method") or "").upper()
+    pm = payment_label(order.get('payment_method'))
     if order.get("ewallet_channel"):
         pm += f" ({order['ewallet_channel']})"
     c.drawString(4 * mm, y, f"Bayar: {pm}")
@@ -265,7 +266,7 @@ def _invoice_pdf(order: dict, store: dict) -> bytes:
     story.append(totals)
     story.append(Spacer(1, 14 * mm))
 
-    pm = "QRIS bank" if order.get("payment_method") == "qris_bank" else (order.get("payment_method") or "").upper()
+    pm = payment_label(order.get('payment_method'))
     if order.get("ewallet_channel"):
         pm += f" via {order['ewallet_channel']}"
     story.append(Paragraph("Metode Pembayaran", p_label))

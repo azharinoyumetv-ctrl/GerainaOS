@@ -14,6 +14,7 @@ import hashlib
 import hmac
 import logging
 import os
+import httpx
 from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, Depends
@@ -63,6 +64,24 @@ async def _process(payload: dict, store_id: str):
         or nested.get("external_id")
     )
     if not ref:
+        return
+
+    if payload.get('event') in ('payment_session.completed', 'payment_session.expired'):
+        order = await db.orders.find_one({'gateway_reference': ref, 'payment_provider': 'xendit', 'store_id': store_id})
+        if not order or nested.get('session_type') != 'PAY' or nested.get('currency') != 'IDR':
+            return
+        if order.get('gateway_session_id') and nested.get('payment_session_id') != order['gateway_session_id']:
+            return
+        try:
+            amount = Decimal(str(nested.get('amount')))
+            if not amount.is_finite() or amount <= 0 or amount != Decimal(str(order['total'])):
+                return
+        except (InvalidOperation, ValueError, TypeError):
+            return
+        completed = payload['event'] == 'payment_session.completed'
+        if nested.get('status') != ('COMPLETED' if completed else 'EXPIRED'):
+            return
+        await provider_transition(db, {'id': order['id'], 'store_id': store_id}, 'paid' if completed else 'failed', {'xendit_webhook_payload': payload})
         return
 
     # Look up the order first (instead of blind update_one), scoped by the tenant this webhook
@@ -140,6 +159,45 @@ async def simulate_webhook(payload: dict, req: Request, store_id: str = ""):
         raise HTTPException(status_code=400, detail="store_id wajib diisi untuk simulator")
     await _process(payload, store_id)
     return {"ok": True}
+
+
+@router.post('/midtrans')
+async def midtrans_webhook(req: Request):
+    payload = await req.json()
+    if not isinstance(payload, dict):
+        raise HTTPException(400, 'Notifikasi tidak valid.')
+    reference = str(payload.get('order_id') or '')
+    db = get_db()
+    order = await db.orders.find_one({'gateway_reference': reference, 'payment_provider': 'midtrans'})
+    if not order:
+        raise HTTPException(404, 'Transaksi tidak ditemukan.')
+    integration = await db.integrations.find_one({'store_id': order['store_id']}) or {}
+    cfg = integration.get('midtrans') or {}
+    key = str(cfg.get('server_key') or '')
+    expected = hashlib.sha512((reference + str(payload.get('status_code') or '') + str(payload.get('gross_amount') or '') + key).encode()).hexdigest()
+    if not key or cfg.get('is_active') is not True or not hmac.compare_digest(expected, str(payload.get('signature_key') or '')):
+        raise HTTPException(401, 'Tanda tangan tidak valid.')
+    # Midtrans's signature does not cover transaction_status. Confirm it server-to-server
+    # before settlement; replaying a signed pending event must never fabricate a payment.
+    base = 'https://api.midtrans.com' if cfg.get('environment') == 'production' else 'https://api.sandbox.midtrans.com'
+    try:
+        async with httpx.AsyncClient(base_url=base, auth=httpx.BasicAuth(key, ''), timeout=20) as client:
+            response = await client.get(f'/v2/{reference}/status')
+            response.raise_for_status()
+            verified = response.json()
+    except (httpx.HTTPError, ValueError):
+        raise HTTPException(503, 'Status merchant belum dapat diperiksa. Ulangi notifikasi.')
+    try:
+        amount = Decimal(str(verified.get('gross_amount')))
+        if verified.get('order_id') != reference or verified.get('currency', 'IDR') != 'IDR' or not amount.is_finite() or amount <= 0 or amount != Decimal(str(order['total'])):
+            raise ValueError()
+    except (InvalidOperation, ValueError, TypeError):
+        raise HTTPException(400, 'Referensi atau nominal pembayaran tidak sesuai.')
+    status = verified.get('transaction_status')
+    mapped = ('paid' if status == 'settlement' or (status == 'capture' and verified.get('fraud_status') == 'accept') else
+              'failed' if status in ('deny', 'expire', 'cancel', 'failure') else 'refunded' if status == 'refund' else 'pending')
+    await provider_transition(db, {'id': order['id'], 'store_id': order['store_id']}, mapped, {'midtrans_webhook_payload': verified})
+    return {'received': True}
 
 
 @router.post("/midtrans/simulate")
@@ -343,15 +401,18 @@ async def _process_doku(raw_body: bytes, headers: dict):
     # https://developers.doku.com/get-started-with-doku-api/notification/best-practice
     if new_status == 'failed':
         return
+    scope = {'store_id': tenant.get('store_id'), '$or': [
+        {'order_no': invoice_number, 'payment_method': 'doku'},
+        {'gateway_reference': invoice_number, 'payment_provider': 'doku'}]}
     if new_status == 'paid':
-        order = await db.orders.find_one({'order_no':invoice_number, 'store_id':tenant.get('store_id')})
+        order = await db.orders.find_one(scope)
         try:
             received = Decimal(str((payload.get('order') or {}).get('amount')))
             if not order or not received.is_finite() or received <= 0 or received != Decimal(str(order['total'])):
                 return
         except (InvalidOperation, TypeError, ValueError):
             return
-    await provider_transition(db, {'order_no': invoice_number, 'store_id': tenant.get('store_id')},
+    await provider_transition(db, scope,
                               new_status, {'doku_webhook_payload': payload})
 
 

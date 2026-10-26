@@ -150,8 +150,7 @@ def test_unimplemented_method_cannot_be_activated_as_working(fixture, section):
 def test_midtrans_is_not_silently_substituted_for_xendit(fixture):
     db, _, client, gateway, _ = fixture
     run(db.integrations.insert_one({'store_id': 'store-a', 'xendit': {'is_active': True, 'secret_key': 'merchant-key', 'webhook_token': 'callback-key'}}))
-    assert client.post('/api/payments/config', json={'ewallet': {'is_active': True, 'provider': 'Midtrans'}}).status_code == 400
-    run(db.payments_config.insert_one({'store_id': 'store-a', 'ewallet': {'is_active': True, 'provider': 'Midtrans'}}))
+    assert client.post('/api/payments/config', json={'ewallet': {'is_active': True, 'provider': 'Midtrans'}}).status_code == 200
     assert client.get('/api/payments/options').json()['methods']['ewallet']['enabled'] is False
     assert checkout(client, 'ewallet', ewallet_channel='DANA').status_code == 400
     assert gateway.await_count == 0
@@ -175,10 +174,11 @@ def test_doku_returns_to_the_stored_order_without_trusting_url_status(fixture, m
     assert client.get('/api/orders/resolve', params={'reference': order['id']}).status_code == 404
 
 
-def test_unimplemented_midtrans_gateway_cannot_be_activated(fixture):
+def test_midtrans_credentials_do_not_implicitly_enable_any_cashier_method(fixture):
     db, _, client, *_ = fixture
-    assert client.post('/api/integrations', json={'midtrans': {'is_active': True, 'server_key': 'not-working'}}).status_code == 400
-    assert run(db.integrations.count_documents({})) == 0
+    assert client.post('/api/integrations', json={'midtrans': {'is_active': True, 'server_key': 'merchant-key'}}).status_code == 200
+    options = client.get('/api/payments/options').json()
+    assert all(options['methods'][name]['enabled'] is False for name in ('ewallet', 'va', 'credit_card'))
 
 
 def test_missing_callback_configuration_does_not_offer_unsettleable_wallet_orders(fixture, monkeypatch):

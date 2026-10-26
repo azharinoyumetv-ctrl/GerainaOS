@@ -120,7 +120,7 @@ export default function Sales() {
                 <td className="px-5 py-3 text-xs text-[hsl(var(--muted))]">{o.created_at?.slice(0, 19).replace("T", " ")}</td>
                 <td className="px-5 py-3 text-xs">{o.items?.length || 0}</td>
                 <td className="px-5 py-3">
-                  <span className="pill pill-muted">{o.payment_method === "qris_bank" ? "QRIS bank" : o.payment_method?.toUpperCase()}</span>
+                  <span className="pill pill-muted">{{cash:'Tunai',qris:'QRIS',qris_bank:'QRIS bank',ewallet:'E-Wallet',va:'Virtual Account',credit_card:'Kartu Kredit',doku:'DOKU',edc:'Kartu EDC'}[o.payment_method] || o.payment_method}</span>
                   {o.ewallet_channel && <span className="text-xs text-[hsl(var(--muted))] ml-1">{o.ewallet_channel}</span>}
                 </td>
                 <td className="px-5 py-3 text-right font-display font-bold num-display">{fmtIDR(o.total)}</td>

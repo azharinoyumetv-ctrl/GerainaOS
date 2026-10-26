@@ -47,7 +47,7 @@ async function runChecks(page,label,png){
   const shot = name=>page.screenshot({path:path.join(out,`${label}-${name}.png`)});
   async function check(name,fn){await fn();assert.deepEqual(errors,[]);checks.push({name,status:'passed'});console.log(`PASS ${label}: ${name}`);}
   // Browser pages use the same public origin as the installed bundled WebView.
-  await check('Starter merchant can open bank setup without gateway credentials',async()=>{await page.goto('https://dagangos.com/geraina/app/payments/qris');await page.getByTestId('bank-qris-form').waitFor();assert.equal(requests.some(r=>r.path==='/api/integrations'),false);assert.equal(await page.getByTestId('bank-qris-active').isChecked(),false);});
+  await check('Starter merchant can open bank setup without gateway credentials',async()=>{await page.goto('https://dagangos.com/geraina/app/integrations/qris');await page.getByTestId('bank-qris-form').waitFor();assert.equal(requests.some(r=>r.path==='/api/integrations'),false);assert.equal(await page.getByTestId('bank-qris-active').isChecked(),false);});
   await check('A real PNG QR image decodes unchanged and needs explicit ownership confirmation',async()=>{
     await page.getByTestId('bank-qris-bank-name').fill('Bank fixture');
     if(profile){

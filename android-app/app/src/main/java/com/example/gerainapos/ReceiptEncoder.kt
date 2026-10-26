@@ -40,7 +40,7 @@ object ReceiptEncoder {
         if (receipt.paymentMethod == "cash") {
             amount("Tunai", receipt.cash); amount("Kembalian", receipt.change)
         } else {
-            val method = when (receipt.paymentMethod) { "qris_bank" -> "QRIS bank"; "qris" -> "QRIS"; "ewallet" -> "E-Wallet"; "edc" -> "Kartu EDC"; "doku" -> "DOKU"; else -> "Non-tunai" }
+            val method = when (receipt.paymentMethod) { "qris_bank" -> "QRIS bank"; "qris" -> "QRIS"; "ewallet" -> "E-Wallet"; "va" -> "Virtual Account"; "credit_card" -> "Kartu Kredit"; "edc" -> "Kartu EDC"; "doku" -> "DOKU"; else -> "Non-tunai" }
             wrapped("Pembayaran: $method")
             wrapped(when (receipt.paymentStatus) {
                 "pending" -> "MENUNGGU PEMBAYARAN"

@@ -7,6 +7,7 @@ const out = path.join(root, 'app/build/reports/remaining-pos'); fs.mkdirSync(out
 const results = [];
 const owner = { id: 'remaining-owner', store_id: 'remaining-store', role: 'Owner', plan: 'business', email: 'fixture@example.invalid', store_name: 'Isolated POS fixture' };
 const products = Array.from({ length: 1203 }, (_, i) => ({ id: `p-${String(i).padStart(4, '0')}`, name: `Product ${String(i).padStart(4, '0')}`, sku: `SKU-${i}`, price: 1000, cost: 500, stock: i === 1202 ? 1 : 20, category: 'Test', unit: 'pcs' }));
+const gateways = {xendit:{label:'Xendit',methods:{ewallet:['OVO','DANA','ShopeePay','LinkAja'],va:['BCA','BNI'],credit_card:['Kartu']}},doku:{label:'DOKU',methods:{ewallet:['OVO','DANA','ShopeePay'],va:['BCA','BNI'],credit_card:['Kartu']}},midtrans:{label:'Midtrans',methods:{ewallet:['GoPay','ShopeePay'],va:['BCA','BNI'],credit_card:['Kartu']}}};
 const orders = Array.from({ length: 257 }, (_, i) => ({ id: `order-${i}`, store_id: owner.store_id, order_no: `ORDER-${String(i).padStart(4, '0')}`, created_at: new Date(Date.UTC(2026, 9, 26) + i * 1000).toISOString(), payment_method: 'doku', payment_status: 'pending', total: 1000, subtotal: 1000, items: [{ product_id: products[0].id, name: products[0].name, quantity: 1, price: 1000, subtotal: 1000 }] }));
 async function fixture(browser, viewport, { signedIn = true, fail = [], failSecond = false } = {}) {
   const context = await browser.newContext({ viewport }), page = await context.newPage();
@@ -32,7 +33,7 @@ async function fixture(browser, viewport, { signedIn = true, fail = [], failSeco
     if (p === '/api/products/lookup') { const code = url.searchParams.get('code'), product = products.find(p => p.sku === code || p.id === code); return route.fulfill({ status: product ? 200 : 404, json: product || { detail: 'Barcode tidak ditemukan.' } }); }
     if (p === '/api/payments/config') {
       if (body) { writes.push({ path: p, body }); configuration = { ...configuration, ...body }; }
-      return route.fulfill({ json: configuration });
+      return route.fulfill({ json: {...configuration,checkout_options:{gateways}} });
     }
     if (p === '/api/payments/options') {
       const channels = Object.entries(configuration.ewallet.channels).filter(([, on]) => on).map(([label]) => ({ code: label.toUpperCase(), label }));
@@ -101,7 +102,7 @@ const scenarios = [
         await go('app/payments/cash'); await page.getByTestId('payment-active').uncheck(); await page.getByTestId('payment-config-save-btn').click(); await page.waitForTimeout(100);
         await go('app/payments/ewallet'); await page.getByLabel('DANA', { exact: true }).uncheck(); await page.getByTestId('payment-config-save-btn').click(); await page.waitForTimeout(100);
         await go('app/pos'); await page.getByTestId('pos-product-p-0000').click(); await cart(); await page.waitForFunction(() => !document.querySelector('[data-testid="pm-ewallet"]')?.disabled);
-        assert.equal(await page.getByTestId('pm-cash').isDisabled(), true); await page.getByTestId('pm-ewallet').click();
+        assert.equal(await page.getByTestId('pm-cash').count(), 0); await page.getByTestId('pm-ewallet').click();
         assert.equal(await page.getByTestId('ew-DANA').count(), 0); assert.equal(await page.getByTestId('ew-OVO').count(), 1);
         assert.equal(await page.getByTestId('pm-edc').count(), 0); assert.deepEqual(writes.map(w => Object.keys(w.body)), [['cash'], ['ewallet']]);
       } },
@@ -110,9 +111,9 @@ const scenarios = [
         await page.getByTestId('pos-payment-options-state').getByRole('button', { name: 'Coba lagi' }).waitFor(); assert.equal(await page.getByTestId('checkout-btn').isDisabled(), true); assert.equal(writes.length, 0);
         recover(); await page.getByTestId('pos-payment-options-state').getByRole('button', { name: 'Coba lagi' }).click(); await page.waitForFunction(() => !document.querySelector('[data-testid="pm-cash"]')?.disabled);
       }, options: { fail: ['/api/payments/options'] } },
-{ name: 'Unsupported standalone payments cannot be activated or saved', run: async ({ page, go }) => {
-        for (const type of ['va', 'credit-card', 'bank-transfer', 'edc']) { await go('app/payments/' + type); await page.getByTestId('payment-method-unavailable').waitFor(); assert.equal(await page.locator('[data-testid="payment-config-page"] input').count(), 0); assert.equal(await page.getByTestId('payment-config-save-btn').count(), 0); }
-        await go('app/integrations/midtrans'); await page.getByTestId('midtrans-unavailable').waitFor(); assert.equal(await page.getByRole('button', { name: 'Simpan Integrasi' }).count(), 0);
+{ name: 'Unimplemented manual-transfer and EDC processing cannot be activated as working', run: async ({ page, go }) => {
+        for (const type of ['bank-transfer', 'edc']) { await go('app/payments/' + type); await page.getByTestId('payment-method-unavailable').waitFor(); assert.equal(await page.locator('[data-testid="payment-config-page"] input').count(), 0); assert.equal(await page.getByTestId('payment-config-save-btn').count(), 0); }
+        await go('app/integrations/midtrans'); await page.getByTestId('midtrans-settings').waitFor(); assert.equal(await page.getByRole('button', { name: 'Simpan Integrasi' }).count(), 1);
       } },
 { name: 'Sales history searches old orders on the server and pages bounded rows', run: async ({ page, go, requests }) => {
         await go('app/sales'); await page.getByTestId('sales-row-order-256').waitFor(); assert.equal(await page.locator('[data-testid^="sales-row-"]').count(), 50);

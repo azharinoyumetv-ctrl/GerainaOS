@@ -190,12 +190,12 @@ html[data-ga-ui] [data-testid="pos-page"]>div:first-child>div:first-child>div:la
 html[data-ga-ui] [data-testid="pos-page"]>div:first-child>div:first-child>div:last-child>div { width:auto; }
 html[data-ga-ui] [data-testid="pos-search"] { height:45px; padding-left:36px!important; font-size:13px!important; }
 html[data-ga-ui] [data-testid="pos-barcode-input"] { display:none; }
-html[data-ga-ui] .ga-barcode-open [data-testid="pos-barcode-input"] { display:block; }
+html[data-ga-ui].ga-barcode-open [data-testid="pos-barcode-input"] { display:block; }
 html[data-ga-ui] [data-testid="pos-page"] form:has([data-testid="pos-barcode-input"]) { width:43px; height:45px; border-radius:12px; background:#e7efde; cursor:pointer; }
 html[data-ga-ui] [data-testid="pos-page"] form:has([data-testid="pos-barcode-input"])>svg { pointer-events:none; left:12px; color:#5e7e4d; }
 html[data-ga-ui] [data-testid="pos-page"] form:has([data-testid="pos-barcode-input"])>button { opacity:0; inset:0; width:100%; height:100%; }
-html[data-ga-ui] .ga-barcode-open [data-testid="pos-page"] form:has([data-testid="pos-barcode-input"]) { position:fixed; top:10px; left:12px; right:12px; width:auto; z-index:90; background:#fff; box-shadow:0 6px 30px #1b30242b; }
-html[data-ga-ui] .ga-barcode-open [data-testid="pos-page"] form:has([data-testid="pos-barcode-input"])>button { opacity:1; left:auto; right:4px; top:4px; height:37px; width:60px; border-radius:9px; }
+html[data-ga-ui].ga-barcode-open [data-testid="pos-page"] form:has([data-testid="pos-barcode-input"]) { position:fixed; top:10px; left:12px; right:12px; width:auto; z-index:90; background:#fff; box-shadow:0 6px 30px #1b30242b; }
+html[data-ga-ui].ga-barcode-open [data-testid="pos-page"] form:has([data-testid="pos-barcode-input"])>button { opacity:1; left:auto; right:4px; top:4px; height:37px; width:60px; border-radius:9px; }
 html[data-ga-ui] [data-testid="pos-categories"] { gap:7px; scrollbar-width:none; margin-bottom:16px; }
 html[data-ga-ui] [data-testid="pos-categories"] button { border-radius:20px; padding:8px 13px; min-height:37px; font-size:12px; }
 html[data-ga-ui] [data-testid="pos-product-grid"] { grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:11px; }

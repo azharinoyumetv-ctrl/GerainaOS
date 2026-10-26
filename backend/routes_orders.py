@@ -24,7 +24,8 @@ from xendit_client import PaymentNotConfiguredError
 from stock_ledger import movement
 from sale_effects import customer_for_sale, apply_loyalty
 from paging import encode_cursor, decode_cursor
-from payment_options import require_payment_method
+from payment_options import require_payment_method, payment_options
+from merchant_checkout import create_merchant_checkout
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
@@ -88,7 +89,13 @@ async def initialize_gateway(payload, user, db, doc):
     order_no, order_id = doc['order_no'], doc['id']
     calc = doc
     integ = await db.integrations.find_one({'store_id': user['store_id']}, {'_id': 0}) or {}
-    if payload.payment_method == "qris":
+    if doc.get('gateway_reference'):
+        provider = doc['payment_provider']
+        try:
+            doc.update(await create_merchant_checkout(provider, integ.get(provider) or {}, doc, doc['gateway_channels']))
+        except Exception as error:
+            raise gateway_failure(error, f'Gateway {provider} belum dapat menyiapkan pembayaran. Periksa integrasi dan kanal akun merchant.')
+    elif payload.payment_method == "qris":
         xendit_cfg = (integ or {}).get("xendit") or {}
         try:
             res = await create_qris(cfg=xendit_cfg, external_id=order_no, amount=int(round(calc["total"])))
@@ -225,7 +232,10 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
             if not existing:
                 raise HTTPException(409, 'Percobaan pembayaran masih perlu diperiksa. Jangan membuat transaksi baru.')
             return public_order(existing), False
-        payload.ewallet_channel = await require_payment_method(db, user, payload.payment_method, payload.ewallet_channel)
+        policy = await payment_options(db, user)
+        payload.ewallet_channel = await require_payment_method(db, user, payload.payment_method, payload.ewallet_channel, options=policy)
+        choice = policy['methods'].get(payload.payment_method, {})
+        hosted = payload.payment_method in ('va', 'credit_card') or (payload.payment_method == 'ewallet' and choice.get('provider') != 'xendit')
         seen, lines = set(), []
         for item in payload.items:
             if item.product_id in seen:
@@ -252,12 +262,15 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
                'order_no': f"GR-{day}-{counter['seq']:04d}", 'items': lines, **calc,
                'tax_percent': payload.tax_percent, 'payment_method': payload.payment_method,
                'payment_status': 'paid' if payload.payment_method == 'cash' else 'pending',
-               'payment_initialization': 'initializing' if payload.payment_method in ('qris', 'ewallet', 'doku') else 'ready',
+               'payment_initialization': 'initializing' if payload.payment_method in ('qris', 'ewallet', 'doku', 'va', 'credit_card') else 'ready',
                'ewallet_channel': payload.ewallet_channel, 'customer_id': customer['id'] if customer else None,
                'customer_name': payload.customer_name, 'customer_phone': payload.customer_phone, 'customer_email': payload.customer_email,
                'cash_received': payload.cash_received, 'change': round(payload.cash_received-calc['total'], 2) if payload.payment_method == 'cash' else None,
                'note': payload.note, 'created_at': now, 'updated_at': now, 'inventory_ledger_version': 1, 'inventory_applied': True}
-        if payload.payment_method in ('qris', 'ewallet'):
+        if hosted:
+            doc.update(payment_provider=choice['provider'], gateway_reference=identifier,
+                       gateway_channels=[channel['code'] for channel in choice['channels']])
+        if payload.payment_method == 'qris' or (payload.payment_method == 'ewallet' and not hosted):
             doc['xendit_reference_id'] = doc['order_no']
         if payload.payment_method == 'doku':
             doc['doku_id'] = doc['order_no']
@@ -282,7 +295,7 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
     except DuplicateKeyError:
         # A concurrent request with the same attempt key committed first.
         doc, created = await transactions.run_transaction(db, prepare)
-    if not created or payload.payment_method not in ('qris', 'ewallet', 'doku'):
+    if not created or payload.payment_method not in ('qris', 'ewallet', 'doku', 'va', 'credit_card'):
         if created:
             await deliver_receipt(payload, user, db, doc)
         return public_order(doc)
@@ -311,7 +324,7 @@ async def create_order(payload: OrderCreate, user: dict = Depends(get_current_us
         raise
     # The order already exists if saving the provider response fails. Retrying the
     # same attempt returns that record and never sends a second provider request.
-    updates = {key: value for key, value in updated.items() if key.startswith(('xendit_', 'doku_'))}
+    updates = {key: value for key, value in updated.items() if key.startswith(('xendit_', 'doku_', 'gateway_'))}
     updates.update(payment_initialization='ready', updated_at=utcnow().isoformat())
     await db.orders.update_one({'id': doc['id'], 'store_id': user['store_id']}, {'$set': updates})
     saved = await db.orders.find_one({'id': doc['id'], 'store_id': user['store_id']})

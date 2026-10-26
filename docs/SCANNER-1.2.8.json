@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 3,
+  "status": "superseded",
+  "version": "1.2.8",
+  "versionCode": 13,
+  "applicationId": "com.dagangos.geraina",
+  "minimumSdk": 34,
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "apkSha256": "0e9dec86a94a801eed797ce6e8f9bee92a2654339073d464a87abb66c00efbf2",
+  "bytes": 17207255,
+  "verifiedAt": "2026-10-26T14:57:29.847Z",
+  "publicationAuthorized": true,
+  "backendChanged": false,
+  "baseRelease": {
+    "version": "1.2.7",
+    "published": true,
+    "sha256": "f63e22a8577c5ccc33042c4f9439b90e4f1396cd5bb0b7715aae536e1f981e52"
+  },
+  "posBrowser": {
+    "startTime": "2026-10-26T14:52:26.917Z",
+    "duration": 99794.318,
+    "expected": 48,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "nativeScanner": {
+    "status": "passed",
+    "version": "1.2.8",
+    "versionCode": 13,
+    "apkSha256": "0e9dec86a94a801eed797ce6e8f9bee92a2654339073d464a87abb66c00efbf2",
+    "checks": [
+      "search-shortcut-camera-ready",
+      "dedicated-camera-ready",
+      "manual-entry-adds-product",
+      "installed-1.2.8-build-13"
+    ],
+    "merchantWrites": 0,
+    "scope": "Actual APK and working emulated cameras on Xiaomi tablet screen profile; physical barcode recognition not certified",
+    "verifiedAt": "2026-10-26T14:57:29.847Z"
+  },
+  "signatureVerified": true,
+  "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+  "checks": {
+    "androidUnits": 24,
+    "frontendUnits": 38,
+    "releaseLintErrors": 0,
+    "bundledManifestEntries": 18
+  },
+  "published": false,
+  "fix": "The search-side barcode icon now opens the native camera. Explicit manual entry has its own button and corrected root CSS selectors.",
+  "scope": "Working native camera preview on AOSP Xiaomi screen profile, plus phone/Xiaomi/Samsung browser checks. Physical barcode recognition not certified.",
+  "supersededReason": "Scanner-only candidate is superseded by the combined payment workflow correction. Rebuild and reverify; do not publish this package."
+}

@@ -6,7 +6,7 @@ const { defineConfig, devices } = require("@playwright/test");
 module.exports = defineConfig({
   testDir: "./tests",
   // Disposable local benches have dedicated configs and need their local API.
-  testIgnore: ["**/*-local.spec.js", "**/customer-*.spec.js"],
+  testIgnore: ["**/*-local.spec.js", "**/customer-*.spec.js", "**/payment-workflow.spec.js"],
   timeout: 90_000,
   // 15s was too tight for real production conditions: every hard navigation
   // (page.goto, which is what every route check in these specs does) re-validates

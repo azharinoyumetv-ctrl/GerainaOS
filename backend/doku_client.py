@@ -85,7 +85,7 @@ async def create_doku_checkout(
         )
     environment = cfg.get("environment") or "sandbox"
     base = _base_url(environment)
-    method_types = _method_types(cfg.get("preferred_channel") or "all")
+    method_types = cfg.get('payment_method_types') or _method_types(cfg.get("preferred_channel") or "all")
 
     body = {
         "order": {
@@ -104,10 +104,11 @@ async def create_doku_checkout(
         },
         "customer": {
             "name": customer_name or "Pelanggan",
-            "email": customer_email or "customer@example.com",
+            "email": customer_email,
             "phone": customer_phone or "",
         },
     }
+    body['customer'] = {key: value for key, value in body['customer'].items() if value}
     # Compact, deterministic separators -- this exact string is what gets digested
     # AND what gets sent on the wire (see module docstring).
     body_json = json.dumps(body, separators=(",", ":"))

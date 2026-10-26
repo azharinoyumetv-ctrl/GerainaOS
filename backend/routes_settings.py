@@ -9,6 +9,7 @@ from plan_limits import require_plan, plan_rank
 from bank_qris import BankQrisSetup, inspect_static_qris, public_bank_qris
 from permissions import require_permission, canonical_role
 from payment_options import payment_options, section, EWALLETS
+from merchant_checkout import GATEWAYS, provider_name, selected_channels
 
 router = APIRouter(tags=["settings"])
 
@@ -109,31 +110,50 @@ async def get_payments_config(user: dict = Depends(get_current_user)):
     res = {**saved, **{key: {**value, **section(saved, key)} for key, value in defaults.items()}}
     # Older clients also receive a complete document. Unsupported legacy flags
     # do not represent a usable checkout and must not appear active on read.
-    for key in ('va', 'credit_card', 'bank_transfer', 'edc'):
+    for key in ('bank_transfer', 'edc'):
         res[key]['is_active'] = False
     options = await payment_options(db, user)
     wallet = section(res, 'ewallet')
     res['ewallet'] = {**wallet, 'provider': wallet.get('provider') or 'Xendit',
                       'is_active': section(saved, 'ewallet').get('is_active', options['methods']['ewallet']['enabled']),
-                      'channels': {label: section(wallet, 'channels').get(label, section(wallet, 'channels').get(code, True)) for code, label in EWALLETS.items()}}
+                      'channels': {**section(wallet, 'channels'), **{label: section(wallet, 'channels').get(label, section(wallet, 'channels').get(code, True)) for code, label in EWALLETS.items()}}}
+    res['qris_bank'] = {'is_active': options['methods']['qris_bank']['displayed'], **section(saved, 'qris_bank')}
+    res['checkout_options'] = options
     return res
 
 @router.post("/api/payments/config", dependencies=[Depends(require_permission("payments.configure"))])
 async def save_payments_config(payload: Dict[str, Any], user: dict = Depends(get_current_user)):
-    for key in ('va', 'credit_card', 'bank_transfer', 'edc'):
+    db = get_db()
+    saved = await db.payments_config.find_one({'store_id': user['store_id']}, {'_id': 0}) or {}
+    for key in payload:
+        if key in ('_id', 'store_id'):
+            continue
+        if key not in ('cash', 'qris', 'qris_bank', 'ewallet', 'va', 'credit_card', 'bank_transfer', 'edc') or not isinstance(payload[key], dict):
+            raise HTTPException(422, 'Pengaturan metode pembayaran tidak valid.')
+        if 'is_active' in payload[key] and type(payload[key]['is_active']) is not bool:
+            raise HTTPException(422, 'Pilihan tampil di kasir harus berupa ya/tidak.')
+        if key in ('ewallet', 'va', 'credit_card'):
+            value = {**section(saved, key), **payload[key]}
+            if key == 'ewallet' and not value.get('provider'):
+                value['provider'] = 'Xendit'
+            provider = provider_name(value)
+            if value.get('is_active') and (provider not in GATEWAYS or not selected_channels(key, value, provider)):
+                raise HTTPException(400, 'Pilih gateway yang didukung dan minimal satu kanal pembayaran.')
+            for field in ('channels', 'banks'):
+                if field in value and (not isinstance(value[field], dict) or any(type(on) is not bool for on in value[field].values())):
+                    raise HTTPException(422, 'Pilihan kanal pembayaran tidak valid.')
+    for key in ('bank_transfer', 'edc'):
         if section(payload, key).get('is_active'):
-            raise HTTPException(400, 'Metode ini belum tersedia sebagai checkout terpisah. Gunakan DOKU untuk kanal yang didukung.')
-    wallet = section(payload, 'ewallet')
-    if wallet.get('is_active') and str(wallet.get('provider') or 'Xendit').lower() != 'xendit':
-        raise HTTPException(400, 'E-Wallet kasir saat ini menggunakan Xendit milik toko. Pilih Xendit.')
+            raise HTTPException(400, 'Transfer manual dan mesin EDC belum dapat diaktifkan pada kasir.')
     qris = payload.get("qris")
     if qris and qris.get("is_active"):
         mid = qris.get("merchant_id")
         if not mid or not str(mid).strip():
             raise HTTPException(status_code=400, detail="Merchant ID wajib diisi")
 
-    db = get_db()
-    update_data = {k: v for k, v in payload.items() if k not in ("_id", "store_id")}
+    update_data = {k: {**section(saved, k), **v} for k, v in payload.items() if k not in ("_id", "store_id")}
+    if any(key in payload for key in ('ewallet', 'va', 'credit_card')):
+        update_data['checkout_policy_version'] = 2
     res = await db.payments_config.find_one_and_update(
         {"store_id": user["store_id"]},
         {"$set": update_data},
@@ -186,8 +206,6 @@ async def get_integrations(user: dict = Depends(integration_owner)):
 
 @router.post("/api/integrations", dependencies=[Depends(require_permission("integrations.manage"))])
 async def save_integrations(payload: Dict[str, Any], user: dict = Depends(integration_owner)):
-    if section(payload, "midtrans").get("is_active"):
-        raise HTTPException(400, "Checkout Midtrans toko belum tersedia. Gunakan Xendit atau DOKU yang didukung.")
     if plan_rank(user.get("plan")) < plan_rank("pro"):
         raise HTTPException(status_code=403, detail="Integrasi pihak ketiga tersedia mulai paket Pro. Upgrade paket untuk mengakses fitur ini.")
     if plan_rank(user.get("plan")) < plan_rank("business"):

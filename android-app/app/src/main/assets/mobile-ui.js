@@ -77,7 +77,7 @@
   function recentMarkup(orders) {
     if (!Array.isArray(orders)) return `<div class="ga-empty">Transaksi belum dapat dimuat.</div>`;
     if (!orders.length) return `<div class="ga-empty">${icon('receipt')}Belum ada transaksi.<br>Mulai penjualan pertama dari kasir.<br><a href="/geraina/app/pos">Buka kasir →</a></div>`;
-    const methods = {cash:'Tunai',qris:'QRIS',qris_bank:'QRIS bank',ewallet:'E-Wallet',edc:'Kartu',doku:'DOKU'};
+    const methods = {cash:'Tunai',qris:'QRIS',qris_bank:'QRIS bank',ewallet:'E-Wallet',va:'Virtual Account',credit_card:'Kartu Kredit',edc:'Kartu',doku:'DOKU'};
     return orders.slice(0,3).map(order=>`<div class="ga-order"><span class="ga-order-icon">${icon('receipt')}</span><div class="ga-order-copy"><b>${esc(order.order_no || 'Penjualan')}</b><p>${esc(methods[order.payment_method] || order.payment_method || 'Pembayaran')} · ${esc(new Date(order.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short'}))}</p></div><div class="ga-order-amount">${money(order.total)}<small>${order.payment_status==='paid'?'Lunas':order.payment_status==='failed'?'Gagal':'Belum lunas'}</small></div></div>`).join('');
   }
   function dashboardMarkup(result) {
@@ -156,8 +156,11 @@
     text($('b',dock),$('[data-testid="cart-total"]',cart)?.textContent||'Rp 0');
     if($('[data-testid="receipt-dialog"]'))closeCart();
     const barcode=$('[data-testid="pos-barcode-input"]',page),form=barcode?.closest('form');
-    if(form&&!form.dataset.gaBound){form.dataset.gaBound='true';form.setAttribute('aria-label','Masukkan barcode');form.addEventListener('click',event=>{
-      if(!document.documentElement.classList.contains('ga-barcode-open')){event.preventDefault();event.stopPropagation();document.documentElement.classList.add('ga-barcode-open');barcode.focus();}
+    if(form&&!form.dataset.gaBound){form.dataset.gaBound='true';form.setAttribute('aria-label','Scan barcode dengan kamera');form.addEventListener('click',event=>{
+      if(!document.documentElement.classList.contains('ga-barcode-open')){event.preventDefault();event.stopPropagation();
+        if(window.GerainaDevice?.scanBarcode)window.GerainaDevice.scanBarcode('pos');
+        else{document.documentElement.classList.add('ga-barcode-open');barcode.focus();}
+      }
     },true);}
   }
   function sync() {

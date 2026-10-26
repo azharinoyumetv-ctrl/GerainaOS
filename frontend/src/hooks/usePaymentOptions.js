@@ -27,6 +27,10 @@ export default function usePaymentOptions(scope, offline, online) {
     })();
     return () => { active = false; controller.abort(); };
   }, [scope, offline, online, attempt]);
-  useEffect(() => { const reload = () => setAttempt(value => value + 1); window.addEventListener('focus', reload); return () => window.removeEventListener('focus', reload); }, []);
+  useEffect(() => {
+    const reload = () => setAttempt(value => value + 1);
+    window.addEventListener('focus', reload); window.addEventListener('geraina-payment-options-changed', reload);
+    return () => { window.removeEventListener('focus', reload); window.removeEventListener('geraina-payment-options-changed', reload); };
+  }, []);
   return { options, error, retry: () => setAttempt(value => value + 1) };
 }

@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 4,
+  "status": "local_passed",
+  "version": "1.2.8",
+  "versionCode": 13,
+  "applicationId": "com.dagangos.geraina",
+  "minimumSdk": 34,
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "apkSha256": "aa66fc8d9088a29a96d3367f919f80cf9d8f0f962aa6de9bb4b83e416d55f1d7",
+  "bytes": 17208155,
+  "verifiedAt": "2026-10-26T16:59:54.534Z",
+  "publicationAuthorized": false,
+  "published": false,
+  "backendChanged": true,
+  "baseRelease": {
+    "version": "1.2.7",
+    "published": true
+  },
+  "backend": {
+    "tests": 355,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "paymentBrowser": {
+    "startTime": "2026-10-26T17:06:37.058Z",
+    "duration": 53707.317,
+    "expected": 24,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "posBrowser": {
+    "startTime": "2026-10-26T16:58:26.091Z",
+    "duration": 44190.479,
+    "expected": 48,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "customerMoneyBrowser": {
+    "startTime": "2026-10-26T16:58:26.096Z",
+    "duration": 30388.988999999998,
+    "expected": 15,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "navigation": {
+    "status": "passed",
+    "build": "D:\\Fullstack Apps\\DagangOS\\GerainaOS\\frontend\\build",
+    "assets": "D:\\Fullstack Apps\\DagangOS\\GerainaOS\\android-app\\app\\src\\main\\assets",
+    "viewportWidth": 1280,
+    "scope": "Bundled UI navigation/action contracts in Chromium with Android bridge presentation and isolated fixtures; no hardware or payment-provider certification",
+    "merchantWrites": 0,
+    "results": [
+      {
+        "name": "DOKU appears in expanded integration navigation",
+        "status": "passed"
+      },
+      {
+        "name": "Sales history is directly reachable in the sidebar",
+        "status": "passed"
+      },
+      {
+        "name": "EDC setup availability page is included in payment navigation",
+        "status": "passed"
+      },
+      {
+        "name": "Credit-card route renders the matching configuration",
+        "status": "passed"
+      },
+      {
+        "name": "Bank-transfer route renders the matching configuration",
+        "status": "passed"
+      },
+      {
+        "name": "Failed payment settings load cannot save defaults and offers retry",
+        "status": "passed"
+      },
+      {
+        "name": "Empty payment settings merge safe defaults without crashing",
+        "status": "passed"
+      },
+      {
+        "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+        "status": "passed"
+      },
+      {
+        "name": "xendit merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "doku merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "whatsapp merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown integrations subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown settings subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown payments subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown reports subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown staff subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Starter Owner can reach bank QRIS from the integration menu",
+        "status": "passed"
+      },
+      {
+        "name": "Browser expanding a menu retains the current screen",
+        "status": "passed"
+      },
+      {
+        "name": "Legacy product deep link retains its destination and query",
+        "status": "passed"
+      },
+      {
+        "name": "Root app alias applies the same cashier permissions as canonical route",
+        "status": "passed"
+      },
+      {
+        "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+        "status": "passed"
+      },
+      {
+        "name": "Bank QRIS integration retains its own subsection navigation",
+        "status": "passed"
+      },
+      {
+        "name": "EDC cannot claim activation before certified support exists",
+        "status": "passed"
+      },
+      {
+        "name": "Billing uses the authoritative account plan without an absent subscription API",
+        "status": "passed"
+      },
+      {
+        "name": "Android retains a visible read-only billing tab and permits its SPA navigation",
+        "status": "passed"
+      },
+      {
+        "name": "doku instructions use the Geraina callback backend",
+        "status": "passed"
+      },
+      {
+        "name": "whatsapp instructions use the Geraina callback backend",
+        "status": "passed"
+      },
+      {
+        "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+        "status": "passed"
+      },
+      {
+        "name": "Sales report does not invent a daily distribution from a weekly total",
+        "status": "passed"
+      },
+      {
+        "name": "Browser dashboard does not fabricate drawer cash or profit",
+        "status": "passed"
+      }
+    ]
+  },
+  "nativeScanner": {
+    "status": "passed",
+    "version": "1.2.8",
+    "versionCode": 13,
+    "apkSha256": "aa66fc8d9088a29a96d3367f919f80cf9d8f0f962aa6de9bb4b83e416d55f1d7",
+    "checks": [
+      "search-shortcut-camera-ready",
+      "dedicated-camera-ready",
+      "manual-entry-adds-product",
+      "installed-1.2.8-build-13",
+      "payment-preferences-drive-cashier",
+      "qris-retains-integration-navigation"
+    ],
+    "merchantWrites": 0,
+    "scope": "Actual APK and working emulated cameras on Xiaomi tablet screen profile; physical barcode recognition not certified",
+    "verifiedAt": "2026-10-26T16:59:54.534Z"
+  },
+  "package": {
+    "signatureVerified": true,
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "bundleManifestEntriesVerified": 18,
+    "androidUnitTests": 24,
+    "frontendUnitTests": 38,
+    "lintErrors": 0,
+    "lintWarnings": 55
+  },
+  "backendDeployment": {
+    "status": "pending"
+  },
+  "scope": "Prepared UI and installed AOSP Xiaomi-profile APK; isolated provider contracts and settlement tests. No live merchant payments, physical printer or physical barcode recognition certification."
+}

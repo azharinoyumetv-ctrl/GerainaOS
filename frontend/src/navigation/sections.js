@@ -5,7 +5,7 @@ export const SECTIONS = {
     tab('xendit', 'Xendit', 'integrations', 'pro'),
     tab('doku', 'DOKU', 'integrations', 'pro'),
     tab('midtrans', 'Midtrans', 'integrations', 'pro'),
-    { id: 'qris', label: 'QRIS bank', path: '/geraina/app/payments/qris' },
+    tab('qris', 'QRIS bank', 'integrations'),
     tab('whatsapp', 'WhatsApp', 'integrations', 'business'),
   ],
   payments: [tab('cash', 'Tunai', 'payments'), tab('qris', 'QRIS bank', 'payments'), tab('ewallet', 'E-Wallet', 'payments'), tab('va', 'Virtual Account', 'payments'), tab('credit_card', 'Kartu Kredit', 'payments'), tab('bank_transfer', 'Transfer Bank', 'payments'), tab('edc', 'EDC (belum tersedia)', 'payments')],

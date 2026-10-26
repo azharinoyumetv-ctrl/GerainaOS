@@ -1,7 +1,7 @@
 import SectionNavigation from "@/navigation/SectionNavigation";
 import PasswordInput from "@/components/PasswordInput";
 import { useEffect, useRef, useState } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, Link } from "react-router-dom";
 import api from "@/api/client";
 import { Save, Link2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
@@ -16,7 +16,7 @@ export default function Integrations() {
   // Empty by default — each store brings its own (BYO) payment/notification credentials.
   const [integrations, setIntegrations] = useState({
     xendit: { is_active: false, secret_key: "", webhook_token: "" },
-    midtrans: { is_active: false, client_key: "", server_key: "" },
+    midtrans: { is_active: false, client_key: "", server_key: "", environment: "sandbox" },
     qris: { is_active: false, nmid: "", merchant_name: "" },
     whatsapp: { is_active: false, phone_number_id: "", access_token: "", app_secret: "", webhook_verify_token: "", template_receipt: "dagangos_order_receipt", template_receipt_lang: "id", template_po: "dagangos_po_notify", template_po_lang: "id" },
     doku: { is_active: false, client_id: "", shared_key: "", environment: "sandbox", preferred_channel: "all" }
@@ -53,7 +53,7 @@ export default function Integrations() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (loading || loadError || saveRef.current || !["xendit", "doku", "whatsapp"].includes(type)) return;
+    if (loading || loadError || saveRef.current || !["xendit", "midtrans", "doku", "whatsapp"].includes(type)) return;
     saveRef.current = true; setSaving(true);
     try {
       // The API merges provider keys. Never resubmit unrelated providers or retired credentials.
@@ -99,7 +99,7 @@ export default function Integrations() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
-  if (["stripe", "telegram", "email", "qris"].includes(type)) return <Navigate to="/geraina/app/payments/qris" replace />;
+  if (["stripe", "telegram", "email", "qris"].includes(type)) return <Navigate to="/geraina/app/integrations/qris" replace />;
   if (!integrations) return <div className="p-4 sm:p-6 lg:p-8 text-center text-xs text-[hsl(var(--muted))]">Memuat data integrasi...</div>;
 
   const renderForm = () => {
@@ -136,7 +136,7 @@ export default function Integrations() {
                 className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm font-mono"
               />
               <p className="text-[11px] text-[hsl(var(--muted))]">
-                Salin Verification Token dari pengaturan webhook Xendit, lalu daftarkan callback URL <code className="font-mono break-all">https://geraina-os.vercel.app/api/webhooks/xendit</code> di dashboard akun Xendit toko Anda. Token harus sama dan tidak dipakai toko lain.
+                Salin Verification Token dari pengaturan webhook Xendit. Daftarkan notifikasi Payment Request dan Payment Session ke callback URL <code className="font-mono break-all">https://geraina-os.vercel.app/api/webhooks/xendit</code> di dashboard akun Xendit toko Anda. Token harus sama dan tidak dipakai toko lain.
               </p>
             </div>
             <p className="text-[11px] text-[hsl(var(--muted))]">Gunakan API key Xendit milik toko Anda sendiri. Transaksi pelanggan diproses pada akun Xendit Anda; biaya penyedia menjadi tanggung jawab toko sesuai perjanjian Xendit. Akun ini terpisah dari akun pembayaran langganan DagangOS.</p>
@@ -158,7 +158,7 @@ export default function Integrations() {
               />
             </div>
             <p className="text-[11px] text-[hsl(var(--muted))]">
-              Gunakan Client ID dan Shared Key DOKU (Checkout/Jokul API) milik toko Anda sendiri dari DOKU Dashboard &gt; Developer &gt; API Keys. Mendukung Virtual Account, E-Money (OVO/DANA/ShopeePay), dan minimarket.
+              Gunakan Client ID dan Shared Key DOKU milik toko Anda sendiri. Pilih metode yang ditampilkan di Kasir melalui menu Pembayaran. Kanal juga perlu aktif pada akun merchant DOKU.
             </p>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1">
@@ -194,19 +194,7 @@ export default function Integrations() {
                   <option value="production">Production (Transaksi Nyata)</option>
                 </select>
               </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-xs font-semibold text-[hsl(var(--muted))] uppercase">Metode Pembayaran</label>
-                <select
-                  value={integrations.doku.preferred_channel}
-                  onChange={(e) => setIntegrations({ ...integrations, doku: { ...integrations.doku, preferred_channel: e.target.value } })}
-                  className="border border-[hsl(var(--border))] rounded-md px-4 py-2 bg-white text-sm"
-                >
-                  <option value="all">Semua (VA + E-Wallet + Minimarket)</option>
-                  <option value="va">Virtual Account saja</option>
-                  <option value="ewallet">E-Wallet saja</option>
-                  <option value="minimart">Minimarket saja</option>
-                </select>
-              </div>
+              <div className="flex flex-col justify-center gap-2 text-sm"><p>Atur pilihan kasir dan kanal melalui menu Pembayaran.</p><Link className="btn-outline" to="/geraina/app/payments/va">Atur metode kasir</Link></div>
             </div>
             <p className="text-[11px] text-[hsl(var(--muted))]">
               Daftarkan webhook notifikasi <code className="font-mono">https://geraina-os.vercel.app/api/webhooks/doku</code> di DOKU Dashboard &gt; Developer &gt; Notification URL agar status pembayaran ter-update otomatis.
@@ -217,7 +205,13 @@ export default function Integrations() {
         );
 
       case "midtrans":
-        return <div className="space-y-3" data-testid="midtrans-unavailable"><h3 className="font-bold">Checkout Midtrans toko belum tersedia</h3><p className="text-sm">Kredensial lama dipertahankan, tetapi tidak mengaktifkan pembayaran kasir. Gunakan E-Wallet Xendit atau DOKU yang sudah didukung. Pembayaran langganan DagangOS dikelola terpisah.</p></div>;
+        return <div className="space-y-4" data-testid="midtrans-settings">
+          <label className="flex items-center justify-between gap-3 text-sm font-semibold">Aktifkan Midtrans Gateway<input type="checkbox" checked={integrations.midtrans.is_active} onChange={e => setIntegrations({ ...integrations, midtrans: { ...integrations.midtrans, is_active: e.target.checked } })} /></label>
+          <p className="text-sm">Gunakan akun Midtrans milik toko. Pilih Virtual Account, E-Wallet atau Kartu Kredit yang ditampilkan di Kasir melalui menu Pembayaran.</p>
+          <label className="block text-sm font-semibold">Server Key<PasswordInput data-testid="midtrans-server-key" value={integrations.midtrans.server_key} onChange={e => setIntegrations({ ...integrations, midtrans: { ...integrations.midtrans, server_key: e.target.value } })} className="input-field mt-2" /></label>
+          <label className="block text-sm font-semibold">Lingkungan<select className="input-field mt-2" value={integrations.midtrans.environment || 'sandbox'} onChange={e => setIntegrations({ ...integrations, midtrans: { ...integrations.midtrans, environment: e.target.value } })}><option value="sandbox">Sandbox (Uji Coba)</option><option value="production">Production (Transaksi Nyata)</option></select></label>
+          <p className="text-xs break-words">Daftarkan Payment Notification URL <code>https://geraina-os.vercel.app/api/webhooks/midtrans</code> di akun merchant Midtrans toko Anda.</p>
+        </div>;
 
       case "whatsapp":
         return (
@@ -389,7 +383,7 @@ export default function Integrations() {
             </div>
           ) : <fieldset disabled={saving} className="space-y-4">{renderForm()}</fieldset>}
 
-          {!["qris", "midtrans"].includes(type) && <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-end">
+          {type !== "qris" && <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-end">
             <button type="submit" disabled={loading || !!loadError || saving} className="btn-primary py-2 px-6 flex items-center gap-2 text-sm font-semibold disabled:opacity-50">
               <Save size={16} /> {saving ? "Menyimpan…" : "Simpan Integrasi"}
             </button>

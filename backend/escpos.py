@@ -15,6 +15,7 @@ Uses cp437 encoding, which is the default code page on the overwhelming majority
 thermal printers and covers Rp/rupiah formatting fine (plain ASCII digits and punctuation).
 """
 from typing import Optional
+from payment_labels import payment_label
 
 LINE_WIDTH = 32
 
@@ -101,7 +102,7 @@ def build_receipt_escpos(order: dict, settings: Optional[dict] = None) -> bytes:
         buf += _kv_line("Tunai", order.get("cash_received", 0))
         buf += _kv_line("Kembali", order.get("change", 0))
     else:
-        buf += _enc(f"Metode: {order.get('payment_method', '-')}\n")
+        buf += _enc(f"Metode: {payment_label(order.get('payment_method'))}\n")
     buf += _divider()
 
     buf += ESC_ALIGN_CENTER
