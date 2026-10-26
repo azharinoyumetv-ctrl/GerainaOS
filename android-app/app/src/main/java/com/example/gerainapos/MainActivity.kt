@@ -440,9 +440,11 @@ class MainActivity : ComponentActivity() {
                 runOnUiThread { handleMessage(message.data.orEmpty()) }
             }
         }
-        val script = assets.open("android-bridge.js").bufferedReader().use { it.readText() }
+        val script = "window.__gerainaSubscriptionPurchases=${BuildConfig.WEB_SUBSCRIPTIONS_ENABLED};\n" +
+            assets.open("android-bridge.js").bufferedReader().use { it.readText() }
         WebViewCompat.addDocumentStartJavaScript(webView, script, setOf(NavigationPolicy.ORIGIN))
         val appInfo = JSONObject().put("versionName", BuildConfig.VERSION_NAME).put("versionCode", BuildConfig.VERSION_CODE)
+            .put("subscriptionPurchases", BuildConfig.WEB_SUBSCRIPTIONS_ENABLED)
             .put("androidVersion", Build.VERSION.RELEASE).put("model", "${Build.MANUFACTURER} ${Build.MODEL}".take(100))
         val deviceScript = "window.__gerainaAppInfo=$appInfo;\n" + assets.open("device-features.js").bufferedReader().use { it.readText() }
         WebViewCompat.addDocumentStartJavaScript(webView, deviceScript, setOf(NavigationPolicy.ORIGIN))

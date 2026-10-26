@@ -1,5 +1,6 @@
 import { useAuth } from "@/auth/AuthContext";
 import SectionNavigation from "@/navigation/SectionNavigation";
+import SubscriptionSettings from "./SubscriptionSettings";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "@/api/client";
@@ -20,12 +21,13 @@ export default function Settings() {
   const type = (rawType === "settings" || !rawType) ? "general" : rawType.toLowerCase();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const { user } = useAuth();
-  const sub = { plan: user?.plan, status: user?.subscription?.status || (user?.plan === "trial" ? "trial" : user?.plan === "expired" ? "expired" : "active"), trial_ends_at: user?.trial_ends_at };
+  const sub = { plan: user?.plan, status: user?.subscription?.status || (user?.plan === "trial" ? "trial" : user?.plan === "expired" ? "expired" : "active") };
   const [testingPrint, setTestingPrint] = useState(false);
   const [loaded, setLoaded] = useState(false), [loadError, setLoadError] = useState(""), [retry, setRetry] = useState(0);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (["billing", "subscription"].includes(type)) { setLoadError(""); return; }
     let active = true; setLoaded(false); setLoadError("");
     api.get("/settings", { timeout: 12000 }).then((r) => {
       if (!r.data || typeof r.data !== "object" || Array.isArray(r.data)) throw new Error("Invalid settings response");
@@ -329,38 +331,8 @@ export default function Settings() {
         );
 
       case "billing":
-      case "subscription": {
-        const PLAN_NAMES = { trial: "Free Trial", starter: "Starter", pro: "Pro", business: "Business", multibranch: "Multi-Branch" };
-        const planId = (sub?.plan || "trial").toLowerCase();
-        const planName = PLAN_NAMES[planId] || planId;
-        const isTrialPlan = planId === "trial";
-        return (
-          <div className="space-y-6" data-testid="subscription-billing-management-area">
-            <div className="p-4 rounded-xl bg-[hsl(var(--surface))] border border-[hsl(var(--border))] space-y-2 text-left">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-black uppercase text-[hsl(var(--muted))] tracking-wider">Paket Langganan Aktif</span>
-                <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 text-[10px] font-extrabold" data-testid="subscription-status-badge">
-                  ● {isTrialPlan ? "TRIAL" : "AKTIF"}
-                </span>
-              </div>
-              <h3 className="font-display text-2xl font-black" data-testid="subscription-plan-title">Paket {planName}</h3>
-              {isTrialPlan && sub?.trial_ends_at && (
-                <p className="text-xs text-[hsl(var(--muted))]">Masa trial berakhir: {new Date(sub.trial_ends_at).toLocaleDateString("id-ID")}</p>
-              )}
-            </div>
-
-            <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 text-xs leading-relaxed">
-              Beli paket melalui halaman Harga dan selesaikan checkout pembayaran. Membuka checkout atau pembayaran yang gagal tidak mengubah paket Anda. Paket diaktifkan setelah sistem memverifikasi pembayaran.
-            </div>
-
-            <div className="border-t border-[hsl(var(--border))] pt-4 flex justify-between items-center">
-              <Link to="/geraina/pricing" className="text-xs font-bold text-blue-600 hover:underline" data-testid="view-pricing-matrix-link">
-                Lihat semua paket &amp; harga &rarr;
-              </Link>
-            </div>
-          </div>
-        );
-      }
+      case "subscription":
+        return <SubscriptionSettings />;
 
       default:
         return <p className="text-sm text-[hsl(var(--muted))]">Pengaturan tidak ditemukan.</p>;
@@ -372,7 +344,7 @@ export default function Settings() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 text-left" data-testid="settings-page">
       <div>
         <span className="label-tiny">Pengaturan</span>
-        <h1 className="font-display text-3xl font-bold mt-1 capitalize">Pengaturan ({type})</h1>
+        <h1 className="font-display text-3xl font-bold mt-1 capitalize">{["billing", "subscription"].includes(type) ? "Langganan & Tagihan" : `Pengaturan (${type})`}</h1>
       </div>
 
       <SectionNavigation section="settings" active={type === "subscription" ? "billing" : type} />
@@ -381,7 +353,7 @@ export default function Settings() {
         {loadError && <div role="alert" data-testid="settings-error" className="mb-4"><p>{loadError}</p><button type="button" className="btn-outline mt-2" onClick={() => setRetry(value => value + 1)}>Coba lagi</button></div>}
         <form onSubmit={handleSave} className="space-y-6">
           <h2 className="font-display font-bold text-lg border-b border-[hsl(var(--border))] pb-3 capitalize">
-            Pengaturan Parameter ({type})
+            {["billing", "subscription"].includes(type) ? "Kelola Paket" : `Pengaturan Parameter (${type})`}
           </h2>
           
           {renderForm()}

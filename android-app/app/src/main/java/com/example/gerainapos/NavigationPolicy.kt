@@ -9,7 +9,7 @@ object NavigationPolicy {
     const val MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024
     enum class Destination { INTERNAL, EXTERNAL, SUBSCRIPTION, BLOCKED }
 
-    fun classify(url: String): Destination {
+    fun classify(url: String, allowSubscriptions: Boolean = BuildConfig.WEB_SUBSCRIPTIONS_ENABLED): Destination {
         val uri = runCatching { URI(url) }.getOrNull() ?: return Destination.BLOCKED
         val scheme = uri.scheme?.lowercase(Locale.ROOT)
         if (scheme in setOf("mailto", "tel")) return Destination.EXTERNAL
@@ -18,6 +18,7 @@ object NavigationPolicy {
             return if (uri.host.isNullOrBlank()) Destination.BLOCKED else Destination.EXTERNAL
         }
         val path = uri.normalize().path.orEmpty().trimEnd('/').lowercase(Locale.ROOT)
+        if (allowSubscriptions && path in setOf("/geraina/pricing", "/geraina/checkout", "/geraina/order")) return Destination.INTERNAL
         if (path in setOf("/geraina/app/settings/billing", "/geraina/app/billing")) return Destination.INTERNAL
         if (path.split('/').any { it in setOf("pricing", "checkout", "order", "billing") }) return Destination.SUBSCRIPTION
         return if (path == "/geraina" || path.startsWith("/geraina/")) Destination.INTERNAL else Destination.EXTERNAL

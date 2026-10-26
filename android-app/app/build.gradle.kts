@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+val distribution = providers.gradleProperty("gerainaDistribution").orElse("website").get()
+require(distribution in setOf("website", "play")) { "Use gerainaDistribution=website or play" }
 val signingProperties = Properties().apply {
     val file = rootProject.file("keystore.properties")
     if (file.exists()) file.inputStream().use { load(it) }
@@ -19,8 +21,9 @@ android {
         minSdk = 34
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
         targetSdk = 36
-        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("14").get().toInt()
-        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.9").get()
+        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("15").get().toInt()
+        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.10").get()
+        buildConfigField("boolean", "WEB_SUBSCRIPTIONS_ENABLED", (distribution == "website").toString())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {

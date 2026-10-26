@@ -20,9 +20,17 @@ class NavigationPolicyTest {
     }
     @Test fun subscriptionPaymentsAreBlockedWithoutBlockingPhysicalSales() {
         for (path in listOf("/geraina/pricing", "/geraina/checkout", "/geraina/app/settings/billing/checkout", "/geraina/%63heckout", "/geraina/app/../pricing")) {
-            assertEquals(path, SUBSCRIPTION, NavigationPolicy.classify("https://dagangos.com$path"))
+            assertEquals(path, SUBSCRIPTION, NavigationPolicy.classify("https://dagangos.com$path", false))
         }
         assertEquals(INTERNAL, NavigationPolicy.classify("https://dagangos.com/geraina/app/pos"))
+    }
+    @Test fun websiteBuildAllowsOnlyGerainaSubscriptionPagesInside() {
+        for (path in listOf("/geraina/pricing", "/geraina/checkout", "/geraina/order?receipt=test", "/geraina/%63heckout", "/geraina/app/../pricing")) {
+            assertEquals(path, INTERNAL, NavigationPolicy.classify("https://dagangos.com$path", true))
+        }
+        assertEquals(EXTERNAL, NavigationPolicy.classify("https://checkout.xendit.co/web/test", true))
+        assertEquals(SUBSCRIPTION, NavigationPolicy.classify("https://dagangos.com/dapuros/pricing", true))
+        assertEquals(SUBSCRIPTION, NavigationPolicy.classify("https://dagangos.com/geraina/app/settings/billing/checkout", true))
     }
     @Test fun accountStatusOverviewsRemainAvailable() {
         for (path in listOf("/geraina/app/settings/billing", "/geraina/app/settings/billing/", "/geraina/app/billing", "/geraina/app/settings/%62illing")) {

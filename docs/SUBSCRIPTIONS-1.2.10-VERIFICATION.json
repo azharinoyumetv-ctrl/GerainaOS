@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 6,
+  "status": "passed",
+  "version": "1.2.10",
+  "versionCode": 15,
+  "applicationId": "com.dagangos.geraina",
+  "minimumSdk": 34,
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "apkSha256": "e7c0486f3274a4661a95b4cd155051cdd94a4755e935406e1cf297a177ff3352",
+  "bytes": 17231203,
+  "backendChanged": true,
+  "baseRelease": {
+    "version": "1.2.9",
+    "published": true
+  },
+  "publicationAuthorized": true,
+  "published": false,
+  "verifiedAt": "2026-10-26T23:34:30.706110+00:00",
+  "backend": {
+    "status": "passed",
+    "tests": 359,
+    "subscriptionTests": 22
+  },
+  "checkout": {
+    "status": "passed",
+    "tests": 15,
+    "rootTests": 26,
+    "pricingBrowser": {
+      "status": "passed",
+      "results": [
+        {
+          "scenario": "active",
+          "status": "passed"
+        },
+        {
+          "scenario": "provider-unavailable",
+          "status": "passed"
+        },
+        {
+          "scenario": "anonymous",
+          "status": "passed"
+        }
+      ],
+      "productionWrites": 0,
+      "providerRequests": 0
+    }
+  },
+  "subscriptionBrowser": {
+    "startTime": "2026-10-26T23:28:58.638Z",
+    "duration": 34469.473999999995,
+    "expected": 20,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "paymentBrowser": {
+    "startTime": "2026-10-26T23:27:57.451Z",
+    "duration": 60624.064,
+    "expected": 24,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "posBrowser": {
+    "startTime": "2026-10-26T23:27:57.443Z",
+    "duration": 54177.579,
+    "expected": 48,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "navigation": {
+    "status": "passed",
+    "build": "D:\\Fullstack Apps\\DagangOS\\GerainaOS\\frontend\\build",
+    "assets": "D:\\Fullstack Apps\\DagangOS\\GerainaOS\\android-app\\app\\src\\main\\assets",
+    "viewportWidth": 1280,
+    "scope": "Bundled UI navigation/action contracts in Chromium with Android bridge presentation and isolated fixtures; no hardware or payment-provider certification",
+    "merchantWrites": 0,
+    "results": [
+      {
+        "name": "DOKU appears in expanded integration navigation",
+        "status": "passed"
+      },
+      {
+        "name": "Sales history is directly reachable in the sidebar",
+        "status": "passed"
+      },
+      {
+        "name": "EDC setup availability page is included in payment navigation",
+        "status": "passed"
+      },
+      {
+        "name": "Credit-card route renders the matching configuration",
+        "status": "passed"
+      },
+      {
+        "name": "Bank-transfer route renders the matching configuration",
+        "status": "passed"
+      },
+      {
+        "name": "Failed payment settings load cannot save defaults and offers retry",
+        "status": "passed"
+      },
+      {
+        "name": "Empty payment settings merge safe defaults without crashing",
+        "status": "passed"
+      },
+      {
+        "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+        "status": "passed"
+      },
+      {
+        "name": "xendit merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "doku merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "whatsapp merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown integrations subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown settings subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown payments subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown reports subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown staff subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Starter Owner can reach bank QRIS from the integration menu",
+        "status": "passed"
+      },
+      {
+        "name": "Browser expanding a menu retains the current screen",
+        "status": "passed"
+      },
+      {
+        "name": "Legacy product deep link retains its destination and query",
+        "status": "passed"
+      },
+      {
+        "name": "Root app alias applies the same cashier permissions as canonical route",
+        "status": "passed"
+      },
+      {
+        "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+        "status": "passed"
+      },
+      {
+        "name": "Bank QRIS integration retains its own subsection navigation",
+        "status": "passed"
+      },
+      {
+        "name": "EDC cannot claim activation before certified support exists",
+        "status": "passed"
+      },
+      {
+        "name": "Billing uses the authoritative account plan without an absent subscription API",
+        "status": "passed"
+      },
+      {
+        "name": "License settings retain the account plan alongside subscription management",
+        "status": "passed"
+      },
+      {
+        "name": "Website Android retains billing navigation and exposes package purchases",
+        "status": "passed"
+      },
+      {
+        "name": "doku instructions use the Geraina callback backend",
+        "status": "passed"
+      },
+      {
+        "name": "whatsapp instructions use the Geraina callback backend",
+        "status": "passed"
+      },
+      {
+        "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+        "status": "passed"
+      },
+      {
+        "name": "Sales report does not invent a daily distribution from a weekly total",
+        "status": "passed"
+      },
+      {
+        "name": "Browser dashboard does not fabricate drawer cash or profit",
+        "status": "passed"
+      }
+    ]
+  },
+  "subscriptionAndroid": {
+    "status": "passed",
+    "installed": {
+      "versionName": "1.2.10",
+      "versionCode": 15,
+      "subscriptionPurchases": true,
+      "androidVersion": "16",
+      "model": "unknown Android SDK built for x86_64"
+    },
+    "apkSha256": "e7c0486f3274a4661a95b4cd155051cdd94a4755e935406e1cf297a177ff3352",
+    "checks": [
+      "Signed 1.2.10 APK exposes account billing",
+      "Stopping preserves the paid expiry",
+      "Stop intent survives restarting the screen",
+      "Owner can undo the stop",
+      "Pricing and package choices stay inside Android",
+      "Authenticated checkout POST is allowed without exposing the token in a URL"
+    ],
+    "productionWrites": 0,
+    "providerRequests": 0,
+    "scope": "Large-tablet Android emulator, real bundled UI and disposable local API; payment creation intercepted"
+  },
+  "package": {
+    "signatureVerified": true,
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "bundleManifestEntriesVerified": 18,
+    "lintErrors": 0,
+    "unitTests": 25
+  },
+  "limits": [
+    "No live paid purchase, refund or cancellation was performed. Provider checks use isolated fixtures.",
+    "Current platform billing is prepaid with no automatic renewal. Stop records end-of-term intent; paid access remains until its original expiry.",
+    "Play distribution keeps subscription purchase restrictions; website APK enables the existing secure web checkout."
+  ]
+}

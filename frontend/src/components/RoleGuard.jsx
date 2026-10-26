@@ -17,22 +17,21 @@ export default function RoleGuard({ children }) {
     return <Navigate to="/geraina/login" replace />;
   }
 
-  // Expired trial blocks the ENTIRE app, not just plan-locked modules -- "starter" is itself
-  // a paid plan, so an account that never subscribed gets no app access at all until it does.
-  // Runs before the per-module PLAN_ROUTES gate below, applies to every role including Owner.
-  // The Pricing page lives outside this /app/* + RoleGuard tree (mounted at /geraina/pricing),
-  // so it stays reachable from here -- that's the only way out of this screen.
+  // Keep account billing available to an expired Owner while POS and other
+  // paid operations remain locked. Staff never acquire billing permissions.
+  const billingPage = ["/geraina/app/settings/billing", "/geraina/app/settings/subscription", "/geraina/app/billing"].includes(location.pathname.replace(/\/+$/, ""));
+  if (billingPage && user.role === "Owner") return children;
   if (user.plan === "expired") {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center space-y-4" data-testid="trial-expired-page">
         <div className="w-16 h-16 rounded-full bg-[hsl(9,65%,55%,0.12)] text-[hsl(9,65%,55%)] grid place-items-center">
           <Lock size={32} />
         </div>
-        <h1 className="font-display text-2xl font-bold">Masa Trial Berakhir</h1>
+        <h1 className="font-display text-2xl font-bold">Akses Paket Berakhir</h1>
         <p className="text-[hsl(var(--muted))] max-w-md text-sm">
-          Trial 14 hari Anda sudah berakhir dan belum ada langganan aktif. Pilih paket untuk mengaktifkan kembali akses ke seluruh fitur.
+          Masa akses Anda sudah berakhir. Pemilik toko dapat memilih paket untuk mengaktifkan kembali layanan.
         </p>
-        <a href="/geraina/pricing" className="btn-primary text-xs px-4 py-2 rounded-lg">Pilih Paket</a>
+        {user.role === "Owner" && <a href="/geraina/app/settings/billing" className="btn-primary text-xs px-4 py-2 rounded-lg">Kelola Paket</a>}
       </div>
     );
   }

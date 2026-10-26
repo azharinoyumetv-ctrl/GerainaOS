@@ -114,6 +114,12 @@ async def scenario(name: str):
         await db.products.update_one({'id': 'product-0000'}, {'$set': {'stock': 0}})
     elif name == 'expired':
         await db.users.update_one({'id': 'owner-a'}, {'$set': {'plan':'trial', 'trial_ends_at': (database.utcnow()-timedelta(days=1)).isoformat()}})
+    elif name in ('subscription-active', 'subscription-expired'):
+        subscription = {'tier': 'pro', 'period': 'monthly', 'status': 'active',
+            'order_id': 'DG-geraina-' + 'a' * 32, 'paid_at': database.utcnow().isoformat(),
+            'expires_at': (database.utcnow() + timedelta(days=20 if name == 'subscription-active' else -1)).isoformat()}
+        await db.users.update_one({'id': 'owner-a'}, {'$set': {'subscriptions.geraina': subscription}})
+        await db.stores.update_one({'id': 'store-a'}, {'$set': {'subscription': subscription, 'plan': 'pro'}})
     return {'ok': True}
 
 

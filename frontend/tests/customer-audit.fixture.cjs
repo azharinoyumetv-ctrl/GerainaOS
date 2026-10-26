@@ -9,15 +9,15 @@ const css = ['mobile-support.css','mobile-ui.css'].map(n => fs.readFileSync(path
 const native = ['android-bridge.js','device-features.js','mobile-ui.js'].map(n => fs.readFileSync(path.join(assets,n),'utf8').replace('__GERAINA_MOBILE_STYLE__',JSON.stringify(css))).join('\n');
 
 const test = base.extend({
-  auditRole: ['owner-a',{option:true}], seedProducts: [3,{option:true}],
-  app: async ({page,context,request,auditRole,seedProducts},use,info) => {
+  auditRole: ['owner-a',{option:true}], seedProducts: [3,{option:true}], nativeShell: [true,{option:true}],
+  app: async ({page,context,request,auditRole,seedProducts,nativeShell},use,info) => {
     const reset = await request.post(host+'/__audit/reset',{data:{products:seedProducts}});
     expect(reset.ok()).toBeTruthy();
     const auth = await request.post(host+'/api/auth/login',{data:{email:auditRole+'@example.com',password:'DisposableAudit123'}});
     expect(auth.status()).toBe(200);
     const session = await auth.json();
     const errors=[],reads=[],blocked=[]; let pending=0,closing=false;
-    await context.addInitScript({content:`window.__gerainaAppInfo={versionName:'1.2.6',versionCode:11,androidVersion:'14',model:'Local audit layout'};window.GerainaNative={postMessage:()=>{}};${native}`});
+    if (nativeShell) await context.addInitScript({content:`window.__gerainaSubscriptionPurchases=true;window.__gerainaAppInfo={versionName:'1.2.10',versionCode:15,androidVersion:'14',model:'Local audit layout'};window.GerainaNative={postMessage:()=>{}};${native}`});
     await context.route('**/*',async route => {
       // Keep the external-traffic barrier installed until the page is closed.
       // Finish existing proxy calls before Playwright disposes `request`.

@@ -203,3 +203,91 @@ def test_dapuros_yearly_payment_activates_its_own_catalog_tier(account, monkeypa
     assert apply_subscription(saved, "dapuros")["plan"] == "business"
     assert apply_subscription(saved, "geraina")["plan"] == "trial"
     assert datetime.fromisoformat(result["expires_at"]) == billing.term_end(NOW, "yearly")
+
+
+def billing_client(user):
+    app = FastAPI()
+    app.include_router(routes_subscriptions.router)
+    token = auth.create_access_token(user["id"], user["store_id"], user["role"], user["email"])
+    return TestClient(app), {"Authorization": "Bearer " + token, "X-DagangOS-Module": "geraina"}
+
+
+def activate(account, monkeypatch):
+    db, user = account
+    prepare(user)
+    monkeypatch.setattr(billing, "fetch_payment_status", AsyncMock(return_value=payment()))
+    run(billing.reconcile_order(ORDER))
+    return db, user
+
+
+def test_stop_retains_paid_access_survives_webhook_retries_and_can_be_undone(account, monkeypatch):
+    db, user = activate(account, monkeypatch)
+    with billing_client(user)[0] as client:
+        headers = billing_client(user)[1]
+        before = client.get("/api/subscriptions/current", headers=headers).json()
+        assert before["billing_model"] == "prepaid" and before["auto_renew"] is False
+        assert before["can_manage"] is True
+        for _ in range(2):
+            stopped = client.post("/api/subscriptions/cancel", headers=headers, json={"orderId": ORDER, "confirm": True})
+            assert stopped.status_code == 200, stopped.text
+            assert stopped.json()["subscription"]["cancel_at_period_end"] is True
+            assert stopped.json()["subscription"]["active"] is True
+            assert stopped.json()["subscription"]["expires_at"] == before["subscription"]["expires_at"]
+        run(billing.reconcile_order(ORDER))
+        current = client.get("/api/subscriptions/current", headers=headers).json()["subscription"]
+        assert current["cancel_at_period_end"] is True
+        assert run(auth.get_current_user(headers["Authorization"][7:], "geraina"))["plan"] == "starter"
+        assert run(db.stores.find_one({"id": STORE}))["subscription"]["status"] == "active"
+        resumed = client.post("/api/subscriptions/resume", headers=headers, json={"orderId": ORDER, "confirm": True})
+        assert resumed.status_code == 200
+        assert resumed.json()["subscription"]["cancel_at_period_end"] is False
+        assert resumed.json()["auto_renew"] is False  # undoing the notice cannot authorize auto-debit
+
+
+def test_stop_requires_owner_confirmation_current_order_and_does_not_touch_other_products(account, monkeypatch):
+    db, user = activate(account, monkeypatch)
+    run(db.users.update_one({"id": OWNER}, {"$set": {"subscriptions.dapuros": {"tier": "pro", "status": "active", "expires_at": (NOW + timedelta(days=20)).isoformat()}}}))
+    with billing_client(user)[0] as client:
+        headers = billing_client(user)[1]
+        assert client.post("/api/subscriptions/cancel", json={"orderId": ORDER, "confirm": True}).status_code == 401
+        for payload in ({"orderId": ORDER}, {"orderId": ORDER, "confirm": "true"}):
+            assert client.post("/api/subscriptions/cancel", headers=headers, json=payload).status_code == 400
+        assert client.post("/api/subscriptions/cancel", headers=headers, json={"orderId": "DG-geraina-" + "e" * 32, "confirm": True}).status_code == 409
+        assert client.post("/api/subscriptions/cancel", headers=headers, json={"orderId": ORDER, "confirm": True}).status_code == 200
+    saved = run(db.users.find_one({"id": OWNER}))
+    assert apply_subscription(saved, "dapuros")["plan"] == "pro"
+    for role in ("Manager", "Cashier", "Warehouse"):
+        employee = {**user, "id": role.lower(), "email": role.lower() + "@example.test", "role": role, "credential_version": 0}
+        run(db.users.insert_one(employee))
+        run(db.staff.insert_one({"id": "staff-" + role, "user_id": employee["id"], "store_id": STORE, "role": role, "status": "Aktif"}))
+        with billing_client(employee)[0] as client:
+            assert client.post("/api/subscriptions/cancel", headers=billing_client(employee)[1], json={"orderId": ORDER, "confirm": True}).status_code == 403
+    run(db.stores.update_one({"id": STORE}, {"$set": {"owner_user_id": "another-owner"}}))
+    with billing_client(user)[0] as client:
+        assert client.post("/api/subscriptions/resume", headers=billing_client(user)[1], json={"orderId": ORDER, "confirm": True}).status_code == 401
+
+
+def test_stopped_term_expires_normally_and_new_purchase_has_no_old_stop_flag(account, monkeypatch):
+    db, user = activate(account, monkeypatch)
+    with billing_client(user)[0] as client:
+        headers = billing_client(user)[1]
+        assert client.post("/api/subscriptions/cancel", headers=headers, json={"orderId": ORDER, "confirm": True}).status_code == 200
+        run(db.users.update_one({"id": OWNER}, {"$set": {"subscriptions.geraina.expires_at": (NOW - timedelta(seconds=1)).isoformat()}}))
+        assert client.get("/api/subscriptions/current", headers=headers).json()["subscription"]["active"] is False
+        assert client.post("/api/subscriptions/resume", headers=headers, json={"orderId": ORDER, "confirm": True}).status_code == 409
+    assert apply_subscription(run(db.users.find_one({"id": OWNER})), "geraina")["plan"] == "expired"
+    newer = "DG-geraina-" + "c" * 32
+    prepare(user, newer, "pro")
+    monkeypatch.setattr(billing, "fetch_payment_status", AsyncMock(return_value=payment(newer, "pro", at=NOW + timedelta(seconds=1))))
+    run(billing.reconcile_order(newer))
+    subscription = apply_subscription(run(db.users.find_one({"id": OWNER})), "geraina")["subscription"]
+    assert subscription["active"] is True and subscription["cancel_at_period_end"] is False
+
+
+def test_changing_billing_period_exposes_current_term_for_explicit_purchase_confirmation(account, monkeypatch):
+    db, user = activate(account, monkeypatch)
+    fresh = run(db.users.find_one({"id": OWNER}))
+    result = run(billing.prepare_order({"orderId": "DG-geraina-" + "f" * 32, "tier": "starter", "period": "yearly"}, {**user, "subscriptions": fresh["subscriptions"]}))
+    assert result["active_subscription"]["tier"] == "starter"
+    assert result["active_subscription"]["expires_at"] == fresh["subscriptions"]["geraina"]["expires_at"]
+    assert result["amount"] == 1490000

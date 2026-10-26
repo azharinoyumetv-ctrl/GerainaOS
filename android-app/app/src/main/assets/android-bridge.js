@@ -4,6 +4,9 @@
   window.__gerainaAndroid = true;
   const send = (type, payload = {}) => window.GerainaNative.postMessage(JSON.stringify({ type, ...payload }));
   const subscriptionPath = url => {
+    // Website-distributed APKs use the account's existing secure web checkout.
+    // A future Play build keeps the purchase gate until Play billing is wired.
+    if (window.__gerainaSubscriptionPurchases === true) return false;
     try {
       const parsed = new URL(url, location.href);
       // These pages only show account status. Their pricing/checkout links stay
@@ -61,7 +64,8 @@
     else if (url) send('open', { url: new URL(url, location.href).href });
     return null;
   };
-  // Existing accounts and free trials work here. SaaS purchases are not offered.
+  if (window.__gerainaSubscriptionPurchases === true) return;
+  // Play distribution keeps SaaS purchases gated independently of POS payments.
   const hide = element => { element.hidden = true; element.style.setProperty('display', 'none', 'important'); };
   const clean = () => {
     document.querySelectorAll('a[href], form[action]').forEach(element => {

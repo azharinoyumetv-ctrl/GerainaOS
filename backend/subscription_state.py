@@ -15,6 +15,11 @@ def subscription_for(user, module):
     except (KeyError, ValueError, TypeError):
         active = False
     result["active"] = active
+    preference = (user.get("subscription_preferences") or {}).get(module, {})
+    stopping = preference.get("order_id") == result.get("order_id") and preference.get("cancel_at_period_end") is True
+    result["cancel_at_period_end"] = stopping
+    if stopping:
+        result["cancel_requested_at"] = preference.get("cancel_requested_at")
     return result
 
 

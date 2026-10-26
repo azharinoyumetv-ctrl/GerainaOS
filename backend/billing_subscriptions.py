@@ -1,7 +1,8 @@
-"""Account-bound subscriptions; the portal verifies Midtrans using its existing key.
+"""Account-bound prepaid subscriptions; the portal verifies its Xendit invoice.
 
-Keep this module identical in both product backends. A browser redirect or webhook
-body never grants access: read payment truth from the fixed portal payment service.
+Shared payment proof rules apply to both products. Geraina additionally exposes
+active-term details for package-change confirmation. A redirect or webhook body
+never grants access: read payment truth from the fixed portal payment service.
 """
 import calendar
 import re
@@ -38,7 +39,7 @@ async def prepare_order(payload, user):
     if tier not in PRICES.get(module, {}) or period not in ("monthly", "yearly") or not isinstance(order_id, str) or not re.fullmatch(rf"DG-{module}-[a-f0-9]{{32}}", order_id):
         raise HTTPException(400, "Pilihan paket tidak valid")
     active = subscription_for(user, module)
-    if active and active["active"] and active["tier"] == tier:
+    if active and active["active"] and active["tier"] == tier and (module != "geraina" or active.get("period") == period):
         raise HTTPException(409, detail={"code": "subscription_active", "subscription": active})
     record = {
         "_id": order_id, "owner_id": user["id"], "store_id": user["store_id"],
@@ -56,7 +57,10 @@ async def prepare_order(payload, user):
         if not existing or any(existing.get(key) != record[key] for key in ("owner_id", "store_id", "module", "tier", "period", "amount")):
             raise HTTPException(409, "Pesanan tidak cocok dengan akun ini")
         record = existing
-    return {**{key: record[key] for key in ("owner_id", "store_id", "module", "tier", "period", "amount")}, "order_id": order_id, "email": user["email"]}
+    result = {**{key: record[key] for key in ("owner_id", "store_id", "module", "tier", "period", "amount")}, "order_id": order_id, "email": user["email"]}
+    if module == "geraina" and active and active["active"]:
+        result["active_subscription"] = {key: active.get(key) for key in ("tier", "period", "expires_at")}
+    return result
 
 
 async def attach_reference(order_id, receipt, user):
