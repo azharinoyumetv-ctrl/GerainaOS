@@ -23,7 +23,7 @@ const API_ENTITIES = [
   { label: "API Pemasok", base: "/api/suppliers", deletable: true, mk: (n) => ({ name: n, phone: "0811", email: "e2e@x.com", address: "-" }) },
   { label: "API Pelanggan", base: "/api/customers", deletable: true, mk: (n) => ({ name: n, phone: "0811" }) },
   { label: "API Membership", base: "/api/customers/memberships", deletable: false, mk: (n) => ({ name: n, min_points: 100, discount_percent: 5 }) },
-  { label: "API Staf", base: "/api/staff", deletable: true, mk: (n) => ({ name: n, email: `e2e.staff.${Date.now()}@gmail.com`, role: "Cashier", phone: "0811", status: "Aktif" }) },
+  { label: "API Staf", base: "/api/staff", deletable: true, softDeactivate: true, mk: (n) => ({ name: n, email: `e2e.staff.${Date.now()}@gmail.com`, role: "Cashier", phone: "0811", status: "Aktif", initial_password: `PosE2e9-${require("node:crypto").randomUUID()}` }) },
   { label: "API Cabang", base: "/api/branches", deletable: true, mk: (n) => ({ name: n, address: "-", phone: "0811" }) },
 ];
 
@@ -62,7 +62,8 @@ async function uiCrud(page, e, results) {
 async function apiCrud(request, headers, e, results) {
   const name = `E2E ${e.label} ${Date.now()}`;
   try {
-    const c = await request.post(e.base, { headers, data: e.mk(name) });
+    const payload = e.mk(name);
+    const c = await request.post(e.base, { headers, data: payload });
     if (!c.ok()) throw new Error(`create ${c.status()} ${(await c.text()).slice(0, 120)}`);
     const created = await c.json().catch(() => ({}));
 
@@ -72,11 +73,28 @@ async function apiCrud(request, headers, e, results) {
     const id = created.id || found.id;
 
     if (e.deletable) {
+      let employeeToken;
+      if (e.softDeactivate) {
+        const login = await request.post("/api/auth/login", { headers, data: { email: payload.email, password: payload.initial_password } });
+        if (!login.ok()) throw new Error(`staff login ${login.status()}`);
+        const session = await login.json();
+        if (session.user.role !== "Cashier" || session.user.must_change_password !== true) throw new Error("staf baru harus memakai peran akun dan mengganti password sementara");
+        employeeToken = session.access_token;
+        if (!employeeToken) throw new Error("token login staf tidak tersedia");
+      }
       const d = await request.delete(`${e.base}/${id}`, { headers });
       if (!d.ok()) throw new Error(`delete ${d.status()}`);
       list = asArray(await (await request.get(e.base, { headers })).json());
-      if (list.some((x) => x.id === id)) throw new Error("masih ada setelah delete");
-      results.push(`OK    ${e.label} (create/read/delete)`);
+      if (e.softDeactivate) {
+        const inactive = list.find((x) => x.id === id);
+        if (!inactive || inactive.status !== "Non-Aktif" || inactive.login_enabled !== false) throw new Error("staf nonaktif harus tetap memiliki riwayat dan tidak bisa login");
+        const denied = await request.get("/api/auth/me", { headers: { ...headers, Authorization: `Bearer ${employeeToken}` } });
+        if (denied.status() !== 401) throw new Error("sesi staf nonaktif harus ditolak");
+        results.push(`OK    ${e.label} (unique password, reset required, deactivate, revoke session)`);
+      } else {
+        if (list.some((x) => x.id === id)) throw new Error("masih ada setelah delete");
+        results.push(`OK    ${e.label} (create/read/delete)`);
+      }
     } else {
       results.push(`OK    ${e.label} (create/read; tanpa delete)`);
     }
