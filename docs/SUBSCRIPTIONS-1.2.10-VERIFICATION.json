@@ -17,7 +17,7 @@
     "published": true
   },
   "publicationAuthorized": true,
-  "published": false,
+  "published": true,
   "verifiedAt": "2026-10-26T23:34:30.706110+00:00",
   "backend": {
     "status": "passed",
@@ -239,5 +239,162 @@
     "No live paid purchase, refund or cancellation was performed. Provider checks use isolated fixtures.",
     "Current platform billing is prepaid with no automatic renewal. Stop records end-of-term intent; paid access remains until its original expiry.",
     "Play distribution keeps subscription purchase restrictions; website APK enables the existing secure web checkout."
-  ]
+  ],
+  "backendDeployment": {
+    "status": "passed",
+    "sourceCommit": "70e672e",
+    "checks": [
+      {
+        "origin": "https://geraina-os.vercel.app",
+        "path": "/api/subscriptions/cancel",
+        "status": 401
+      },
+      {
+        "origin": "https://geraina-os.vercel.app",
+        "path": "/api/subscriptions/resume",
+        "status": 401
+      },
+      {
+        "origin": "https://dagangos.com",
+        "path": "/api/subscriptions/cancel",
+        "status": 401
+      },
+      {
+        "origin": "https://dagangos.com",
+        "path": "/api/subscriptions/resume",
+        "status": 401
+      }
+    ],
+    "verifiedAt": "2026-10-26T23:35:35.707218+00:00"
+  },
+  "publishedVerifiedAt": "2026-10-26T23:43:47.258085+00:00",
+  "sourceCommit": "70e672e14fd7d35e433b52de7ef99557a035155a",
+  "publication": {
+    "releaseCommit": "ab2b4d86bcb2c278902dc2ffc1fd7ac89c69f82c",
+    "ci": {
+      "conclusion": "success",
+      "headSha": "ab2b4d86bcb2c278902dc2ffc1fd7ac89c69f82c",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "deploy",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "cloudflare-zone-audit",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "e2e-geraina",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "public-accessibility",
+          "status": "completed"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40420911026"
+    },
+    "manifest": {
+      "version": "1.2.10",
+      "versionCode": 15,
+      "applicationId": "com.dagangos.geraina",
+      "downloadUrl": "/downloads/geraina/Geraina-POS-1.2.10.apk",
+      "bytes": 17231203,
+      "sha256": "e7c0486f3274a4661a95b4cd155051cdd94a4755e935406e1cf297a177ff3352",
+      "minimumAndroid": "14.0",
+      "minimumSdk": 34,
+      "supportedAbis": [
+        "arm64-v8a",
+        "x86_64"
+      ],
+      "verifiedAt": "2026-10-26T23:34:30.706110+00:00",
+      "signingCertificateSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8"
+    },
+    "website": {
+      "status": "passed",
+      "base": "https://dagangos.com",
+      "version": "1.2.10",
+      "checks": [
+        "Listing, images and verified download links fit 1440px",
+        "Listing, images and verified download links fit 768px",
+        "Listing, images and verified download links fit 393px",
+        "Listing, images and verified download links fit 320px",
+        "Clicking Download saves the exact verified APK bytes",
+        "Unavailable release metadata leaves download buttons safely disabled"
+      ]
+    },
+    "frontend": {
+      "status": "passed",
+      "bundle": "/geraina/static/js/main.fa6d795e.js",
+      "checks": [
+        "Public application bundle contains subscription management and its confirmation control"
+      ],
+      "productionWrites": 0
+    },
+    "installedUpdate": {
+      "status": "passed",
+      "profile": "xiaomi12",
+      "mode": "real-system-upgrade",
+      "checks": [
+        {
+          "name": "Published 1.2.9 checks for a newer official update without forcing installation",
+          "status": "passed"
+        },
+        {
+          "name": "Postponing the update leaves the installed version unchanged",
+          "status": "passed"
+        },
+        {
+          "name": "Official APK downloads and is verified before requesting installation permission",
+          "status": "passed"
+        },
+        {
+          "name": "Denying installation permission leaves the current app usable",
+          "status": "passed"
+        },
+        {
+          "name": "Permission settings return to the standard Android update confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "Android installs the newer package over the existing app",
+          "status": "passed"
+        },
+        {
+          "name": "The update preserves stored preferences and the pending offline-sale record",
+          "status": "passed"
+        }
+      ],
+      "merchantWrites": 0,
+      "targetVersion": "1.2.10",
+      "targetVersionCode": 15,
+      "fromVersionCode": 14,
+      "sentinelId": "e1e4653c-62a1-49db-b0f7-f4cd0bbebf4f",
+      "finishedAt": "2026-10-26T23:40:29.133Z",
+      "sourceApkSha256": "fafda4e10e305ed5e0616fbdf69289b9982e7c9d83db2d7827a64019f46dbee8",
+      "apkSha256": "e7c0486f3274a4661a95b4cd155051cdd94a4755e935406e1cf297a177ff3352",
+      "installedApkVerified": true
+    },
+    "hostedChecks": [
+      {
+        "testId": "6aeabb04-2f07-46ac-ab0e-b5d7a715ae0c",
+        "runId": "9c4995a7-7747-4b7a-b99f-8f1eb28d6518",
+        "status": "passed",
+        "executionUrl": "https://www.testsprite.com/dashboard-v3/o/7468bfad-8578-53ea-8da7-d93ac8f0989d/projects/1466ba50-a196-4dc9-a160-f14658033239/execution/c122b8d5-cc03-407b-8d68-f82a6e8745c6/test/9c4995a7-7747-4b7a-b99f-8f1eb28d6518",
+        "apiOutput": "{\"status\": \"passed\", \"version\": \"1.2.10\", \"sha256\": \"e7c0486f3274a4661a95b4cd155051cdd94a4755e935406e1cf297a177ff3352\", \"merchantWrites\": 0}\n"
+      },
+      {
+        "testId": "e8c8bbdd-63d4-4197-ae73-43b27c686e60",
+        "runId": "9b1e6de1-5a7e-44d5-b8b4-7cf52e32cd61",
+        "status": "passed",
+        "executionUrl": "https://www.testsprite.com/dashboard-v3/o/7468bfad-8578-53ea-8da7-d93ac8f0989d/projects/1466ba50-a196-4dc9-a160-f14658033239/execution/d79cc04b-06d1-4fb4-a599-3e4272972fdd/test/9b1e6de1-5a7e-44d5-b8b4-7cf52e32cd61",
+        "apiOutput": "geraina: backend session rejection reached; selected package preserved; no payment created\ndapuros: backend session rejection reached; selected package preserved; no payment created\n"
+      }
+    ]
+  }
 }
