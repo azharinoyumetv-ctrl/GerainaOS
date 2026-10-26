@@ -6,9 +6,10 @@ const {join}=require('node:path');
 const {createHash,randomUUID}=require('node:crypto');
 const {_android}=require('../../frontend/node_modules/playwright');
 const root=join(__dirname,'..'),profileId=process.env.GERAINA_DEVICE_PROFILE||'phone',profile=require('./android-device-profiles.json')[profileId];
-const shipping=process.env.GERAINA_UPDATE_MODE==='shipping',upgrade=shipping||process.env.GERAINA_UPDATE_MODE==='upgrade',serial=`emulator-${profile.port}`,app='com.dagangos.geraina',fromCode=shipping?10:6;
-const apk=join(root,shipping?'releases/Geraina-POS-1.2.5.apk':upgrade?'build/update-tests/bootstrap.apk':'releases/Geraina-POS-1.2.6.apk');
-const out=join(root,'app/build/reports/updater',shipping?'shipping':profileId);mkdirSync(out,{recursive:true});
+const shipping=process.env.GERAINA_UPDATE_MODE==='shipping',upgrade=shipping||process.env.GERAINA_UPDATE_MODE==='upgrade',serial=`emulator-${profile.port}`,app='com.dagangos.geraina',fromCode=shipping?Number(process.env.GERAINA_UPDATE_FROM_CODE||10):6;
+const fromVersion=process.env.GERAINA_UPDATE_FROM_VERSION||'1.2.5',expectedVersion=process.env.GERAINA_UPDATE_EXPECT_VERSION;
+const apk=join(root,shipping?`releases/Geraina-POS-${fromVersion}.apk`:upgrade?'build/update-tests/bootstrap.apk':'releases/Geraina-POS-1.2.6.apk');
+const out=join(root,'app/build/reports/updater',shipping?(expectedVersion?`shipping-${expectedVersion}`:'shipping'):profileId);mkdirSync(out,{recursive:true});
 const report={status:'running',profile:profileId,mode:upgrade?'real-system-upgrade':'current-release',apkSha256:createHash('sha256').update(readFileSync(apk)).digest('hex'),checks:[],merchantWrites:0};
 const adbPath=join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe');
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -28,7 +29,7 @@ async function attach(){
 async function step(name,fn){await fn();report.checks.push({name,status:'passed'});console.log(`PASS: ${name}`);}
 async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa pembaruan"/);}
 (async()=>{try{
- adb(['install','-r',apk]);adb(['shell','am','force-stop',app]);
+ adb(['install','-r',...(shipping?['-d']:[]),apk]);adb(['shell','am','force-stop',app]);
  // Start current-release checks offline so an old fixture session cannot race the
  // debugger with a production auth redirect before our isolated routes are installed.
  adb(['shell','svc','wifi',upgrade?'enable':'disable']);adb(['shell','svc','data',upgrade?'enable':'disable']);
@@ -38,8 +39,8 @@ async function manual(){tap(/content-desc="Menu aplikasi"/);tap(/text="Periksa p
  await page.reload({waitUntil:'domcontentloaded'});await page.getByTestId('login-form').waitFor();
  if(!upgrade){adb(['shell','svc','wifi','enable']);adb(['shell','svc','data','enable']);await page.waitForFunction(()=>navigator.onLine);}
  if(upgrade){
-  const official=await(await fetch('https://dagangos.com/downloads/geraina/latest.json')).json();assert.ok(official.versionCode>fromCode);assert.match(official.version,/^\d+\.\d+\.\d+$/);report.targetVersion=official.version;report.targetVersionCode=official.versionCode;report.fromVersionCode=fromCode;
-  await step(shipping?'Published 1.2.5 checks for a newer official update without forcing installation':'Automatic check offers the newer official release without opening an installer',async()=>{if(shipping){await manual();await tree(/Unduh pembaruan/);tap(/text="Nanti"/);}await tree(new RegExp(`Geraina ${official.version.replaceAll('.','\\.')} tersedia`));assert.ok(!/packageinstaller|permissioncontroller:id\/permission/.test(xml()));capture('automatic-update-banner');});
+  const official=await(await fetch('https://dagangos.com/downloads/geraina/latest.json')).json();assert.ok(official.versionCode>fromCode);assert.match(official.version,/^\d+\.\d+\.\d+$/);if(expectedVersion)assert.equal(official.version,expectedVersion);report.targetVersion=official.version;report.targetVersionCode=official.versionCode;report.fromVersionCode=fromCode;
+  await step(shipping?`Published ${fromVersion} checks for a newer official update without forcing installation`:'Automatic check offers the newer official release without opening an installer',async()=>{if(shipping){await manual();await tree(/Unduh pembaruan/);tap(/text="Nanti"/);}await tree(new RegExp(`Geraina ${official.version.replaceAll('.','\\.')} tersedia`));assert.ok(!/packageinstaller|permissioncontroller:id\/permission/.test(xml()));capture('automatic-update-banner');});
   await step('Postponing the update leaves the installed version unchanged',async()=>{tap(/content-desc="Perbarui Geraina"/);await tree(/Unduh pembaruan/);tap(/text="Nanti"/);assert.equal(installedCode(),fromCode);});
   const sentinel=randomUUID();report.sentinelId=sentinel;
   await page.evaluate(async value=>{
