@@ -18,7 +18,7 @@
     "published": true
   },
   "publicationAuthorized": true,
-  "published": false,
+  "published": true,
   "verifiedAt": "2026-10-27T05:47:44.085577+00:00",
   "purchaseBrowser": {
     "status": "passed",
@@ -48,7 +48,7 @@
         "profile": "phone",
         "scenario": "slow-click",
         "status": "passed",
-        "feedbackMs": 0.7000000029802322,
+        "feedbackMs": 0.8000000044703484,
         "posts": 1
       },
       {
@@ -132,7 +132,7 @@
         "profile": "xiaomi",
         "scenario": "confirmation",
         "status": "passed",
-        "feedbackMs": 0.3999999985098839,
+        "feedbackMs": 0.5,
         "posts": 1
       },
       {
@@ -188,7 +188,7 @@
         "profile": "samsung",
         "scenario": "confirmation",
         "status": "passed",
-        "feedbackMs": 0.5,
+        "feedbackMs": 0.3999999985098839,
         "posts": 1
       }
     ],
@@ -657,5 +657,193 @@
   "limits": [
     "No real invoice, charge, refund or customer subscription change was made during these checks.",
     "Feedback timings measure local UI response; live Xendit processing latency was not measured."
-  ]
+  ],
+  "publishedVerifiedAt": "2026-10-27T05:58:18.544738+00:00",
+  "sourceCommit": "0ef522d77a7f23b7e148918d9071d8b3080c478e",
+  "publication": {
+    "releaseCommit": "c34bb94a6bb9c1b0b3ecda9a30b8b723bc364097",
+    "ci": {
+      "conclusion": "success",
+      "headSha": "c34bb94a6bb9c1b0b3ecda9a30b8b723bc364097",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "cloudflare-zone-audit",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "deploy",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "public-accessibility",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "e2e-geraina",
+          "status": "completed"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40457508255"
+    },
+    "manifest": {
+      "version": "1.2.11",
+      "versionCode": 16,
+      "applicationId": "com.dagangos.geraina",
+      "downloadUrl": "/downloads/geraina/Geraina-POS-1.2.11.apk",
+      "bytes": 17231323,
+      "sha256": "27282182840a453eb8c630b7432792384ce5166619425ffe7c5c3eb00c77d81a",
+      "minimumAndroid": "14.0",
+      "minimumSdk": 34,
+      "supportedAbis": [
+        "arm64-v8a",
+        "x86_64"
+      ],
+      "verifiedAt": "2026-10-27T05:47:44.085577+00:00",
+      "signingCertificateSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8"
+    },
+    "website": {
+      "status": "passed",
+      "base": "https://dagangos.com",
+      "version": "1.2.11",
+      "checks": [
+        "Listing, images and verified download links fit 1440px",
+        "Listing, images and verified download links fit 768px",
+        "Listing, images and verified download links fit 393px",
+        "Listing, images and verified download links fit 320px",
+        "Clicking Download saves the exact verified APK bytes",
+        "Unavailable release metadata leaves download buttons safely disabled"
+      ]
+    },
+    "publicPurchase": {
+      "status": "passed",
+      "results": [
+        {
+          "profile": "phone",
+          "status": "passed",
+          "feedbackMs": 0.6999999955296516,
+          "checkoutPosts": 1,
+          "assets": [
+            {
+              "url": "https://dagangos.com/subscription-pricing.js?v=20261027b",
+              "status": 200
+            },
+            {
+              "url": "https://dagangos.com/subscription-feedback.css?v=20261027b",
+              "status": 200
+            },
+            {
+              "url": "https://dagangos.com/subscription-feedback.js?v=20261027b",
+              "status": 200
+            }
+          ]
+        },
+        {
+          "profile": "xiaomi",
+          "status": "passed",
+          "feedbackMs": 0.7999999970197678,
+          "checkoutPosts": 1,
+          "assets": [
+            {
+              "url": "https://dagangos.com/subscription-pricing.js?v=20261027b",
+              "status": 200
+            },
+            {
+              "url": "https://dagangos.com/subscription-feedback.css?v=20261027b",
+              "status": 200
+            },
+            {
+              "url": "https://dagangos.com/subscription-feedback.js?v=20261027b",
+              "status": 200
+            }
+          ]
+        },
+        {
+          "profile": "samsung",
+          "status": "passed",
+          "feedbackMs": 0.7999999970197678,
+          "checkoutPosts": 1,
+          "assets": [
+            {
+              "url": "https://dagangos.com/subscription-feedback.css?v=20261027b",
+              "status": 200
+            },
+            {
+              "url": "https://dagangos.com/subscription-feedback.js?v=20261027b",
+              "status": 200
+            },
+            {
+              "url": "https://dagangos.com/subscription-pricing.js?v=20261027b",
+              "status": 200
+            }
+          ]
+        }
+      ],
+      "productionWrites": 0,
+      "providerRequests": 0
+    },
+    "frontend": {
+      "status": "passed",
+      "bundle": "/geraina/static/js/main.80a1994d.js",
+      "checks": [
+        "Published application contains the colored tier notices and purchase loading state"
+      ],
+      "productionWrites": 0
+    },
+    "installedUpdate": {
+      "status": "passed",
+      "profile": "xiaomi12",
+      "mode": "real-system-upgrade",
+      "checks": [
+        {
+          "name": "Published 1.2.10 checks for a newer official update without forcing installation",
+          "status": "passed"
+        },
+        {
+          "name": "Postponing the update leaves the installed version unchanged",
+          "status": "passed"
+        },
+        {
+          "name": "Official APK downloads and is verified before requesting installation permission",
+          "status": "passed"
+        },
+        {
+          "name": "Denying installation permission leaves the current app usable",
+          "status": "passed"
+        },
+        {
+          "name": "Permission settings return to the standard Android update confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "Android installs the newer package over the existing app",
+          "status": "passed"
+        },
+        {
+          "name": "The update preserves stored preferences and the pending offline-sale record",
+          "status": "passed"
+        }
+      ],
+      "merchantWrites": 0,
+      "targetVersion": "1.2.11",
+      "targetVersionCode": 16,
+      "fromVersionCode": 15,
+      "sentinelId": "fac49267-6121-4fc3-9476-002bf24ece79",
+      "finishedAt": "2026-10-27T05:53:42.986Z",
+      "sourceApkSha256": "e7c0486f3274a4661a95b4cd155051cdd94a4755e935406e1cf297a177ff3352",
+      "apkSha256": "27282182840a453eb8c630b7432792384ce5166619425ffe7c5c3eb00c77d81a",
+      "installedApkVerified": true
+    },
+    "hostedCheck": {
+      "testId": "6aeabb04-2f07-46ac-ab0e-b5d7a715ae0c",
+      "runId": "093ed0e4-9cf1-4fb9-b5c6-cf040f722877",
+      "status": "passed",
+      "executionUrl": "https://www.testsprite.com/dashboard-v3/o/7468bfad-8578-53ea-8da7-d93ac8f0989d/projects/1466ba50-a196-4dc9-a160-f14658033239/execution/7999a07e-e223-4c97-957d-e218dcfc8097/test/093ed0e4-9cf1-4fb9-b5c6-cf040f722877",
+      "apiOutput": "{\"status\": \"passed\", \"version\": \"1.2.11\", \"sha256\": \"27282182840a453eb8c630b7432792384ce5166619425ffe7c5c3eb00c77d81a\", \"merchantWrites\": 0}\n"
+    }
+  }
 }
