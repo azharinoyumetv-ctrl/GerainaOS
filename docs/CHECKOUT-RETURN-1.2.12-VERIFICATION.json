@@ -17,7 +17,7 @@
     "published": true
   },
   "publicationAuthorized": true,
-  "published": false,
+  "published": true,
   "verifiedAt": "2026-10-27T06:22:57.963674+00:00",
   "regressionBaseline": {
     "status": "reproduced",
@@ -214,5 +214,118 @@
   "limits": [
     "The external unpaid checkout screen is a network-disabled Android fixture. No live invoice or payment was created.",
     "Backend payment and entitlement logic is unchanged from the published 1.2.11 release."
-  ]
+  ],
+  "publishedVerifiedAt": "2026-10-27T06:34:48.050954+00:00",
+  "sourceCommit": "3e9c05855688d95663ac75cd94aad195820dc898",
+  "publication": {
+    "releaseCommit": "0d4ff3aad587f910960185e90e0d16117b5cef20",
+    "ci": {
+      "conclusion": "success",
+      "headSha": "0d4ff3aad587f910960185e90e0d16117b5cef20",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "name": "deploy",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "cloudflare-zone-audit",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "e2e-geraina",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "public-accessibility",
+          "status": "completed"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40461215459"
+    },
+    "manifest": {
+      "version": "1.2.12",
+      "versionCode": 17,
+      "applicationId": "com.dagangos.geraina",
+      "downloadUrl": "/downloads/geraina/Geraina-POS-1.2.12.apk",
+      "bytes": 17231399,
+      "sha256": "6da08c531e0d80c4ba630cb3ab4f317961b45aa8a1d3b16dce51d973c92e3323",
+      "minimumAndroid": "14.0",
+      "minimumSdk": 34,
+      "supportedAbis": [
+        "arm64-v8a",
+        "x86_64"
+      ],
+      "verifiedAt": "2026-10-27T06:22:57.963674+00:00",
+      "signingCertificateSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8"
+    },
+    "website": {
+      "status": "passed",
+      "base": "https://dagangos.com",
+      "version": "1.2.12",
+      "checks": [
+        "Listing, images and verified download links fit 1440px",
+        "Listing, images and verified download links fit 768px",
+        "Listing, images and verified download links fit 393px",
+        "Listing, images and verified download links fit 320px",
+        "Clicking Download saves the exact verified APK bytes",
+        "Unavailable release metadata leaves download buttons safely disabled"
+      ]
+    },
+    "installedUpdate": {
+      "status": "passed",
+      "profile": "xiaomi12",
+      "mode": "real-system-upgrade",
+      "checks": [
+        {
+          "name": "Published 1.2.11 checks for a newer official update without forcing installation",
+          "status": "passed"
+        },
+        {
+          "name": "Postponing the update leaves the installed version unchanged",
+          "status": "passed"
+        },
+        {
+          "name": "Official APK downloads and is verified before requesting installation permission",
+          "status": "passed"
+        },
+        {
+          "name": "Denying installation permission leaves the current app usable",
+          "status": "passed"
+        },
+        {
+          "name": "Permission settings return to the standard Android update confirmation",
+          "status": "passed"
+        },
+        {
+          "name": "Android installs the newer package over the existing app",
+          "status": "passed"
+        },
+        {
+          "name": "The update preserves stored preferences and the pending offline-sale record",
+          "status": "passed"
+        }
+      ],
+      "merchantWrites": 0,
+      "targetVersion": "1.2.12",
+      "targetVersionCode": 17,
+      "fromVersionCode": 16,
+      "sentinelId": "63a1b86a-fef7-4242-8164-65cd45dae36e",
+      "finishedAt": "2026-10-27T06:31:34.984Z",
+      "sourceApkSha256": "27282182840a453eb8c630b7432792384ce5166619425ffe7c5c3eb00c77d81a",
+      "apkSha256": "6da08c531e0d80c4ba630cb3ab4f317961b45aa8a1d3b16dce51d973c92e3323",
+      "installedApkVerified": true
+    },
+    "hostedCheck": {
+      "testId": "6aeabb04-2f07-46ac-ab0e-b5d7a715ae0c",
+      "runId": "ec8381af-0b55-422b-80d5-5be20e336e9e",
+      "status": "passed",
+      "executionUrl": "https://www.testsprite.com/dashboard-v3/o/7468bfad-8578-53ea-8da7-d93ac8f0989d/projects/1466ba50-a196-4dc9-a160-f14658033239/execution/3c17eab2-8675-4d38-a729-949e4089db7a/test/ec8381af-0b55-422b-80d5-5be20e336e9e",
+      "apiOutput": "{\"status\": \"passed\", \"version\": \"1.2.12\", \"sha256\": \"6da08c531e0d80c4ba630cb3ab4f317961b45aa8a1d3b16dce51d973c92e3323\", \"merchantWrites\": 0}\n"
+    }
+  }
 }
