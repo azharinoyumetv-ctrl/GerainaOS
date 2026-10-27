@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
-import { Check, ArrowRight, ChevronDown } from "lucide-react";
+import { Check, ArrowRight, ChevronDown, Loader2 } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 import { toast } from "@/components/ui/sonner";
 
@@ -32,8 +32,16 @@ export default function Pricing() {
   const [addons, setAddons] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
   const [billing, setBilling] = useState("yearly");
-  const { user, refresh } = useAuth();
+  const { user } = useAuth();
   const [upgradingId, setUpgradingId] = useState(null);
+  const purchasing = useRef(false);
+  useEffect(() => {
+    const returned = event => {
+      if (event.persisted) { purchasing.current = false; setUpgradingId(null); }
+    };
+    window.addEventListener("pageshow", returned);
+    return () => window.removeEventListener("pageshow", returned);
+  }, []);
   // Whether this authenticated account already has a Geraina store. null = not checked yet
   // (don't render either way until known, to avoid flashing the wrong CTA). This is what lets
   // us show a real "Aktifkan Geraina" entry point for a DagangOS account that has a store in
@@ -47,7 +55,7 @@ export default function Pricing() {
   const [buyingAddonId, setBuyingAddonId] = useState(null);
 
   useEffect(() => {
-    api.get("/pricing/tiers").then((r) => setTiers(r.data)).catch(() => {});
+    api.get("/pricing/tiers").then((r) => setTiers((r.data || []).filter(t => ["starter", "pro", "business"].includes(t.id)))).catch(() => {});
     api.get("/pricing/addons").then((r) => setAddons(r.data)).catch(() => {});
   }, []);
 
@@ -69,25 +77,16 @@ export default function Pricing() {
   const isYearly = billing === "yearly";
 
   const handleUpgrade = async (tierId) => {
-    if (['starter', 'pro', 'business'].includes(tierId)) {
-      sessionStorage.setItem('dagangos_checkout_geraina', JSON.stringify({ tier: tierId, period: billing, expires: Date.now() + 1800000 }));
-      window.location.assign(`/geraina/pricing?period=${billing}&plan=${tierId}&checkout=1`);
-      return;
-    }
+    if (purchasing.current || !['starter', 'pro', 'business'].includes(tierId)) return;
+    purchasing.current = true;
     setUpgradingId(tierId);
     try {
-      const res = await api.post("/pricing/upgrade", { tier_id: tierId });
-      await refresh();
-      if (res?.data?.status === "pending_manual_activation") {
-        toast.success(res.data.message || "Permintaan upgrade tercatat, menunggu aktivasi manual.");
-      } else {
-        toast.success(`Sukses mengubah paket ke ${tierId.toUpperCase()}!`);
-      }
+      sessionStorage.setItem('dagangos_checkout_geraina', JSON.stringify({ tier: tierId, period: billing, expires: Date.now() + 1800000 }));
+      requestAnimationFrame(() => requestAnimationFrame(() => window.location.assign(`/geraina/pricing?period=${billing}&plan=${tierId}&checkout=1`)));
     } catch (err) {
-      const msg = err?.response?.data?.detail || "Gagal terhubung ke server.";
-      toast.error(`Gagal mengubah paket ke ${tierId.toUpperCase()}: ${msg}`);
-    } finally {
+      purchasing.current = false;
       setUpgradingId(null);
+      toast.error("Pembelian belum dapat dibuka. Coba lagi.");
     }
   };
 
@@ -171,7 +170,7 @@ export default function Pricing() {
       </section>
 
       <section className="py-10 px-5 sm:px-8">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tiers.map((t) => (
             <div key={t.id} className={`rounded-2xl bg-white flex flex-col relative ${t.highlight ? "p-7" : "p-6"}`} style={{ border: t.highlight ? `2px solid ${TEAL}` : `1px solid ${LINE}`, boxShadow: t.highlight ? "0 16px 40px -12px rgba(13,148,136,0.35)" : "none" }} data-testid={`pricing-card-${t.id}`}>
               {t.badge && <span className="absolute -top-3 left-6 text-[11px] font-bold px-2.5 py-1 rounded-full text-white" style={{ background: TEAL }} data-testid={`pricing-badge-${t.id}`}>{t.badge}</span>}
@@ -190,17 +189,7 @@ export default function Pricing() {
                   <li key={f} className="flex gap-2"><Check size={16} style={{ color: TEAL }} className="shrink-0 mt-0.5" /><span>{f}</span></li>
                 ))}
               </ul>
-              {t.id !== "trial" ? (
-                <a href={`/geraina/checkout?plan=${t.id}&period=${billing}`} className="mt-auto w-full text-center py-2.5 rounded-xl border font-semibold text-sm" style={{ borderColor: LINE, color: INK }} data-testid={`pricing-cta-${t.id}`}>Beli {t.name} →</a>
-              ) : user ? (
-                user.plan === t.id ? (
-                  <button disabled className="mt-auto w-full py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed" style={{ background: "#eef2f0", color: MUTED }} data-testid={`pricing-cta-${t.id}`}>Paket Aktif</button>
-                ) : (
-                  <button onClick={() => handleUpgrade(t.id)} disabled={upgradingId !== null} className="mt-auto w-full py-2.5 rounded-xl text-white font-semibold text-sm" style={{ background: TEAL }} data-testid={`pricing-cta-${t.id}`}>{upgradingId === t.id ? "Memproses…" : `Pilih ${t.name}`} →</button>
-                )
-              ) : (
-                <Link to="/geraina/register" className="mt-auto w-full text-center py-2.5 rounded-xl font-semibold text-sm" style={t.highlight ? { background: TEAL, color: "#fff" } : { border: `1px solid ${LINE}`, color: INK }} data-testid={`pricing-cta-${t.id}`}>{t.cta} →</Link>
-              )}
+                <button type="button" onClick={() => handleUpgrade(t.id)} disabled={upgradingId !== null} aria-busy={upgradingId === t.id} className="mt-auto w-full flex items-center justify-center gap-2 text-center py-2.5 rounded-xl border font-semibold text-sm disabled:opacity-60" style={{ borderColor: LINE, color: INK }} data-testid={`pricing-cta-${t.id}`}>{upgradingId === t.id ? <><Loader2 size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> Membuka pembayaran…</> : <>Beli {t.name} →</>}</button>
             </div>
           ))}
         </div>

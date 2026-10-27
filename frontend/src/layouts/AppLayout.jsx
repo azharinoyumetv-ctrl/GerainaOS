@@ -12,6 +12,14 @@ import {
 
 import { sectionMenu, isPlanLocked as isLocked, PLAN_LABEL } from "@/navigation/sections";
 
+const TIER_COLORS = {
+  trial: { backgroundColor: "#fef3c7", color: "#78350f", borderColor: "#fbbf24" },
+  starter: { backgroundColor: "#dcfce7", color: "#14532d", borderColor: "#86efac" },
+  pro: { backgroundColor: "#dbeafe", color: "#1e3a8a", borderColor: "#93c5fd" },
+  business: { backgroundColor: "#f3e8ff", color: "#581c87", borderColor: "#d8b4fe" },
+  expired: { backgroundColor: "#fee2e2", color: "#7f1d1d", borderColor: "#fca5a5" },
+};
+
 export const MENU_STRUCTURE = [
   { to: "/geraina/app/dashboard", icon: LayoutDashboard, label: "Dasbor", key: "dashboard" },
   { to: "/geraina/app/pos", icon: ShoppingCart, label: "Kasir", key: "pos" },
@@ -404,7 +412,8 @@ export default function AppLayout() {
         </nav>
 
         <TierNotice {...(role === "Owner" ? { to: "/geraina/app/settings/billing", title: "Informasi paket" } : {})}
-          className="mx-3 my-2 flex h-9 shrink-0 items-center gap-1.5 rounded-md px-2 text-[11px] font-medium whitespace-nowrap bg-white/5"
+          className="mx-3 my-2 flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium whitespace-nowrap"
+          style={TIER_COLORS[isTrial ? "trial" : user?.plan] || TIER_COLORS.expired}
           data-testid="tier-notice">
           <Crown size={14} className="shrink-0" aria-hidden="true" />
           <span className="font-semibold" data-testid="tier-name">{tierLabel}</span>

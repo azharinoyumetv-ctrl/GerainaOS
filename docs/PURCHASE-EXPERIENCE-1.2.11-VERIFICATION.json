@@ -1,0 +1,661 @@
+{
+  "schemaVersion": 7,
+  "status": "passed",
+  "version": "1.2.11",
+  "versionCode": 16,
+  "applicationId": "com.dagangos.geraina",
+  "minimumSdk": 34,
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "apkSha256": "27282182840a453eb8c630b7432792384ce5166619425ffe7c5c3eb00c77d81a",
+  "bytes": 17231323,
+  "backendChanged": false,
+  "paymentProtocolChanged": false,
+  "baseRelease": {
+    "version": "1.2.10",
+    "published": true
+  },
+  "publicationAuthorized": true,
+  "published": false,
+  "verifiedAt": "2026-10-27T05:47:44.085577+00:00",
+  "purchaseBrowser": {
+    "status": "passed",
+    "results": [
+      {
+        "profile": "phone",
+        "scenario": "active",
+        "status": "passed",
+        "posts": 1,
+        "currentRequests": 1
+      },
+      {
+        "profile": "phone",
+        "scenario": "provider-unavailable",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 1
+      },
+      {
+        "profile": "phone",
+        "scenario": "anonymous",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 0
+      },
+      {
+        "profile": "phone",
+        "scenario": "slow-click",
+        "status": "passed",
+        "feedbackMs": 0.7000000029802322,
+        "posts": 1
+      },
+      {
+        "profile": "phone",
+        "scenario": "resume",
+        "status": "passed",
+        "posts": 1,
+        "currentRequests": 0
+      },
+      {
+        "profile": "phone",
+        "scenario": "forged-resume",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 1
+      },
+      {
+        "profile": "phone",
+        "scenario": "expired-intent",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 1
+      },
+      {
+        "profile": "phone",
+        "scenario": "confirmation",
+        "status": "passed",
+        "feedbackMs": 0.5,
+        "posts": 1
+      },
+      {
+        "profile": "xiaomi",
+        "scenario": "active",
+        "status": "passed",
+        "posts": 1,
+        "currentRequests": 1
+      },
+      {
+        "profile": "xiaomi",
+        "scenario": "provider-unavailable",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 1
+      },
+      {
+        "profile": "xiaomi",
+        "scenario": "anonymous",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 0
+      },
+      {
+        "profile": "xiaomi",
+        "scenario": "slow-click",
+        "status": "passed",
+        "feedbackMs": 0.7000000029802322,
+        "posts": 1
+      },
+      {
+        "profile": "xiaomi",
+        "scenario": "resume",
+        "status": "passed",
+        "posts": 1,
+        "currentRequests": 0
+      },
+      {
+        "profile": "xiaomi",
+        "scenario": "forged-resume",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 1
+      },
+      {
+        "profile": "xiaomi",
+        "scenario": "expired-intent",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 1
+      },
+      {
+        "profile": "xiaomi",
+        "scenario": "confirmation",
+        "status": "passed",
+        "feedbackMs": 0.3999999985098839,
+        "posts": 1
+      },
+      {
+        "profile": "samsung",
+        "scenario": "active",
+        "status": "passed",
+        "posts": 1,
+        "currentRequests": 1
+      },
+      {
+        "profile": "samsung",
+        "scenario": "provider-unavailable",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 1
+      },
+      {
+        "profile": "samsung",
+        "scenario": "anonymous",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 0
+      },
+      {
+        "profile": "samsung",
+        "scenario": "slow-click",
+        "status": "passed",
+        "feedbackMs": 0.6000000014901161,
+        "posts": 1
+      },
+      {
+        "profile": "samsung",
+        "scenario": "resume",
+        "status": "passed",
+        "posts": 1,
+        "currentRequests": 0
+      },
+      {
+        "profile": "samsung",
+        "scenario": "forged-resume",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 1
+      },
+      {
+        "profile": "samsung",
+        "scenario": "expired-intent",
+        "status": "passed",
+        "posts": 0,
+        "currentRequests": 1
+      },
+      {
+        "profile": "samsung",
+        "scenario": "confirmation",
+        "status": "passed",
+        "feedbackMs": 0.5,
+        "posts": 1
+      }
+    ],
+    "productionWrites": 0,
+    "providerRequests": 0
+  },
+  "tierBrowser": {
+    "status": "passed",
+    "colors": [
+      {
+        "plan": "trial",
+        "profile": "phone",
+        "height": 36,
+        "x": 2.1771116256713867,
+        "right": 278.1771116256714,
+        "width": 274,
+        "scroll": 274,
+        "background": "rgb(254, 243, 199)",
+        "color": "rgb(120, 53, 15)",
+        "contrast": 8.147351692651375
+      },
+      {
+        "plan": "starter",
+        "profile": "phone",
+        "height": 36,
+        "x": 2.1771116256713867,
+        "right": 278.1771116256714,
+        "width": 274,
+        "scroll": 274,
+        "background": "rgb(220, 252, 231)",
+        "color": "rgb(20, 83, 45)",
+        "contrast": 8.29574712745287
+      },
+      {
+        "plan": "pro",
+        "profile": "phone",
+        "height": 36,
+        "x": 2.1771116256713867,
+        "right": 278.1771116256714,
+        "width": 274,
+        "scroll": 274,
+        "background": "rgb(219, 234, 254)",
+        "color": "rgb(30, 58, 138)",
+        "contrast": 8.489743903584975
+      },
+      {
+        "plan": "business",
+        "profile": "phone",
+        "height": 36,
+        "x": 2.1321582794189453,
+        "right": 278.13215827941895,
+        "width": 274,
+        "scroll": 274,
+        "background": "rgb(243, 232, 255)",
+        "color": "rgb(88, 28, 135)",
+        "contrast": 9.217261896108543
+      },
+      {
+        "plan": "expired",
+        "profile": "phone",
+        "height": 36,
+        "x": 2.1771116256713867,
+        "right": 278.1771116256714,
+        "width": 274,
+        "scroll": 274,
+        "background": "rgb(254, 226, 226)",
+        "color": "rgb(127, 29, 29)",
+        "contrast": 8.202187642119998
+      },
+      {
+        "plan": "trial",
+        "profile": "xiaomi",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(254, 243, 199)",
+        "color": "rgb(120, 53, 15)",
+        "contrast": 8.147351692651375
+      },
+      {
+        "plan": "starter",
+        "profile": "xiaomi",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(220, 252, 231)",
+        "color": "rgb(20, 83, 45)",
+        "contrast": 8.29574712745287
+      },
+      {
+        "plan": "pro",
+        "profile": "xiaomi",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(219, 234, 254)",
+        "color": "rgb(30, 58, 138)",
+        "contrast": 8.489743903584975
+      },
+      {
+        "plan": "business",
+        "profile": "xiaomi",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(243, 232, 255)",
+        "color": "rgb(88, 28, 135)",
+        "contrast": 9.217261896108543
+      },
+      {
+        "plan": "expired",
+        "profile": "xiaomi",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(254, 226, 226)",
+        "color": "rgb(127, 29, 29)",
+        "contrast": 8.202187642119998
+      },
+      {
+        "plan": "trial",
+        "profile": "samsung",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(254, 243, 199)",
+        "color": "rgb(120, 53, 15)",
+        "contrast": 8.147351692651375
+      },
+      {
+        "plan": "starter",
+        "profile": "samsung",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(220, 252, 231)",
+        "color": "rgb(20, 83, 45)",
+        "contrast": 8.29574712745287
+      },
+      {
+        "plan": "pro",
+        "profile": "samsung",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(219, 234, 254)",
+        "color": "rgb(30, 58, 138)",
+        "contrast": 8.489743903584975
+      },
+      {
+        "plan": "business",
+        "profile": "samsung",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(243, 232, 255)",
+        "color": "rgb(88, 28, 135)",
+        "contrast": 9.217261896108543
+      },
+      {
+        "plan": "expired",
+        "profile": "samsung",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(254, 226, 226)",
+        "color": "rgb(127, 29, 29)",
+        "contrast": 8.202187642119998
+      }
+    ],
+    "checks": [
+      {
+        "profile": "phone",
+        "name": "React purchase shows three paid tiers and immediate feedback without the legacy checkout detour",
+        "status": "passed"
+      },
+      {
+        "profile": "xiaomi",
+        "name": "React purchase shows three paid tiers and immediate feedback without the legacy checkout detour",
+        "status": "passed"
+      },
+      {
+        "profile": "samsung",
+        "name": "React purchase shows three paid tiers and immediate feedback without the legacy checkout detour",
+        "status": "passed"
+      }
+    ],
+    "productionWrites": 0
+  },
+  "purchaseAndroid": {
+    "status": "passed",
+    "installed": {
+      "versionName": "1.2.11",
+      "versionCode": 16,
+      "subscriptionPurchases": true,
+      "androidVersion": "16",
+      "model": "unknown Android SDK built for x86_64"
+    },
+    "apkSha256": "27282182840a453eb8c630b7432792384ce5166619425ffe7c5c3eb00c77d81a",
+    "colors": [
+      {
+        "plan": "trial",
+        "profile": "native",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(254, 243, 199)",
+        "color": "rgb(120, 53, 15)",
+        "contrast": 8.147351692651375
+      },
+      {
+        "plan": "starter",
+        "profile": "native",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(220, 252, 231)",
+        "color": "rgb(20, 83, 45)",
+        "contrast": 8.29574712745287
+      },
+      {
+        "plan": "pro",
+        "profile": "native",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(219, 234, 254)",
+        "color": "rgb(30, 58, 138)",
+        "contrast": 8.489743903584975
+      },
+      {
+        "plan": "business",
+        "profile": "native",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(243, 232, 255)",
+        "color": "rgb(88, 28, 135)",
+        "contrast": 9.217261896108543
+      },
+      {
+        "plan": "expired",
+        "profile": "native",
+        "height": 36,
+        "x": 12,
+        "right": 227,
+        "width": 213,
+        "scroll": 213,
+        "background": "rgb(254, 226, 226)",
+        "color": "rgb(127, 29, 29)",
+        "contrast": 8.202187642119998
+      }
+    ],
+    "checks": [
+      {
+        "name": "trial tier is colored, readable and one line",
+        "status": "passed"
+      },
+      {
+        "name": "starter tier is colored, readable and one line",
+        "status": "passed"
+      },
+      {
+        "name": "pro tier is colored, readable and one line",
+        "status": "passed"
+      },
+      {
+        "name": "business tier is colored, readable and one line",
+        "status": "passed"
+      },
+      {
+        "name": "expired tier is colored, readable and one line",
+        "status": "passed"
+      },
+      {
+        "name": "Only three paid tiers are offered",
+        "status": "passed"
+      },
+      {
+        "name": "First tap immediately shows payment spinner",
+        "status": "passed",
+        "feedbackMs": 2.8999999999650754
+      },
+      {
+        "name": "Repeated tap sends only one checkout request",
+        "status": "passed"
+      },
+      {
+        "name": "Signed-in checkout remains bound to the selected account",
+        "status": "passed"
+      }
+    ],
+    "productionWrites": 0,
+    "providerRequests": 0
+  },
+  "navigation": {
+    "status": "passed",
+    "build": "D:\\Fullstack Apps\\DagangOS\\GerainaOS\\frontend\\build",
+    "assets": "D:\\Fullstack Apps\\DagangOS\\GerainaOS\\android-app\\app\\src\\main\\assets",
+    "viewportWidth": 1280,
+    "scope": "Bundled UI navigation/action contracts in Chromium with Android bridge presentation and isolated fixtures; no hardware or payment-provider certification",
+    "merchantWrites": 0,
+    "results": [
+      {
+        "name": "DOKU appears in expanded integration navigation",
+        "status": "passed"
+      },
+      {
+        "name": "Sales history is directly reachable in the sidebar",
+        "status": "passed"
+      },
+      {
+        "name": "EDC setup availability page is included in payment navigation",
+        "status": "passed"
+      },
+      {
+        "name": "Credit-card route renders the matching configuration",
+        "status": "passed"
+      },
+      {
+        "name": "Bank-transfer route renders the matching configuration",
+        "status": "passed"
+      },
+      {
+        "name": "Failed payment settings load cannot save defaults and offers retry",
+        "status": "passed"
+      },
+      {
+        "name": "Empty payment settings merge safe defaults without crashing",
+        "status": "passed"
+      },
+      {
+        "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+        "status": "passed"
+      },
+      {
+        "name": "xendit merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "doku merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "whatsapp merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown integrations subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown settings subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown payments subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown reports subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown staff subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Starter Owner can reach bank QRIS from the integration menu",
+        "status": "passed"
+      },
+      {
+        "name": "Browser expanding a menu retains the current screen",
+        "status": "passed"
+      },
+      {
+        "name": "Legacy product deep link retains its destination and query",
+        "status": "passed"
+      },
+      {
+        "name": "Root app alias applies the same cashier permissions as canonical route",
+        "status": "passed"
+      },
+      {
+        "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+        "status": "passed"
+      },
+      {
+        "name": "Bank QRIS integration retains its own subsection navigation",
+        "status": "passed"
+      },
+      {
+        "name": "EDC cannot claim activation before certified support exists",
+        "status": "passed"
+      },
+      {
+        "name": "Billing uses the authoritative account plan without an absent subscription API",
+        "status": "passed"
+      },
+      {
+        "name": "License settings retain the account plan alongside subscription management",
+        "status": "passed"
+      },
+      {
+        "name": "Website Android retains billing navigation and exposes package purchases",
+        "status": "passed"
+      },
+      {
+        "name": "doku instructions use the Geraina callback backend",
+        "status": "passed"
+      },
+      {
+        "name": "whatsapp instructions use the Geraina callback backend",
+        "status": "passed"
+      },
+      {
+        "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+        "status": "passed"
+      },
+      {
+        "name": "Sales report does not invent a daily distribution from a weekly total",
+        "status": "passed"
+      },
+      {
+        "name": "Browser dashboard does not fabricate drawer cash or profit",
+        "status": "passed"
+      }
+    ]
+  },
+  "checkoutTests": 26,
+  "package": {
+    "signatureVerified": true,
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "bundleManifestEntriesVerified": 18,
+    "unitTests": 25,
+    "lintErrors": 0
+  },
+  "limits": [
+    "No real invoice, charge, refund or customer subscription change was made during these checks.",
+    "Feedback timings measure local UI response; live Xendit processing latency was not measured."
+  ]
+}
