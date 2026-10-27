@@ -109,6 +109,7 @@ async def _ensure_indexes():
         ("integrations", [("whatsapp.phone_number_id", 1)]),
         ("upgrade_requests", [("store_id", 1), ("status", 1)]),
         ("subscription_orders", [("owner_id", 1), ("module", 1), ("status", 1), ("created_at", -1)]),
+        ("addon_purchases", [("store_id", 1), ("addon_id", 1), ("status", 1)]),
         ("expenses", [("store_id", 1), ("expense_date", -1)]),
         ("products", [("store_id", 1), ("id", 1)]),
         ("stock_movements", [("store_id", 1), ("created_at", -1), ("id", -1)]),

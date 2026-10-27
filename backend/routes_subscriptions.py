@@ -1,5 +1,6 @@
 """Subscription checkout and payment reconciliation; synced with DapurOS."""
 import re
+import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -27,6 +28,12 @@ async def payment_reference(order_id: str, payload: dict, user: dict = Depends(r
 @router.get("/current")
 async def current(user: dict = Depends(get_billing_user)):
     await reconcile_pending(user, user["current_module"])
+    if user.get('role') in ('Owner', 'admin'):
+        orders = await get_db().subscription_orders.find({'owner_id': user['id'], 'store_id': user['store_id'], 'module': 'geraina', 'kind': 'addon', 'status': 'pending', 'receipt': {'$exists': True}}).sort('created_at', -1).limit(2).to_list(length=2)
+        async def check(order):
+            try: await reconcile_order(order['_id'], force=False)
+            except HTTPException: pass
+        await asyncio.gather(*(check(order) for order in orders))
     fresh = await get_db().users.find_one({"id": user["id"]}, {"_id": 0, "password_hash": 0})
     return await billing_view(user, fresh)
 
@@ -38,12 +45,22 @@ async def billing_view(user, fresh=None):
     if not fresh:
         raise HTTPException(401, "Akun tidak lagi tersedia")
     store = await db.stores.find_one({"id": user["store_id"], "owner_user_id": user["id"], "module": {"$in": [user["current_module"], None]}})
-    return {
+    result = {
         "subscription": subscription_for(fresh, user["current_module"]),
         "plan": user.get("plan"), "trial_ends_at": user.get("trial_ends_at"),
         "billing_model": "prepaid", "auto_renew": False,
         "can_manage": user.get("role") in ("Owner", "admin") and store is not None,
     }
+    if result['can_manage']:
+        from addon_billing import view
+        result['addons'] = await view(db, {**user, 'subscriptions': fresh.get('subscriptions', {})})
+    return result
+
+
+@router.post('/orders/{order_id}/invoice-claim')
+async def claim_addon_invoice(order_id: str, user: dict = Depends(require_billing_admin)):
+    from addon_billing import claim_invoice
+    return await claim_invoice(order_id, user)
 
 
 async def set_end_of_term(payload, user, stopping):

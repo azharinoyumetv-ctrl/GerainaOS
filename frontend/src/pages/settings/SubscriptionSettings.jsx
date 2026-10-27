@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
+import AddonManagement from "./AddonManagement";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
 const names = { trial: "Trial", starter: "Starter", pro: "Pro", business: "Business", expired: "Berakhir" };
@@ -47,6 +48,7 @@ export default function SubscriptionSettings() {
     </div>
     <p className="text-sm leading-relaxed">Paket dibayar di muka untuk satu bulan atau satu tahun. Tidak ada perpanjangan atau pemotongan saldo otomatis.</p>
     {data.can_manage && <a href="/geraina/pricing" className="btn-primary inline-flex" data-testid="view-pricing-matrix-link">{sub?.active ? "Ubah atau upgrade paket" : "Pilih & beli paket"}</a>}
+    {data.addons && <AddonManagement data={data.addons} canManage={data.can_manage} />}
     {stopping && <p role="status" className="text-sm" data-testid="subscription-stopped">Langganan akan berhenti pada {expiry}. Akses yang sudah dibayar tetap tersedia sampai tanggal tersebut. Data toko tetap tersimpan.</p>}
     {data.can_manage && sub?.active && sub.order_id && <div className="border-t pt-4">
       <button type="button" disabled={busy} className="btn-outline disabled:opacity-50" data-testid="subscription-stop-button" onClick={() => stopping ? changeStop(false) : setConfirm(true)}>{busy ? "Menyimpan…" : stopping ? "Batalkan penghentian" : "Hentikan langganan"}</button>
