@@ -1,5 +1,6 @@
 import { useAuth } from "@/auth/AuthContext";
 import { Leaf, ShieldCheck, Cpu, Building2, Mail, HelpCircle } from "lucide-react";
+import SupportContact from '@/support/SupportContact';
 
 export default function About() {
   const { user } = useAuth();
@@ -87,9 +88,7 @@ export default function About() {
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-[hsl(var(--muted))]">Kontak Dukungan</p>
-                <a href="mailto:contact@dagangos.com" className="text-sm font-semibold text-[hsl(var(--accent))] hover:underline" data-testid="about-support">
-                  contact@dagangos.com
-                </a>
+                {user && <SupportContact key={`${user.id}_${user.store_id}`} user={user} appVersion={appInfo?.versionName || 'Web'} initiallyOpen={new URLSearchParams(location.search).get('support') === '1'} deletionRequest={new URLSearchParams(location.search).get('topic') === 'account-deletion'} />}
               </div>
             </div>
           </div>

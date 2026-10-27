@@ -570,7 +570,11 @@ class MainActivity : ComponentActivity() {
                     }
                     "Privasi" -> navigate("https://dagangos.com/kebijakan-privasi")
                     "Minta penghapusan akun" -> requestDeletion()
-                    "Bantuan" -> navigate("mailto:contact@dagangos.com")
+                    "Bantuan" -> {
+                        if (Uri.parse(lastPage).path == "/geraina/app/about") {
+                            webView.evaluateJavascript("window.dispatchEvent(new Event('geraina-open-support'))", null)
+                        } else navigate("https://dagangos.com/geraina/app/about?support=1")
+                    }
                     "Tentang Geraina" -> AlertDialog.Builder(this@MainActivity).setTitle("Geraina POS ${BuildConfig.VERSION_NAME}")
                         .setMessage("Kasir, produk, inventori, dan laporan toko Anda.\n\nPT DagangOS Digital Indonesia\n\nSetelah masuk dan mengunduh katalog, pembayaran tunai dapat dicatat offline dan disinkronkan saat tersambung. Pembayaran elektronik memerlukan internet.\n\nPrinter struk ESC/POS: Bluetooth Classic atau USB printer-class. Dukungan perangkat mengikuti protokol printer.")
                         .setPositiveButton("Tutup", null).show()
@@ -583,11 +587,9 @@ class MainActivity : ComponentActivity() {
 
     private fun requestDeletion() {
         AlertDialog.Builder(this).setTitle("Minta penghapusan akun")
-            .setMessage("Kirim permintaan penghapusan akun dan data Geraina POS ke contact@dagangos.com dari email akun Anda. Sertakan nama toko. Dukungan akan memverifikasi kepemilikan akun; data yang wajib disimpan dapat dipertahankan sesuai kebijakan privasi.\n\nTombol berikut membuka draf email. Permintaan baru dikirim setelah Anda menekan Kirim di aplikasi email.")
-            .setPositiveButton("Buka draf email") { _, _ ->
-                val subject = Uri.encode("Permintaan penghapusan akun Geraina POS")
-                val body = Uri.encode("Saya meminta penghapusan akun Geraina POS dan data terkait.\nEmail akun: \nNama toko: \n\nMohon verifikasi kepemilikan akun dan konfirmasikan proses penghapusan.")
-                navigate("mailto:contact@dagangos.com?subject=$subject&body=$body")
+            .setMessage("Buka formulir dukungan dengan email akun Geraina Anda. Dukungan akan memverifikasi kepemilikan akun; data yang wajib disimpan dapat dipertahankan sesuai kebijakan privasi.\n\nPermintaan baru dikirim setelah Anda menekan Kirim permintaan di formulir. Tindakan ini tidak langsung menghapus akun.")
+            .setPositiveButton("Buka formulir dukungan") { _, _ ->
+                navigate("https://dagangos.com/geraina/app/about?support=1&topic=account-deletion", forceReload = true)
             }.setNegativeButton("Batal", null).show()
     }
 

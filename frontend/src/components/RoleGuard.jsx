@@ -21,6 +21,7 @@ export default function RoleGuard({ children }) {
   // paid operations remain locked. Staff never acquire billing permissions.
   const billingPage = ["/geraina/app/settings/billing", "/geraina/app/settings/subscription", "/geraina/app/billing"].includes(location.pathname.replace(/\/+$/, ""));
   if (billingPage && user.role === "Owner") return children;
+  if (location.pathname.replace(/\/+$/, '') === '/geraina/app/about' && canAccessPath(user.role, location.pathname)) return children;
   if (user.plan === "expired") {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center space-y-4" data-testid="trial-expired-page">
