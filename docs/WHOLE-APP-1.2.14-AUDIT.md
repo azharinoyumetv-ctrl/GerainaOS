@@ -29,3 +29,11 @@ The installed tablet cash-sale test uses real disposable backend handlers and Mo
 Physical Bluetooth/USB receipt output, vendor-specific printer protocols, optical barcode capture on customer cameras, live merchant gateway settlement/webhooks, bank settlement and live WhatsApp delivery are not established by these local runs. Browser dimensions are not a physical Samsung/Xiaomi hardware certification. Pending or unavailable checks remain unverified.
 
 The public release must also pass package/signature/credential exclusion checks, deployed support delivery, website/download checks, CI, TestSprite and the actual in-app upgrade before publication is reported complete.
+
+## Published verification
+
+Geraina 1.2.14/build 19 is published. All four deployment jobs passed. The actual 1.2.13-to-1.2.14 update passed seven checks and retained preferences and a pending offline sale. The installed updated APK matched the public download hash.
+
+The read-only live-store sweep passed all 56 screens. The deployed support form displayed the authenticated account email, prevented editing that identity, and was ready to submit; that UI check sent no request. The single separately approved live support email reached the official Gmail inbox through Resend and Cloudflare, with the correct authenticated customer Reply-To. No additional live support emails or payment transactions were sent.
+
+Installed support/menu/permission checks passed on Android 14 and 17 phone emulators and Android 16 Xiaomi-sized 12.4-inch and Samsung-sized 14.6-inch tablet emulators. TestSprite's official APK download/metadata/checksum check passed. The external/hardware limitations above remain unverified.
