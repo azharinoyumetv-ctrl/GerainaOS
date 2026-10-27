@@ -43,4 +43,15 @@ class NavigationPolicyTest {
         assertEquals("geraina-export.pdf", NavigationPolicy.safeFilename("..."))
         assertEquals(120, NavigationPolicy.safeFilename("a".repeat(200)).length)
     }
+    @Test fun onlySubscriptionCheckoutReturnsToBilling() {
+        for (path in listOf("/geraina/pricing", "/geraina/checkout", "/geraina/order?receipt=fixture")) {
+            assertEquals(NavigationPolicy.BILLING_URL, NavigationPolicy.subscriptionReturnUrl("https://dagangos.com$path", "https://checkout.xendit.co/web/fixture"))
+        }
+        for (source in listOf("https://dagangos.com/geraina/app/pos", "https://dagangos.com/geraina/app/about", "https://evil.test/geraina/checkout", "http://dagangos.com/geraina/checkout")) {
+            assertEquals(null, NavigationPolicy.subscriptionReturnUrl(source, "https://checkout.xendit.co/web/fixture"))
+        }
+        for (destination in listOf("https://checkout.xendit.co.evil.test/web/fixture", "https://evil.test/", "http://checkout.xendit.co/web/fixture", "https://user@checkout.xendit.co/web/fixture", "https://checkout.xendit.co:8443/web/fixture")) {
+            assertEquals(null, NavigationPolicy.subscriptionReturnUrl("https://dagangos.com/geraina/checkout", destination))
+        }
+    }
 }

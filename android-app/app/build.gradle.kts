@@ -21,8 +21,8 @@ android {
         minSdk = 34
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
         targetSdk = 36
-        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("16").get().toInt()
-        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.11").get()
+        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("17").get().toInt()
+        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.12").get()
         buildConfigField("boolean", "WEB_SUBSCRIPTIONS_ENABLED", (distribution == "website").toString())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

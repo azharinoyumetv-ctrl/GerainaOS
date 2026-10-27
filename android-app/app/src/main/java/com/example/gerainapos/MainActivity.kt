@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity() {
     private val io = Executors.newSingleThreadExecutor()
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var lastPage = NavigationPolicy.START_URL
+    private var subscriptionReturnUrl: String? = null
     private var pageFailed = false
     private var failedPageUrl: String? = null
     private var exportInProgress = false
@@ -116,6 +117,8 @@ class MainActivity : ComponentActivity() {
         scannerOpen = savedInstanceState?.getBoolean("scannerOpen") ?: false
         receiptPrinter = ThermalPrinterController(this, ::notice)
         appUpdater = AppUpdater(this, savedInstanceState != null, ::notice)
+        subscriptionReturnUrl = savedInstanceState?.getString("subscriptionReturnUrl")
+            ?.takeIf { it == NavigationPolicy.BILLING_URL }
         // A force-stopped app cannot receive the old document-picker result.
         // Retain the file across rotation, but discard it on a fresh launch.
         if (savedInstanceState == null) pendingExport.delete()
@@ -528,9 +531,18 @@ class MainActivity : ComponentActivity() {
                 } else webView.loadUrl(url)
             }
             NavigationPolicy.Destination.EXTERNAL -> {
+                val checkoutReturn = NavigationPolicy.subscriptionReturnUrl(lastPage, url)
                 try {
+                    if (checkoutReturn != null) subscriptionReturnUrl = checkoutReturn
                     startActivity(Intent(if (url.startsWith("mailto:")) Intent.ACTION_SENDTO else Intent.ACTION_VIEW, Uri.parse(url)))
-                } catch (_: ActivityNotFoundException) { notice("Tidak ada aplikasi untuk membuka tautan ini.") }
+                } catch (_: ActivityNotFoundException) {
+                    if (checkoutReturn != null) {
+                        subscriptionReturnUrl = null
+                        webView.stopLoading()
+                        navigate(checkoutReturn, forceReload = true)
+                    }
+                    notice("Tidak ada aplikasi untuk membuka tautan ini.")
+                }
             }
             NavigationPolicy.Destination.SUBSCRIPTION -> showSubscriptionNotice()
             NavigationPolicy.Destination.BLOCKED -> notice("Tautan ini tidak dapat dibuka.")
@@ -597,6 +609,7 @@ class MainActivity : ComponentActivity() {
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
     override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("subscriptionReturnUrl", subscriptionReturnUrl)
         outState.putString("barcodeTarget", barcodeTarget)
         outState.putString("barcodeOriginPath", barcodeOriginPath)
         outState.putBoolean("scannerOpen", scannerOpen)
@@ -614,6 +627,15 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (::webView.isInitialized) webView.onResume()
+        val checkoutReturn = subscriptionReturnUrl
+        if (checkoutReturn != null && ::webView.isInitialized && nativeFeaturesReady) {
+            subscriptionReturnUrl = null
+            exitBackAt = 0L
+            webView.stopLoading()
+            // A 303 handed the payment screen to another Android activity.
+            // Resume with a clean GET, never replay the checkout POST/history.
+            navigate(checkoutReturn, forceReload = true)
+        }
         if (::appUpdater.isInitialized) appUpdater.onResume()
     }
     override fun onDestroy() {

@@ -43,6 +43,10 @@
     if (document.documentElement.classList.contains('ga-barcode-open')) { document.documentElement.classList.remove('ga-barcode-open'); return true; }
     const backdrop = $('[data-testid="mobile-sidebar-backdrop"]');
     if (backdrop) { backdrop.click(); return true; }
+    if (token() && ['/geraina/pricing', '/geraina/checkout', '/geraina/order'].includes(location.pathname.replace(/\/+$/, ''))) {
+      location.replace('/geraina/app/settings/billing');
+      return true;
+    }
     return false;
   }
   function navigate(route) {

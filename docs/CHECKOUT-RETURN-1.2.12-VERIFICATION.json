@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 8,
+  "status": "passed",
+  "version": "1.2.12",
+  "versionCode": 17,
+  "applicationId": "com.dagangos.geraina",
+  "minimumSdk": 34,
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "apkSha256": "6da08c531e0d80c4ba630cb3ab4f317961b45aa8a1d3b16dce51d973c92e3323",
+  "bytes": 17231399,
+  "backendChanged": false,
+  "baseRelease": {
+    "version": "1.2.11",
+    "published": true
+  },
+  "publicationAuthorized": true,
+  "published": false,
+  "verifiedAt": "2026-10-27T06:22:57.963674+00:00",
+  "regressionBaseline": {
+    "status": "reproduced",
+    "installedVersion": "1.2.11",
+    "afterReturn": {
+      "path": "/geraina/pricing",
+      "busy": true,
+      "tokenRetained": true
+    },
+    "afterBack": {
+      "path": "/geraina/app/dashboard",
+      "tokenRetained": true
+    },
+    "passedThroughLogin": true,
+    "navigations": [
+      "/geraina/pricing",
+      "/geraina/pricing",
+      "/geraina/checkout",
+      "/geraina/login",
+      "/geraina/login",
+      "/geraina/app/dashboard"
+    ],
+    "checkoutPosts": 1,
+    "providerRequests": 0,
+    "productionWrites": 0
+  },
+  "checkoutReturnAndroid": {
+    "status": "passed",
+    "installed": {
+      "versionName": "1.2.12",
+      "versionCode": 17,
+      "subscriptionPurchases": true,
+      "androidVersion": "16",
+      "model": "unknown Android SDK built for x86_64"
+    },
+    "apkSha256": "6da08c531e0d80c4ba630cb3ab4f317961b45aa8a1d3b16dce51d973c92e3323",
+    "checks": [
+      "A single Buy tap opens the separate unpaid checkout activity",
+      "Android Back returns directly to signed-in billing without a spinner",
+      "Leaving before selecting a payment method does not change the plan",
+      "A second attempt has one request and returns cleanly again",
+      "Back from package selection also returns to billing",
+      "External links outside subscription checkout retain their own app screen",
+      "A genuinely revoked session still requires sign-in"
+    ],
+    "checkoutPosts": 3,
+    "validReturnLoginNavigations": 0,
+    "revokedSessionRequiresLogin": true,
+    "providerRequests": 0,
+    "productionWrites": 0
+  },
+  "navigation": {
+    "status": "passed",
+    "build": "D:\\Fullstack Apps\\DagangOS\\GerainaOS\\frontend\\build",
+    "assets": "D:\\Fullstack Apps\\DagangOS\\GerainaOS\\android-app\\app\\src\\main\\assets",
+    "viewportWidth": 1280,
+    "scope": "Bundled UI navigation/action contracts in Chromium with Android bridge presentation and isolated fixtures; no hardware or payment-provider certification",
+    "merchantWrites": 0,
+    "results": [
+      {
+        "name": "DOKU appears in expanded integration navigation",
+        "status": "passed"
+      },
+      {
+        "name": "Sales history is directly reachable in the sidebar",
+        "status": "passed"
+      },
+      {
+        "name": "EDC setup availability page is included in payment navigation",
+        "status": "passed"
+      },
+      {
+        "name": "Credit-card route renders the matching configuration",
+        "status": "passed"
+      },
+      {
+        "name": "Bank-transfer route renders the matching configuration",
+        "status": "passed"
+      },
+      {
+        "name": "Failed payment settings load cannot save defaults and offers retry",
+        "status": "passed"
+      },
+      {
+        "name": "Empty payment settings merge safe defaults without crashing",
+        "status": "passed"
+      },
+      {
+        "name": "Saving one payment section cannot resubmit unrelated sections or double submit",
+        "status": "passed"
+      },
+      {
+        "name": "xendit merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "doku merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "whatsapp merchant screen excludes developer webhook simulators",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown integrations subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown settings subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown payments subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown reports subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Unknown staff subsection has a safe not-found screen",
+        "status": "passed"
+      },
+      {
+        "name": "Starter Owner can reach bank QRIS from the integration menu",
+        "status": "passed"
+      },
+      {
+        "name": "Browser expanding a menu retains the current screen",
+        "status": "passed"
+      },
+      {
+        "name": "Legacy product deep link retains its destination and query",
+        "status": "passed"
+      },
+      {
+        "name": "Root app alias applies the same cashier permissions as canonical route",
+        "status": "passed"
+      },
+      {
+        "name": "Cashier Android dashboard does not advertise forbidden stock/report destinations",
+        "status": "passed"
+      },
+      {
+        "name": "Bank QRIS integration retains its own subsection navigation",
+        "status": "passed"
+      },
+      {
+        "name": "EDC cannot claim activation before certified support exists",
+        "status": "passed"
+      },
+      {
+        "name": "Billing uses the authoritative account plan without an absent subscription API",
+        "status": "passed"
+      },
+      {
+        "name": "License settings retain the account plan alongside subscription management",
+        "status": "passed"
+      },
+      {
+        "name": "Website Android retains billing navigation and exposes package purchases",
+        "status": "passed"
+      },
+      {
+        "name": "doku instructions use the Geraina callback backend",
+        "status": "passed"
+      },
+      {
+        "name": "whatsapp instructions use the Geraina callback backend",
+        "status": "passed"
+      },
+      {
+        "name": "Tax page does not fabricate liability or offer a no-op e-Faktur export",
+        "status": "passed"
+      },
+      {
+        "name": "Sales report does not invent a daily distribution from a weekly total",
+        "status": "passed"
+      },
+      {
+        "name": "Browser dashboard does not fabricate drawer cash or profit",
+        "status": "passed"
+      }
+    ]
+  },
+  "checkoutTests": 26,
+  "package": {
+    "signatureVerified": true,
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "bundleManifestEntriesVerified": 18,
+    "unitTests": 26,
+    "lintErrors": 0
+  },
+  "limits": [
+    "The external unpaid checkout screen is a network-disabled Android fixture. No live invoice or payment was created.",
+    "Backend payment and entitlement logic is unchanged from the published 1.2.11 release."
+  ]
+}
