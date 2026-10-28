@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import api from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
+import { subscriptionState } from "@/auth/subscriptionState";
 import AddonManagement from "./AddonManagement";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
-const names = { trial: "Trial", starter: "Starter", pro: "Pro", business: "Business", expired: "Berakhir" };
 const date = value => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "";
 
 export default function SubscriptionSettings() {
@@ -35,22 +35,23 @@ export default function SubscriptionSettings() {
 
   if (!data) return <div data-testid="subscription-billing-management-area">{error ? <div role="alert"><p>{error}</p><button type="button" className="btn-outline mt-3" onClick={() => setRetry(v => v + 1)}>Coba lagi</button></div> : <p role="status">Memuat informasi paket…</p>}</div>;
   const sub = data.subscription;
-  const plan = sub?.tier || data.plan || "trial";
-  const stopping = sub?.cancel_at_period_end === true;
-  const expiry = date(sub?.expires_at || data.trial_ends_at);
-  const active = sub ? sub.active : plan !== "expired";
+  const state = subscriptionState(data);
+  const { plan, active, known } = state;
+  const stopping = active && sub?.cancel_at_period_end === true;
+  const expiry = date(state.expiresAt);
   return <div className="space-y-5" data-testid="subscription-billing-management-area">
     <div className="rounded-xl border p-4 space-y-2">
       <p className="text-xs uppercase text-[hsl(var(--muted))]">Paket Anda</p>
-      <h3 className="font-display text-2xl font-bold" data-testid="subscription-plan-title">Paket {names[plan] || plan}</h3>
-      <p className="text-sm font-semibold" data-testid="subscription-status-badge">{!active ? "BERAKHIR" : stopping ? "BERHENTI DI AKHIR PERIODE" : plan === "trial" ? "TRIAL" : "AKTIF"}</p>
+      <h3 className="font-display text-2xl font-bold" data-testid="subscription-plan-title">Paket {state.tierLabel}</h3>
+      <p className="text-sm font-semibold" data-testid="subscription-status-badge">{!known ? "PERLU DIPERIKSA" : !active ? "BERAKHIR" : stopping ? "BERHENTI DI AKHIR PERIODE" : plan === "trial" ? "TRIAL" : "AKTIF"}</p>
       {expiry && <p className="text-sm" data-testid="subscription-expiry">{active ? "Akses tersedia hingga" : "Berakhir pada"} {expiry}</p>}
     </div>
+    {!known && <p role="alert" className="text-sm text-amber-900" data-testid="subscription-data-warning">Status paket belum diketahui karena informasi akun tidak sesuai. Hubungi dukungan untuk memeriksa paket Anda.</p>}
     <p className="text-sm leading-relaxed">Paket dibayar di muka untuk satu bulan atau satu tahun. Tidak ada perpanjangan atau pemotongan saldo otomatis.</p>
-    {data.can_manage && <a href="/geraina/pricing" className="btn-primary inline-flex" data-testid="view-pricing-matrix-link">{sub?.active ? "Ubah atau upgrade paket" : "Pilih & beli paket"}</a>}
+    {data.can_manage && <a href="/geraina/pricing" className="btn-primary inline-flex" data-testid="view-pricing-matrix-link">{active && plan !== "trial" ? "Ubah atau upgrade paket" : "Pilih & beli paket"}</a>}
     {data.addons && <AddonManagement data={data.addons} canManage={data.can_manage} />}
     {stopping && <p role="status" className="text-sm" data-testid="subscription-stopped">Langganan akan berhenti pada {expiry}. Akses yang sudah dibayar tetap tersedia sampai tanggal tersebut. Data toko tetap tersimpan.</p>}
-    {data.can_manage && sub?.active && sub.order_id && <div className="border-t pt-4">
+    {data.can_manage && active && sub?.order_id && <div className="border-t pt-4">
       <button type="button" disabled={busy} className="btn-outline disabled:opacity-50" data-testid="subscription-stop-button" onClick={() => stopping ? changeStop(false) : setConfirm(true)}>{busy ? "Menyimpan…" : stopping ? "Batalkan penghentian" : "Hentikan langganan"}</button>
       <AlertDialog open={confirm} onOpenChange={value => { if (!busy) setConfirm(value); }}>
         <AlertDialogContent>

@@ -1,67 +1,66 @@
 import { safeAppReturn } from "@/auth/appReturn";
 import "@/index.css";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import PasswordSetup from "@/auth/PasswordSetup";
 import { Toaster } from "@/components/ui/sonner";
 
-import DagangOS from "@/pages/DagangOS";
-import Landing from "@/pages/Landing";
-import Pricing from "@/pages/Pricing";
 import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import Activate from "@/pages/Activate";
 import AppLayout from "@/layouts/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
 import POS from "@/pages/POS";
-import Sales from "@/pages/Sales";
-import About from "@/pages/About";
-import LicenseDevices from "@/pages/LicenseDevices";
-
-// Submodules
-import Categories from "@/pages/products/Categories";
-import Brands from "@/pages/products/Brands";
-import Units from "@/pages/products/Units";
-import StockAdjustment from "@/pages/products/StockAdjustment";
-import StockTransfer from "@/pages/products/StockTransfer";
-
-import StockOverview from "@/pages/inventory/StockOverview";
-import StockMovement from "@/pages/inventory/StockMovement";
-import InventoryValuation from "@/pages/inventory/InventoryValuation";
-import LowStock from "@/pages/inventory/LowStock";
-import DeadStock from "@/pages/inventory/DeadStock";
-
-import PurchaseOrder from "@/pages/purchase/PurchaseOrder";
-import GoodsReceiving from "@/pages/purchase/GoodsReceiving";
-import SupplierInvoice from "@/pages/purchase/SupplierInvoice";
-
-import SupplierList from "@/pages/supplier/SupplierList";
-
-import CustomerList from "@/pages/customer/CustomerList";
-import Membership from "@/pages/customer/Membership";
-import LoyaltyPoints from "@/pages/customer/LoyaltyPoints";
-
-import AccountsReceivable from "@/pages/debt/AccountsReceivable";
-import AccountsPayable from "@/pages/debt/AccountsPayable";
-
-import PaymentConfig from "@/pages/payments/PaymentConfig";
-import BankQrisSettings from "@/pages/payments/BankQrisSettings";
-import Reports from "@/pages/reports/Reports";
-
-import StaffManagement from "@/pages/staff/StaffManagement";
-import Roles from "@/pages/staff/Roles";
-import Permissions from "@/pages/staff/Permissions";
-import Attendance from "@/pages/staff/Attendance";
-
-import BranchManagement from "@/pages/branches/BranchManagement";
-import Integrations from "@/pages/integrations/Integrations";
-import Settings from "@/pages/settings/Settings";
 
 import RoleGuard from "@/components/RoleGuard";
 import AppPageNotFound from "@/navigation/AppPageNotFound";
 import { SECTIONS } from "@/navigation/sections";
+
+const DagangOS = deferred(() => import("@/pages/DagangOS"));
+const Landing = deferred(() => import("@/pages/Landing"));
+const Pricing = deferred(() => import("@/pages/Pricing"));
+const Register = deferred(() => import("@/pages/Register"));
+const Activate = deferred(() => import("@/pages/Activate"));
+const Sales = deferred(() => import("@/pages/Sales"));
+const About = deferred(() => import("@/pages/About"));
+const LicenseDevices = deferred(() => import("@/pages/LicenseDevices"));
+const Categories = deferred(() => import("@/pages/products/Categories"));
+const Brands = deferred(() => import("@/pages/products/Brands"));
+const Units = deferred(() => import("@/pages/products/Units"));
+const StockAdjustment = deferred(() => import("@/pages/products/StockAdjustment"));
+const StockTransfer = deferred(() => import("@/pages/products/StockTransfer"));
+const StockOverview = deferred(() => import("@/pages/inventory/StockOverview"));
+const StockMovement = deferred(() => import("@/pages/inventory/StockMovement"));
+const InventoryValuation = deferred(() => import("@/pages/inventory/InventoryValuation"));
+const LowStock = deferred(() => import("@/pages/inventory/LowStock"));
+const DeadStock = deferred(() => import("@/pages/inventory/DeadStock"));
+const PurchaseOrder = deferred(() => import("@/pages/purchase/PurchaseOrder"));
+const GoodsReceiving = deferred(() => import("@/pages/purchase/GoodsReceiving"));
+const SupplierInvoice = deferred(() => import("@/pages/purchase/SupplierInvoice"));
+const SupplierList = deferred(() => import("@/pages/supplier/SupplierList"));
+const CustomerList = deferred(() => import("@/pages/customer/CustomerList"));
+const Membership = deferred(() => import("@/pages/customer/Membership"));
+const LoyaltyPoints = deferred(() => import("@/pages/customer/LoyaltyPoints"));
+const AccountsReceivable = deferred(() => import("@/pages/debt/AccountsReceivable"));
+const AccountsPayable = deferred(() => import("@/pages/debt/AccountsPayable"));
+const PaymentConfig = deferred(() => import("@/pages/payments/PaymentConfig"));
+const BankQrisSettings = deferred(() => import("@/pages/payments/BankQrisSettings"));
+const Reports = deferred(() => import("@/pages/reports/Reports"));
+const StaffManagement = deferred(() => import("@/pages/staff/StaffManagement"));
+const Roles = deferred(() => import("@/pages/staff/Roles"));
+const Permissions = deferred(() => import("@/pages/staff/Permissions"));
+const Attendance = deferred(() => import("@/pages/staff/Attendance"));
+const BranchManagement = deferred(() => import("@/pages/branches/BranchManagement"));
+const Integrations = deferred(() => import("@/pages/integrations/Integrations"));
+const Settings = deferred(() => import("@/pages/settings/Settings"));
+
+// Keep the operational shell mounted while a secondary screen loads.
+function deferred(load) {
+  const Page = lazy(load);
+  return function DeferredPage(props) {
+    return <Suspense fallback={<div className="p-4 text-sm" role="status" data-testid="route-loading">Memuat halaman…</div>}><Page {...props} /></Suspense>;
+  };
+}
 
 function KnownSection({ section, children }) {
   const { type } = useParams();

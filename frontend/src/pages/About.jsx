@@ -1,11 +1,12 @@
 import { useAuth } from "@/auth/AuthContext";
+import { subscriptionState } from "@/auth/subscriptionState";
 import { Leaf, ShieldCheck, Cpu, Building2, Mail, HelpCircle } from "lucide-react";
 import SupportContact from '@/support/SupportContact';
 
 export default function About() {
   const { user } = useAuth();
   const appInfo = window.GerainaDevice?.appInfo;
-  const plan = { trial: "Trial", starter: "Starter", pro: "Pro", business: "Business", expired: "Berakhir" }[user?.plan] || "Belum diketahui";
+  const license = subscriptionState(user);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="about-page">
@@ -64,8 +65,8 @@ export default function About() {
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-[hsl(var(--muted))]">Status Lisensi</p>
-                <p className="text-sm font-semibold text-[hsl(var(--success))]" data-testid="about-license-status">
-                  {plan}
+                <p className={`text-sm font-semibold ${license.active ? "text-[hsl(var(--success))]" : "text-amber-900"}`} data-testid="about-license-status">
+                  {license.label}
                 </p>
               </div>
             </div>

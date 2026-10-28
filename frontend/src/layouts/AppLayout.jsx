@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/auth/AuthContext";
+import { subscriptionState } from "@/auth/subscriptionState";
 import { ROLE_MODULES, canAccessPath, canonicalRole } from "@/auth/permissions";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -18,6 +19,7 @@ const TIER_COLORS = {
   pro: { backgroundColor: "#dbeafe", color: "#1e3a8a", borderColor: "#93c5fd" },
   business: { backgroundColor: "#f3e8ff", color: "#581c87", borderColor: "#d8b4fe" },
   expired: { backgroundColor: "#fee2e2", color: "#7f1d1d", borderColor: "#fca5a5" },
+  unknown: { backgroundColor: "#fef3c7", color: "#78350f", borderColor: "#fbbf24" },
 };
 
 export const MENU_STRUCTURE = [
@@ -140,12 +142,13 @@ export default function AppLayout() {
   const nav = useNavigate();
   const location = useLocation();
   const days = trialDaysLeft(user?.trial_ends_at);
-  const isTrial = (user?.plan || "trial") === "trial";
+  const license = subscriptionState(user);
+  const isTrial = license.plan === "trial";
 
   const role = canonicalRole(user?.role);
   const permissions = ROLE_MODULES[role] || [];
   const TierNotice = role === "Owner" ? Link : "div";
-  const tierLabel = isTrial ? "Trial" : PLAN_LABEL[user?.plan] || "Paket berakhir";
+  const tierLabel = license.plan === "expired" ? "Paket berakhir" : license.label;
 
   const [openMenus, setOpenMenus] = useState({});
   const [showEcosystemSwitcher, setShowEcosystemSwitcher] = useState(false);
@@ -413,7 +416,7 @@ export default function AppLayout() {
 
         <TierNotice {...(role === "Owner" ? { to: "/geraina/app/settings/billing", title: "Informasi paket" } : {})}
           className="mx-3 my-2 flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium whitespace-nowrap"
-          style={TIER_COLORS[isTrial ? "trial" : user?.plan] || TIER_COLORS.expired}
+          style={TIER_COLORS[license.plan]}
           data-testid="tier-notice">
           <Crown size={14} className="shrink-0" aria-hidden="true" />
           <span className="font-semibold" data-testid="tier-name">{tierLabel}</span>

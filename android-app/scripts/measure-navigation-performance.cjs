@@ -21,7 +21,7 @@ async function sample(browser,rate){
   const request=route.request(),url=new URL(request.url());assert.equal(request.method(),'GET','This audit never writes API data');
   const row={path:url.pathname,query:url.search,startedAt:Date.now()};requests.push(row);
   await new Promise(resolve=>setTimeout(resolve,url.pathname==='/api/auth/me'?1500:250));
-  const json=url.pathname==='/api/auth/me'?user:url.pathname==='/api/products'?products.filter(p=>(!url.searchParams.get('q')||p.name.toLowerCase().includes(url.searchParams.get('q').toLowerCase()))&&(!url.searchParams.get('category')||p.category===url.searchParams.get('category'))):url.pathname.endsWith('category-names')?['Coffee','Tea']:url.pathname==='/api/orders/stats'?{today_sales:0,today_orders:0,product_count:500}:url.pathname==='/api/settings'?{}:[];
+  const json=url.pathname==='/api/products/catalogue'?{items:products,total:products.length,next_cursor:null}:url.pathname.startsWith('/api/records/')?{items:[],total:0,next_cursor:null}:url.pathname==='/api/auth/me'?user:url.pathname==='/api/products'?products.filter(p=>(!url.searchParams.get('q')||p.name.toLowerCase().includes(url.searchParams.get('q').toLowerCase()))&&(!url.searchParams.get('category')||p.category===url.searchParams.get('category'))):url.pathname.endsWith('category-names')?['Coffee','Tea']:url.pathname==='/api/orders/stats'?{today_sales:0,today_orders:0,product_count:500,low_stock_count:0}:url.pathname==='/api/orders/history'?{items:[],total:0}:url.pathname==='/api/settings'?{}:[];
   row.respondedAt=Date.now();return route.fulfill({json}).catch(()=>{});
  });
  const cdp=await context.newCDPSession(page);if(rate!==1)await cdp.send('Emulation.setCPUThrottlingRate',{rate});

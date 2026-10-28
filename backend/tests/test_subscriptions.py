@@ -291,3 +291,25 @@ def test_changing_billing_period_exposes_current_term_for_explicit_purchase_conf
     assert result["active_subscription"]["tier"] == "starter"
     assert result["active_subscription"]["expires_at"] == fresh["subscriptions"]["geraina"]["expires_at"]
     assert result["amount"] == 1490000
+
+
+def test_manual_business_grant_has_real_expiry_and_shared_store_access(account):
+    db, user = account
+    grant = {"tier": "business", "status": "active", "expires_at": "2099-11-10T13:01:19+00:00", "source": "manual_grant"}
+    run(db.users.update_one({"id": OWNER}, {"$set": {"trial_ends_at": (NOW - timedelta(days=1)).isoformat(), "subscriptions.geraina": grant}}))
+    run(db.stores.update_one({"id": STORE}, {"$set": {"subscription": grant, "plan": "business"}}))
+    context = run(auth.resolve_user_context(run(db.users.find_one({"id": OWNER})), "geraina"))
+    view = run(routes_subscriptions.billing_view(context))
+    assert context["plan"] == view["plan"] == "business"
+    assert view["subscription"]["active"] is True
+    assert view["subscription"]["expires_at"] == grant["expires_at"]
+    outlet = next(offer for offer in view["addons"]["offers"] if offer["id"] == "extra_outlet")
+    assert outlet["eligible"] is True
+    assert run(db.subscription_orders.count_documents({})) == 0  # no fabricated purchase
+    assert apply_subscription(run(db.users.find_one({"id": OWNER})), "dapuros")["plan"] != "business"
+    employee = {"id": "grant-cashier", "email": "cashier@example.test", "role": "Cashier", "store_id": STORE, "credential_version": 0}
+    run(db.users.insert_one(employee.copy()))
+    run(db.staff.insert_one({"id": "grant-staff", "user_id": employee["id"], "store_id": STORE, "role": "Cashier", "status": "Aktif"}))
+    staff = run(auth.resolve_user_context(employee, "geraina"))
+    assert staff["plan"] == "business" and staff["subscription"]["expires_at"] == grant["expires_at"]
+    assert staff["is_store_owner"] is False

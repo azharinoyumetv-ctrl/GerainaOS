@@ -8,7 +8,7 @@ test.describe('Every customer screen',()=>{
     await f.go('app/'+route);
     await expect(f.page.locator('.route-stage')).toBeVisible();
     await f.settle();
-    expect((await f.page.locator('.route-stage').innerText()).trim().length).toBeGreaterThan(10);
+    await expect.poll(async () => (await f.page.locator('.route-stage').innerText()).trim().length).toBeGreaterThan(10);
     expect(f.errors).toEqual([]);
     expect(f.reads.filter(r=>r.status>=400)).toEqual([]);
     const overflow=await f.page.evaluate(()=>Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-innerWidth);

@@ -1,6 +1,7 @@
 """POS / Orders routes."""
 from permissions import require_permission
 import os
+import asyncio
 import uuid
 import re
 from typing import Optional
@@ -371,21 +372,23 @@ async def stats(user: dict = Depends(get_current_user)):
         rows = await cur.to_list(length=1)
         return rows[0] if rows else {"total": 0, "count": 0}
 
-    today = await sum_in(today_start, before=today_end)
-    week = await sum_in(week_start)
-    month = await sum_in(month_start)
-    product_count = await db.products.count_documents({"store_id": user["store_id"]})
     first_day = local_start - timedelta(days=6)
-    day_rows = await db.orders.aggregate([
+    daily_query = db.orders.aggregate([
         {'$match': {'store_id':user['store_id'],'payment_status':'paid',
           'created_at':{'$gte':first_day.astimezone(timezone.utc).isoformat(),'$lt':today_end,'$lte':now.isoformat()}}},
         {'$group':{'_id':{'$dateToString':{'format':'%Y-%m-%d','date':{'$dateFromString':{'dateString':'$created_at'}},'timezone':str(zone)}},
                    'value':{'$sum':'$total'}}}
     ]).to_list(None)
+    # These independent reads share the same store and time boundaries. Waiting
+    # for each database round trip in turn unnecessarily delays every dashboard.
+    today, week, month, product_count, day_rows, low_stock_count = await asyncio.gather(
+        sum_in(today_start, before=today_end), sum_in(week_start), sum_in(month_start),
+        db.products.count_documents({"store_id": user["store_id"]}), daily_query,
+        db.products.count_documents({'store_id':user['store_id'],'stock':{'$lte':5}}),
+    )
     by_day = {row['_id']:row['value'] for row in day_rows}
     daily_sales = [{'date':(first_day+timedelta(days=index)).date().isoformat(),
                     'value':by_day.get((first_day+timedelta(days=index)).date().isoformat(),0)} for index in range(7)]
-    low_stock_count = await db.products.count_documents({'store_id':user['store_id'],'stock':{'$lte':5}})
     return {
         "timezone": str(zone), "today_date": local_start.date().isoformat(),
         "daily_sales": daily_sales, "low_stock_count": low_stock_count,

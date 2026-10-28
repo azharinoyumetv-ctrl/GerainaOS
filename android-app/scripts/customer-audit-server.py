@@ -114,6 +114,14 @@ async def scenario(name: str):
         await db.products.update_one({'id': 'product-0000'}, {'$set': {'stock': 0}})
     elif name == 'expired':
         await db.users.update_one({'id': 'owner-a'}, {'$set': {'plan':'trial', 'trial_ends_at': (database.utcnow()-timedelta(days=1)).isoformat()}})
+    elif name in ('subscription-malformed', 'subscription-legacy-business', 'subscription-manual-business'):
+        await db.users.update_one({'id': 'owner-a'}, {'$set': {
+            'plan': 'Business' if name == 'subscription-malformed' else 'business' if name == 'subscription-legacy-business' else 'trial',
+            'trial_ends_at': '2099-11-10T13:01:19+00:00'}, '$unset': {'subscriptions': ''}})
+        if name == 'subscription-manual-business':
+            subscription = {'tier': 'business', 'status': 'active', 'source': 'manual_grant', 'expires_at': '2099-11-10T13:01:19+00:00'}
+            await db.users.update_one({'id': 'owner-a'}, {'$set': {'subscriptions.geraina': subscription}})
+            await db.stores.update_one({'id': 'store-a'}, {'$set': {'subscription': subscription, 'plan': 'business'}})
     elif name in ('subscription-active', 'subscription-expired'):
         subscription = {'tier': 'pro', 'period': 'monthly', 'status': 'active',
             'order_id': 'DG-geraina-' + 'a' * 32, 'paid_at': database.utcnow().isoformat(),

@@ -214,7 +214,8 @@
 
 .route-stage {
   min-height: 100%;
-  animation: route-enter .42s cubic-bezier(.2,.8,.2,1) both;
+  /* Operational menus should appear immediately, without a full-screen blur. */
+  animation: none;
 }
 
 .operational-surface,
