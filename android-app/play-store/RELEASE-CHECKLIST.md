@@ -1,6 +1,6 @@
 # Geraina POS — Google Play readiness
 
-Reviewed 28 October 2026. Public website release: 1.2.15/build 20. Source candidate: 1.2.16/build 21. No Play submission or approval is claimed. Organization verification and the owner's D-U-N-S remain external prerequisites.
+Reviewed 29 October 2026. Public website release: 1.2.16/build 21. The separate Play build is 1.2.16/build 21. No Play submission or approval is claimed. Organization verification and the owner's D-U-N-S remain external prerequisites.
 
 ## Package gate
 

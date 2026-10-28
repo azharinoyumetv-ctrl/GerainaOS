@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "status": "local-checks-passed-external-gates-open",
+  "status": "published-verified-external-gates-open",
   "version": "1.2.16",
   "versionCode": 21,
-  "published": false,
-  "publicVersion": "1.2.15",
+  "published": true,
+  "publicVersion": "1.2.16",
   "verifiedAt": "2026-10-28T14:00:36.382709+00:00",
   "backendChanged": false,
-  "sourceState": "uncommitted candidate",
+  "sourceState": "published website release",
   "packages": {
     "website": {
       "apkSha256": "33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7",
@@ -130,8 +130,7 @@
     "Physical printer paper output and vendor-specific device compatibility",
     "Live merchant settlement/webhooks and optional WhatsApp delivery",
     "Verified account/data erasure procedure and retention policy",
-    "Final Data safety/Play Console organization and testing requirements",
-    "Official 1.2.16 download/update-feed smoke after publication"
+    "Final Data safety/Play Console organization and testing requirements"
   ],
   "notes": [
     "Original interrupted menu download reproduced a blank screen. Recovery verified on all three layouts.",
@@ -373,5 +372,22 @@
     "replaces": "External TestSprite navigation verification",
     "browserUiLoginJourneys": 3,
     "details": "Login rejection/recovery, real form login, deferred menu clicks, Back/Forward and session retention passed on phone and two tablet layouts."
+  },
+  "sourceCommit": "0e325020665052b8a6915ca1d9a6e4148ac47275",
+  "publication": {
+    "verifiedAt": "2026-10-28T16:49:15.159812+00:00",
+    "portalCommit": "19a590e9d96a1b97f483fd45a0c4be3f65f71597",
+    "runId": 40718805979,
+    "publicWebsite": "passed",
+    "publicDownload": "passed",
+    "officialUpdate": "passed",
+    "installedApkSha256": "33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7"
+  },
+  "externalBench": {
+    "printerCommandTests": 7,
+    "paymentContractTests": 113,
+    "supportIdentityTests": 23,
+    "status": "passed",
+    "scope": "Emulated/captured only; no paper output, live settlement or real erasure"
   }
 }

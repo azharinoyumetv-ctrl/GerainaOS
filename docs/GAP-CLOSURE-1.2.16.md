@@ -1,6 +1,6 @@
-# Geraina 1.2.16 — gap closure candidate
+# Geraina 1.2.16 — published gap closure
 
-Source candidate only; public release remains 1.2.15. No payment-provider processing, server authorization, prices or customer records were changed in this pass. No Play upload was performed.
+Website release published and verified on 29 October 2026 JST. Public release is 1.2.16/build 21. No payment-provider processing, server authorization, prices or customer records were changed in this pass. No Play upload was performed.
 
 ## Confirmed gaps repaired
 
@@ -31,7 +31,7 @@ The owner requested Playwright instead of TestSprite. All 42 browser cases passe
 
 Six installed-APK runs passed on Android 16 phone and 14.6-inch tablet emulators (three per device): startup/navigation/cold restart; support/deletion-request intake and actual permission denial/grant; and offline cash plus a real in-place 1.2.15-to-1.2.16 installation. Each upgrade preserved login, a preference, the catalogue and a genuine pending offline sale. Reconnect produced exactly two sales in total and stock 8 from an initial 10 after the two sales, without duplicate synchronization.
 
-The APK is unchanged: SHA-256 `33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7`. Only tests and evidence changed in this follow-up. Exact paths and scopes are in REMAINING-PLAYWRIGHT-1.2.16.json. Startup samples are emulator observations, not physical-device performance guarantees. Upgrade retention used Android installation via adb; official 1.2.16 update-feed delivery still needs a post-publication check. Support intake is tested, while actual account/data erasure remains separate. No provider charges, live settlement or external emails were performed.
+The APK is unchanged: SHA-256 `33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7`. Only tests and evidence changed in this follow-up. Exact paths and scopes are in REMAINING-PLAYWRIGHT-1.2.16.json. Startup samples are emulator observations, not physical-device performance guarantees. Upgrade retention used Android installation via adb; official 1.2.16 update-feed delivery subsequently passed the real Android update flow described below. Support intake is tested, while actual account/data erasure remains separate. No provider charges, live settlement or external emails were performed.
 
 ## Open gates
 
@@ -43,3 +43,11 @@ The APK is unchanged: SHA-256 `33273cea7288c06acdcf0ef183ec8893a59f34be46864888f
 - This pass is targeted gap closure. It does not certify all workflows, zero defects, 200,000-user capacity, or Google Play approval. The full backend suite was not rerun because backend code did not change; previous backend results remain historical.
 
 The current submission checklist is ../android-app/play-store/RELEASE-CHECKLIST.md. It links the official Google requirements checked during this review.
+
+## Published verification — 29 October 2026
+
+Website APK 1.2.16/build 21 is live at https://dagangos.com/geraina/android. All four deployment jobs passed: deploy, Cloudflare zone audit, Geraina e2e and public accessibility. Six live listing/download checks and the public APK contract passed. The actual public 1.2.15-to-1.2.16 update passed seven checks, including user permission denial/retry and retained preferences/pending offline sale. Pulling the installed package confirmed SHA-256 `33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7`.
+
+At the owner's request, remaining equipment/provider behavior was tested on the bench: seven ESC/POS command tests (58/80 mm), 113 payment/configuration/webhook contract tests and 23 support-identity tests passed. These simulate/capture external effects. They do not claim printer paper output, settled funds, actual account erasure, WhatsApp delivery or Play Console approval. Those external/operating-policy limits remain explicit.
+
+Publication source: GerainaOS `0e325020665052b8a6915ca1d9a6e4148ac47275`; portal `19a590e9d96a1b97f483fd45a0c4be3f65f71597`; workflow 40718805979.
