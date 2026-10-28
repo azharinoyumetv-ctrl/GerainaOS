@@ -6,13 +6,14 @@ const {_android}=require('../../frontend/node_modules/playwright');
 const checks=require('./usability-checks.cjs');
 const {loadTestConfig}=require('./test-config.cjs');
 const config=loadTestConfig(),root=path.resolve(__dirname,'..');
-const version=process.env.GERAINA_RELEASE_VERSION||'1.2.15';
+const version=process.env.GERAINA_RELEASE_VERSION||'1.2.16',profileId=process.env.GERAINA_DEVICE_PROFILE||'phone';
+const profile=require('./android-device-profiles.json')[profileId];assert.ok(profile);
 assert.match(version,/^\d+\.\d+\.\d+$/);
-const apk=path.join(root,'releases',`Geraina-POS-${version}.apk`),serial='emulator-5556',app='com.dagangos.geraina';
+const apk=path.join(root,'releases',`Geraina-POS-${version}.apk`),serial=`emulator-${profile.port}`,app='com.dagangos.geraina';
 const adbPath=path.join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe');
 const out=path.join(root,'app/build/reports/startup-android',new Date().toISOString().replace(/[:.]/g,'-'));
 fs.mkdirSync(out,{recursive:true});
-const report={version,status:'running',apkSha256:crypto.createHash('sha256').update(fs.readFileSync(apk)).digest('hex'),scope:'Installed signed APK on Android emulator; real test-store reads; merchant writes blocked; no physical-device performance claim',checks:[],menus:[]};
+const report={version,profile:profileId,status:'running',apkSha256:crypto.createHash('sha256').update(fs.readFileSync(apk)).digest('hex'),scope:'Installed signed APK on Android emulator; real test-store reads; merchant writes blocked; no physical-device performance claim',checks:[],menus:[]};
 let device,page;
 function adb(args,binary=false){const r=spawnSync(adbPath,['-s',serial,...args],{encoding:binary?undefined:'utf8',windowsHide:true,timeout:60000,maxBuffer:20000000});assert.equal(r.status,0,String(r.stderr));return r.stdout;}
 async function attach(){
@@ -24,6 +25,7 @@ async function screenshot(name){fs.writeFileSync(path.join(out,name+'.png'),adb(
  adb(['install','-r',apk]);adb(['shell','cmd','uimode','night','no']);adb(['shell','am','force-stop',app]);
  report.activityStart=adb(['shell','am','start','-W','-n',`${app}/com.example.gerainapos.MainActivity`]);
  await attach();
+ await page.evaluate(()=>{for(const key of ['geraina_token','geraina_user','dagangos_token','dagangos_user','dapuros_token','dapuros_user'])localStorage.removeItem(key);});
  await checks.loginContrast(page);report.checks.push('Installed login readable');
  const t=Date.now();await checks.signIn(page);await page.getByTestId('mobile-dashboard').waitFor();
  report.loginToDashboardShellMs=Date.now()-t;

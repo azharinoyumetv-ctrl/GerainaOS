@@ -28,7 +28,7 @@ import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** User-approved updates for the APK distributed on dagangos.com, never a Play self-updater. */
+/** User-approved updates included only in the APK distributed on dagangos.com. */
 class AppUpdater(private val activity: ComponentActivity, restoring: Boolean, private val notice: (String) -> Unit) {
     private val prefs = activity.getSharedPreferences("website-updates", 0)
     private val executor = Executors.newSingleThreadExecutor()

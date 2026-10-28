@@ -1,7 +1,8 @@
 import { safeAppReturn } from "@/auth/appReturn";
 import "@/index.css";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
-import { lazy, Suspense, useEffect } from "react";
+import { useEffect } from "react";
+import { deferred } from "@/navigation/DeferredPage";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import PasswordSetup from "@/auth/PasswordSetup";
 import { Toaster } from "@/components/ui/sonner";
@@ -53,14 +54,6 @@ const Attendance = deferred(() => import("@/pages/staff/Attendance"));
 const BranchManagement = deferred(() => import("@/pages/branches/BranchManagement"));
 const Integrations = deferred(() => import("@/pages/integrations/Integrations"));
 const Settings = deferred(() => import("@/pages/settings/Settings"));
-
-// Keep the operational shell mounted while a secondary screen loads.
-function deferred(load) {
-  const Page = lazy(load);
-  return function DeferredPage(props) {
-    return <Suspense fallback={<div className="p-4 text-sm" role="status" data-testid="route-loading">Memuat halaman…</div>}><Page {...props} /></Suspense>;
-  };
-}
 
 function KnownSection({ section, children }) {
   const { type } = useParams();

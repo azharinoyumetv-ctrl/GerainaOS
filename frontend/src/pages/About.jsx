@@ -99,10 +99,10 @@ export default function About() {
           <div className="card-surface p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="font-display font-bold">Pembaruan aplikasi</h2>
-              <p className="text-xs text-[hsl(var(--muted))] mt-1">Geraina memeriksa pembaruan saat aplikasi dibuka. Unduh dan pasang saat Anda siap.</p>
+              <p className="text-xs text-[hsl(var(--muted))] mt-1">{appInfo?.updateChannel === 'play' ? 'Pembaruan aplikasi tersedia melalui Google Play.' : 'Geraina memeriksa pembaruan saat aplikasi dibuka. Unduh dan pasang saat Anda siap.'}</p>
             </div>
             <button type="button" className="btn-primary shrink-0" data-testid="about-check-updates" onClick={() => window.GerainaDevice.checkForUpdates()}>
-              Periksa pembaruan
+              {appInfo?.updateChannel === 'play' ? 'Buka Google Play' : 'Periksa pembaruan'}
             </button>
           </div>
         )}

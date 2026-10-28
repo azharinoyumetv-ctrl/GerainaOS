@@ -1,0 +1,212 @@
+{
+  "status": "passed",
+  "method": "Playwright instead of TestSprite, as requested by owner",
+  "reviewDateJST": "2026-10-29",
+  "verifiedAt": "2026-10-28T15:17:41.319133+00:00",
+  "browser": {
+    "startTime": "2026-10-28T15:07:05.231Z",
+    "duration": 124704.23000000001,
+    "expected": 42,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "browserScope": "Actual login form and API, deferred menus, Back/Forward, retry, onboarding and payment-method configuration on three browser layouts; loopback disposable replica; no provider settlement",
+  "supportBrowser": {
+    "status": "passed",
+    "checks": [
+      "phone: authenticated account, internal form, spinner/repeat guard, correct customer reply address and reload recovery",
+      "phone: lost SMTP response does not claim success or send twice",
+      "phone: unavailable mail configuration disables submission honestly",
+      "phone: expired customer can request support",
+      "phone: employee uses their own account email",
+      "samsung-tablet: authenticated account, internal form, spinner/repeat guard, correct customer reply address and reload recovery",
+      "samsung-tablet: lost SMTP response does not claim success or send twice",
+      "samsung-tablet: unavailable mail configuration disables submission honestly",
+      "samsung-tablet: expired customer can request support",
+      "samsung-tablet: employee uses their own account email"
+    ],
+    "reportPath": "android-app/app/build/reports/support/1.2.16/browser-2026-10-28T15-07-13-103Z/verification.json",
+    "realEmailsSent": 0
+  },
+  "installedRuns": [
+    {
+      "profile": "phone",
+      "kind": "startup/navigation/cold restart",
+      "status": "passed",
+      "apkSha256": "33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7",
+      "checks": [
+        "Installed login readable",
+        "Seven menus retain the authenticated document and have no transition animation",
+        "Cold activity restart retains the test-store session"
+      ],
+      "menuSamplesMs": [
+        {
+          "route": "products",
+          "shellMs": 156
+        },
+        {
+          "route": "products/categories",
+          "shellMs": 77
+        },
+        {
+          "route": "reports/sales",
+          "shellMs": 406
+        },
+        {
+          "route": "settings/general",
+          "shellMs": 75
+        },
+        {
+          "route": "about",
+          "shellMs": 392
+        },
+        {
+          "route": "pos",
+          "shellMs": 111
+        },
+        {
+          "route": "dashboard",
+          "shellMs": 102
+        }
+      ],
+      "reportPath": "android-app/app/build/reports/startup-android/2026-10-28T15-10-26-701Z/verification.json",
+      "scope": "Installed signed APK on Android emulator; real test-store reads; merchant writes blocked; no physical-device performance claim"
+    },
+    {
+      "profile": "phone",
+      "kind": "support/deletion intake/native permissions",
+      "status": "passed",
+      "apkSha256": "33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7",
+      "checks": [
+        "installed-tablet: authenticated account, internal form, spinner/repeat guard, correct customer reply address and reload recovery",
+        "installed-tablet: lost SMTP response does not claim success or send twice",
+        "installed-tablet: unavailable mail configuration disables submission honestly",
+        "installed-tablet: expired customer can request support",
+        "installed-tablet: employee uses their own account email",
+        "Native Help menu repeatedly opens support without launching email or sending a message",
+        "Account-deletion request opens a customer-identified draft only after confirmation; cancellation sends nothing",
+        "First-use camera permission prompt appears; denial returns safely to cashier",
+        "Granting camera permission starts the real emulator camera preview",
+        "First-use Nearby devices permission is requested by the real Bluetooth printer control and denial does not crash"
+      ],
+      "reportPath": "android-app/app/build/reports/support/1.2.16/android-phone-2026-10-28T15-10-39-730Z/verification.json",
+      "realEmailsSent": 0,
+      "scope": "Installed signed APK; real permission dialogs/camera preview; disposable Mongo/captured SMTP; no account erasure"
+    },
+    {
+      "profile": "phone",
+      "kind": "offline sale/in-place update retention/reconnect",
+      "status": "passed",
+      "apkSha256": "33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7",
+      "fromVersion": "1.2.15",
+      "checks": [
+        "Actual installed-app cash sale persists once and decrements real stock once",
+        "With device networking off, cash is saved locally without a server order",
+        "Offline app reload retains the signed-in customer and cached catalogue",
+        "In-place 1.2.15 to 1.2.16 upgrade preserves login, preference, complete catalogue and actual pending cash sale while offline",
+        "Reconnect synchronizes the pending sale once; reload does not duplicate revenue or stock changes",
+        "Both sales appear in the installed app sales history"
+      ],
+      "reportPath": "android-app/app/build/reports/native-sales/1.2.16/phone-2026-10-28T15-13-04-797Z/verification.json",
+      "scope": "Android in-place APK installation (adb), not the unpublished update-feed delivery",
+      "productionWrites": 0,
+      "providerRequests": 0
+    },
+    {
+      "profile": "tablet146",
+      "kind": "startup/navigation/cold restart",
+      "status": "passed",
+      "apkSha256": "33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7",
+      "checks": [
+        "Installed login readable",
+        "Seven menus retain the authenticated document and have no transition animation",
+        "Cold activity restart retains the test-store session"
+      ],
+      "menuSamplesMs": [
+        {
+          "route": "products",
+          "shellMs": 1452
+        },
+        {
+          "route": "products/categories",
+          "shellMs": 1019
+        },
+        {
+          "route": "reports/sales",
+          "shellMs": 1554
+        },
+        {
+          "route": "settings/general",
+          "shellMs": 1060
+        },
+        {
+          "route": "about",
+          "shellMs": 838
+        },
+        {
+          "route": "pos",
+          "shellMs": 905
+        },
+        {
+          "route": "dashboard",
+          "shellMs": 523
+        }
+      ],
+      "reportPath": "android-app/app/build/reports/startup-android/2026-10-28T15-13-59-387Z/verification.json",
+      "scope": "Installed signed APK on Android emulator; real test-store reads; merchant writes blocked; no physical-device performance claim"
+    },
+    {
+      "profile": "tablet146",
+      "kind": "support/deletion intake/native permissions",
+      "status": "passed",
+      "apkSha256": "33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7",
+      "checks": [
+        "installed-tablet: authenticated account, internal form, spinner/repeat guard, correct customer reply address and reload recovery",
+        "installed-tablet: lost SMTP response does not claim success or send twice",
+        "installed-tablet: unavailable mail configuration disables submission honestly",
+        "installed-tablet: expired customer can request support",
+        "installed-tablet: employee uses their own account email",
+        "Native Help menu repeatedly opens support without launching email or sending a message",
+        "Account-deletion request opens a customer-identified draft only after confirmation; cancellation sends nothing",
+        "First-use camera permission prompt appears; denial returns safely to cashier",
+        "Granting camera permission starts the real emulator camera preview",
+        "First-use Nearby devices permission is requested by the real Bluetooth printer control and denial does not crash"
+      ],
+      "reportPath": "android-app/app/build/reports/support/1.2.16/android-tablet146-2026-10-28T15-14-19-174Z/verification.json",
+      "realEmailsSent": 0,
+      "scope": "Installed signed APK; real permission dialogs/camera preview; disposable Mongo/captured SMTP; no account erasure"
+    },
+    {
+      "profile": "tablet146",
+      "kind": "offline sale/in-place update retention/reconnect",
+      "status": "passed",
+      "apkSha256": "33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7",
+      "fromVersion": "1.2.15",
+      "checks": [
+        "Actual installed-app cash sale persists once and decrements real stock once",
+        "With device networking off, cash is saved locally without a server order",
+        "Offline app reload retains the signed-in customer and cached catalogue",
+        "In-place 1.2.15 to 1.2.16 upgrade preserves login, preference, complete catalogue and actual pending cash sale while offline",
+        "Reconnect synchronizes the pending sale once; reload does not duplicate revenue or stock changes",
+        "Both sales appear in the installed app sales history"
+      ],
+      "reportPath": "android-app/app/build/reports/native-sales/1.2.16/tablet146-2026-10-28T15-15-39-290Z/verification.json",
+      "scope": "Android in-place APK installation (adb), not the unpublished update-feed delivery",
+      "productionWrites": 0,
+      "providerRequests": 0
+    }
+  ],
+  "apkSha256": "33273cea7288c06acdcf0ef183ec8893a59f34be46864888f9391355064722e7",
+  "appCodeChanged": false,
+  "testBenchNotes": [
+    "Initial CLI invocation used the wrong working directory; actual run used the project-installed Playwright from frontend.",
+    "Initial upgrade safety guard stopped before reset/install because AVD output contained an extra carriage return. Trimmed the captured name, retained the exact AVD-name guard and reran successfully."
+  ],
+  "limits": [
+    "Native runs are AOSP emulators, not physical Xiaomi/Samsung firmware benchmarks.",
+    "Upgrade used Android in-place APK installation via adb, not the unpublished 1.2.16 update feed.",
+    "Support delivery is captured SMTP; deletion-request entry is verified, not actual erasure.",
+    "Gateway method tests use isolated provider fixtures; no live payment settlement or external messages."
+  ]
+}

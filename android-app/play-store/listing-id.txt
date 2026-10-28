@@ -17,15 +17,15 @@ LAPORAN DAN TIM
 Tinjau data toko dan gunakan akses staf sesuai peran. Fitur cabang dan laporan mengikuti paket akun yang aktif.
 
 FITUR ANDROID
-Impor file dengan pemilih file Android, simpan ekspor atau PDF ke lokasi pilihan Anda, dan gunakan layanan cetak Android yang tersedia pada perangkat.
+Pindai barcode dengan kamera perangkat, impor file dengan pemilih file Android, simpan ekspor atau PDF, dan hubungkan printer struk ESC/POS Bluetooth Classic atau USB printer-class yang kompatibel. Dukungan mengikuti protokol dan model; BLE dan protokol khusus belum didukung.
 
 PERSYARATAN
-Memerlukan koneksi internet, akun Geraina POS, serta Android System WebView atau Chrome yang diperbarui. Fitur yang tersedia bergantung pada paket dan peran akun. Pembelian atau perubahan paket tidak tersedia di aplikasi Android ini.
+Memerlukan Android 14 atau lebih baru, akun Geraina POS, serta Android System WebView atau Chrome yang diperbarui. Login awal, unduh katalog, sinkronisasi dan pembayaran elektronik memerlukan internet. Fitur mengikuti paket dan peran akun. Pembelian paket dan add-on tidak tersedia pada versi Google Play; akses yang sudah aktif tetap dapat digunakan.
 
-Mode transaksi offline, pemindai kamera, serta koneksi langsung printer Bluetooth/USB belum tersedia. Untuk mencetak, gunakan layanan cetak Android yang kompatibel atau simpan bukti transaksi sebagai PDF.
+Setelah persiapan online, penjualan tunai dapat dicatat offline dan disinkronkan saat aplikasi aktif dan tersambung kembali. Uji kamera dan printer yang digunakan sebelum operasional. Dukungan dan penghapusan akun tersedia melalui menu aplikasi serta situs Geraina.
 
 Geraina POS disediakan oleh PT DagangOS Digital Indonesia.
 Bantuan: contact@dagangos.com
 
-CATATAN RILIS 1.0.0
-Rilis awal Geraina POS untuk Android. Akses operasional toko, impor file, simpan PDF dan ekspor, serta cetak melalui layanan cetak Android. Memerlukan koneksi internet.
+CATATAN KANDIDAT GOOGLE PLAY (BELUM DIPUBLIKASIKAN)
+Akses operasional toko dengan pemindai barcode, transaksi tunai offline setelah persiapan, struk dan ekspor. Navigasi dapat dicoba ulang saat halaman gagal dimuat. Pembaruan versi Google Play melalui Google Play.

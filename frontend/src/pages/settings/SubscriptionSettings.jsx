@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import api from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
 import { subscriptionState } from "@/auth/subscriptionState";
+import { subscriptionPurchasesAllowed } from "@/auth/subscriptionPurchases";
 import AddonManagement from "./AddonManagement";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
@@ -48,7 +49,7 @@ export default function SubscriptionSettings() {
     </div>
     {!known && <p role="alert" className="text-sm text-amber-900" data-testid="subscription-data-warning">Status paket belum diketahui karena informasi akun tidak sesuai. Hubungi dukungan untuk memeriksa paket Anda.</p>}
     <p className="text-sm leading-relaxed">Paket dibayar di muka untuk satu bulan atau satu tahun. Tidak ada perpanjangan atau pemotongan saldo otomatis.</p>
-    {data.can_manage && <a href="/geraina/pricing" className="btn-primary inline-flex" data-testid="view-pricing-matrix-link">{active && plan !== "trial" ? "Ubah atau upgrade paket" : "Pilih & beli paket"}</a>}
+    {data.can_manage && subscriptionPurchasesAllowed() && <a href="/geraina/pricing" className="btn-primary inline-flex" data-testid="view-pricing-matrix-link">{active && plan !== "trial" ? "Ubah atau upgrade paket" : "Pilih & beli paket"}</a>}
     {data.addons && <AddonManagement data={data.addons} canManage={data.can_manage} />}
     {stopping && <p role="status" className="text-sm" data-testid="subscription-stopped">Langganan akan berhenti pada {expiry}. Akses yang sudah dibayar tetap tersedia sampai tanggal tersebut. Data toko tetap tersimpan.</p>}
     {data.can_manage && active && sub?.order_id && <div className="border-t pt-4">

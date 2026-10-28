@@ -6,12 +6,14 @@ const {spawnSync}=require('node:child_process');
 const {_android,expect}=require('../../frontend/node_modules/@playwright/test');
 const profiles=require('./android-device-profiles.json');
 const profileId=process.env.GERAINA_DEVICE_PROFILE||'phone',profile=profiles[profileId];assert.ok(profile);
-const root=path.resolve(__dirname,'..'),app='com.dagangos.geraina',version='1.2.15';
-const apk=path.join(root,'releases',`Geraina-POS-${version}.apk`),serial=`emulator-${profile.port}`;
+const root=path.resolve(__dirname,'..'),app='com.dagangos.geraina',version=process.env.GERAINA_RELEASE_VERSION||'1.2.16';
+const distribution=process.env.GERAINA_DISTRIBUTION||'website';
+assert.match(version,/^\d+\.\d+\.\d+$/);assert.ok(['website','play'].includes(distribution));
+const apk=path.join(root,'releases',...(distribution==='play'?['play']:[]),`Geraina-POS-${version}.apk`),serial=`emulator-${profile.port}`;
 const adbPath=path.join(process.env.USERPROFILE,'AppData/Local/Android/Sdk/platform-tools/adb.exe');
 const out=path.join(root,'app/build/reports/subscription-android',profileId+'-'+new Date().toISOString().replace(/[:.]/g,'-'));
 fs.mkdirSync(out,{recursive:true});
-const report={status:'running',version,profile:profileId,apkSha256:crypto.createHash('sha256').update(fs.readFileSync(apk)).digest('hex'),
+const report={status:'running',version,distribution,profile:profileId,apkSha256:crypto.createHash('sha256').update(fs.readFileSync(apk)).digest('hex'),
  scope:'Installed signed APK and packaged frontend; disposable local API; no customer records or gateway requests',checks:[],requests:[],errors:[]};
 let device,page;
 function adb(args,binary=false){const r=spawnSync(adbPath,['-s',serial,...args],{encoding:binary?undefined:'utf8',windowsHide:true,timeout:60000,maxBuffer:20000000});assert.equal(r.status,0,String(r.stderr));return r.stdout;}
@@ -39,6 +41,7 @@ async function go(route){await page.evaluate(route=>{if(!GerainaRouter.navigate(
   report.requests.push({method:request.method(),path:url.pathname,status:response.status});
   await route.fulfill({status:response.status,body:Buffer.from(await response.arrayBuffer()),contentType:response.headers.get('content-type')||'application/json'});
  });
+ await page.evaluate(()=>{localStorage.clear();sessionStorage.clear();});
  await page.goto('https://dagangos.com/geraina/login');await page.getByTestId('login-form').waitFor();
  await scenario('subscription-malformed');
  await expect(page.getByTestId('subscription-status-badge')).toHaveText('PERLU DIPERIKSA');
@@ -52,13 +55,21 @@ async function go(route){await page.evaluate(route=>{if(!GerainaRouter.navigate(
  await expect(page.getByTestId('subscription-status-badge')).toHaveText('AKTIF');
  await expect(page.getByTestId('subscription-expiry')).toContainText('2099');
  await expect(page.getByTestId('tier-name')).toHaveText('Business');
- await expect(page.getByTestId('addon-buy-extra_outlet')).toBeEnabled();
- await expect(page.getByTestId('addon-buy-extra_device')).toBeDisabled();
+ if(distribution==='website'){
+  await expect(page.getByTestId('addon-buy-extra_outlet')).toBeEnabled();
+  await expect(page.getByTestId('addon-buy-extra_device')).toBeDisabled();
+ }else{
+  await expect(page.getByTestId('play-subscription-notice')).toBeVisible();
+  await expect(page.getByTestId('view-pricing-matrix-link')).toHaveCount(0);
+  await expect(page.locator('[data-testid^="addon-buy-"], [data-testid="addon-renew"]')).toHaveCount(0);
+ }
  await screenshot('business-through-2099');await go('about');
  await expect(page.getByTestId('about-license-status')).toHaveText('Business');
  await expect(page.getByTestId('about-version')).toHaveText('v'+version);
+ await expect(page.getByTestId('about-check-updates')).toHaveText(distribution==='play'?'Buka Google Play':'Periksa pembaruan');
+ assert.equal(await page.evaluate(()=>GerainaDevice.appInfo.updateChannel),distribution);
  await screenshot('business-about');
- report.checks.push('Business grant through 2099 agrees across screens and enables the Business outlet add-on');
+ report.checks.push('Business through 2099 agrees across screens; purchase and update controls match '+distribution+' distribution');
  await scenario('subscription-expired');
  await expect(page.getByTestId('subscription-status-badge')).toHaveText('BERAKHIR');
  await expect(page.getByTestId('tier-name')).toHaveText('Paket berakhir');

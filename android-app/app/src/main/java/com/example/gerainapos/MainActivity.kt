@@ -447,6 +447,7 @@ class MainActivity : ComponentActivity() {
             assets.open("android-bridge.js").bufferedReader().use { it.readText() }
         WebViewCompat.addDocumentStartJavaScript(webView, script, setOf(NavigationPolicy.ORIGIN))
         val appInfo = JSONObject().put("versionName", BuildConfig.VERSION_NAME).put("versionCode", BuildConfig.VERSION_CODE)
+            .put("updateChannel", BuildConfig.DISTRIBUTION)
             .put("subscriptionPurchases", BuildConfig.WEB_SUBSCRIPTIONS_ENABLED)
             .put("androidVersion", Build.VERSION.RELEASE).put("model", "${Build.MANUFACTURER} ${Build.MODEL}".take(100))
         val deviceScript = "window.__gerainaAppInfo=$appInfo;\n" + assets.open("device-features.js").bufferedReader().use { it.readText() }
@@ -556,19 +557,20 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showMenu(anchor: View) {
+        val updateLabel = if (BuildConfig.DISTRIBUTION == "play") "Buka Google Play" else "Periksa pembaruan"
         PopupMenu(this, anchor).apply {
-            listOf("Muat ulang", "Periksa pembaruan", "Printer struk", "Cetak contoh printer", "Cetak halaman", "Chat bantuan", "Privasi", "Minta penghapusan akun", "Bantuan", "Tentang Geraina").forEach { menu.add(it) }
+            listOf("Muat ulang", updateLabel, "Printer struk", "Cetak contoh printer", "Cetak halaman", "Chat bantuan", "Privasi", "Minta penghapusan akun", "Bantuan", "Tentang Geraina").forEach { menu.add(it) }
             setOnMenuItemClickListener {
                 when (it.title.toString()) {
                     "Muat ulang" -> if (nativeFeaturesReady) { failedPageUrl = null; webView.reload() } else notice("Perbarui Android System WebView atau Chrome terlebih dahulu.")
                     "Cetak halaman" -> printPage()
-                    "Periksa pembaruan" -> appUpdater.check()
+                    updateLabel -> appUpdater.check()
                     "Printer struk" -> if (authenticatedScreen) receiptPrinter.configure() else notice("Masuk ke toko terlebih dahulu.")
                     "Cetak contoh printer" -> if (authenticatedScreen) receiptPrinter.sample() else notice("Masuk ke toko terlebih dahulu.")
                     "Chat bantuan" -> webView.evaluateJavascript("window.GerainaMobile?.openSupport?.() || false") { opened ->
                         if (opened != "true") notice("Chat belum tersedia. Gunakan Bantuan untuk menghubungi dukungan.")
                     }
-                    "Privasi" -> navigate("https://dagangos.com/kebijakan-privasi")
+                    "Privasi" -> navigate("https://dagangos.com/geraina/privacy")
                     "Minta penghapusan akun" -> requestDeletion()
                     "Bantuan" -> {
                         if (Uri.parse(lastPage).path == "/geraina/app/about") {

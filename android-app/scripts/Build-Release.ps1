@@ -1,13 +1,20 @@
-param([int]$VersionCode = 20, [string]$VersionName = '1.2.15', [ValidateSet('website','play')][string]$Distribution = 'website')
+param([int]$VersionCode = 21, [string]$VersionName = '1.2.16', [ValidateSet('website','play')][string]$Distribution = 'website')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($VersionCode -lt 1 -or $VersionName -notmatch '^\d+\.\d+\.\d+$') { throw 'Use a positive version code and a version such as 1.0.0.' }
+$publishedManifest = Join-Path $projectRoot '../../public/downloads/geraina/latest.json'
+if (Test-Path -LiteralPath $publishedManifest) {
+    $published = Get-Content -Raw -LiteralPath $publishedManifest | ConvertFrom-Json
+    if ($VersionCode -le $published.versionCode) { throw 'Use a version code newer than the published app. Published release files must not be replaced.' }
+}
 if (!(Test-Path -LiteralPath (Join-Path $projectRoot 'keystore.properties'))) { throw 'Run Prepare-UploadKey.ps1 once before building a release.' }
 Push-Location $projectRoot
 try {
     & .\gradlew.bat testDebugUnitTest lintRelease assembleRelease bundleRelease "-PgerainaVersionCode=$VersionCode" "-PgerainaVersionName=$VersionName" "-PgerainaDistribution=$Distribution" --console=plain
     if ($LASTEXITCODE -ne 0) { throw 'Android release verification or build failed.' }
+    & (Join-Path $PSScriptRoot 'Verify-Distribution.ps1') -Distribution $Distribution
     $releaseDir = Join-Path $projectRoot 'releases'
+    if ($Distribution -eq 'play') { $releaseDir = Join-Path $releaseDir 'play' }
     New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
     $prefix = "Geraina-POS-$VersionName"
     Copy-Item -LiteralPath 'app/build/outputs/apk/release/app-release.apk' -Destination (Join-Path $releaseDir "$prefix.apk")

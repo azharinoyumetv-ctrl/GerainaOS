@@ -2,7 +2,7 @@
 
 The Android app connects to the production Geraina service at `https://dagangos.com/geraina/login`. It bundles the Geraina frontend for offline startup in a hardened Android WebView, with durable cash-sale storage and replay, native camera barcode scanning, Bluetooth/USB receipt printing, navigation, Android file selection and PDF/export saving.
 
-Application ID: `com.dagangos.geraina`. Current source version: `1.2.2`, version code `7`. Android 14 (API 34) or newer; targets Android 16 (API 36). A recent Android System WebView/Chrome is required. The debug build uses a separate `.debug` app ID. The public download version is recorded separately in the portal manifest.
+Application ID: `com.dagangos.geraina`. Source candidate: `1.2.16`, version code `21`; public release: `1.2.15` until a separately verified publication. Android 14 (API 34) or newer; targets Android 16 (API 36). A recent Android System WebView/Chrome is required. The debug build uses a separate `.debug` app ID. The public download version is recorded separately in the portal manifest.
 
 Distribution is website-first at `https://dagangos.com/geraina/android`. Google Play publication is postponed at the owner's request while the organization's D-U-N-S is unavailable. The parent portal's `scripts/stage-geraina-android.mjs` stages only the verified signed APK, its public metadata and selected screenshots.
 
@@ -25,9 +25,9 @@ Use JDK 17, Android SDK platform 36 and build tools 36.0.0. Set `sdk.dir` in the
 .\scripts\Build-Release.ps1 -VersionCode 10 -VersionName 1.2.5
 ```
 
-Outputs are in `releases/`. Distribute the signed `.apk` through the website. The current APK/AAB contains a website self-updater and is not ready for Google Play submission: remove that updater and `REQUEST_INSTALL_PACKAGES`, and use Play's update mechanism before submitting. Files in `releases/` are ignored by Git.
+Website outputs are in `releases/`. Build the separate Play candidate with `scripts/Build-Release.ps1 -Distribution play`; outputs go into `releases/play/`. Separate updater source and manifest overlays exclude the APK installer and its permission/provider from Play. The Play update control opens Google Play; the website build retains its verified updater. Both channels retain the original signing identity. The build checks compiled code and both package manifests before staging output, and rejects version codes already published. Files in `releases/` are ignored by Git. These checks do not establish Google Play approval; see the current submission checklist.
 
-Version 1.2.5 changes the QRIS checkout to the merchant's existing bank-issued static QRIS, uploaded in **Pembayaran > QRIS**. Staff check the bank's merchant app and explicitly confirm the matching amount; Geraina records who confirmed and when. No Xendit key is required for this flow. See [BANK-QRIS.md](BANK-QRIS.md) for setup, recovery and verification limits.
+Bank QRIS uses the merchant's bank-issued static QRIS, uploaded in **Integrasi > QRIS bank**. **Pembayaran** selects what appears at the cashier. Staff check the bank's merchant app and explicitly confirm the matching amount; Geraina records who confirmed and when. No Xendit key is required. See [BANK-QRIS.md](BANK-QRIS.md) for verification limits.
 
 ## Updates inside the app
 

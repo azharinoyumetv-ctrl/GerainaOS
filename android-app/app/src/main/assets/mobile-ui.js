@@ -76,7 +76,8 @@
     if (!days) return `<div class="ga-empty">Rincian harian belum tersedia.<br><a href="/geraina/app/sales">Buka riwayat penjualan →</a></div>`;
     const maximum = Math.max(1,...days.map(day=>day.value));
     const total = days.reduce((sum,day)=>sum+day.value,0);
-    return `<p class="ga-chart-total" data-testid="mobile-week-total">${money(total)}</p><div class="ga-bars" role="img" aria-label="Penjualan per hari dalam zona waktu UTC">${days.map(day=>`<span class="ga-bar" style="height:${Math.max(3,day.value/maximum*100)}%" aria-label="${esc(day.date.toLocaleDateString('id-ID',{timeZone:'UTC'}))}: ${money(day.value)}" title="${money(day.value)}"></span>`).join('')}</div><div class="ga-days">${days.map(day=>`<span>${esc(day.date.toLocaleDateString('id-ID',{weekday:'short',timeZone:'UTC'}))}</span>`).join('')}</div><p class="ga-chart-note">${total===0?'Belum ada penjualan pada periode ini.':'Transaksi lunas'} · UTC</p>`;
+    const timezone=esc(stats.timezone || 'Asia/Jakarta');
+    return `<p class="ga-chart-total" data-testid="mobile-week-total">${money(total)}</p><div class="ga-bars" role="img" aria-label="Penjualan per hari dalam zona waktu ${timezone}">${days.map(day=>`<span class="ga-bar" style="height:${Math.max(3,day.value/maximum*100)}%" aria-label="${esc(day.date.toLocaleDateString('id-ID',{timeZone:'UTC'}))}: ${money(day.value)}" title="${money(day.value)}"></span>`).join('')}</div><div class="ga-days">${days.map(day=>`<span>${esc(day.date.toLocaleDateString('id-ID',{weekday:'short',timeZone:'UTC'}))}</span>`).join('')}</div><p class="ga-chart-note">${total===0?'Belum ada penjualan pada periode ini.':'Transaksi lunas'} · ${timezone}</p>`;
   }
   function recentMarkup(orders) {
     if (!Array.isArray(orders)) return `<div class="ga-empty">Transaksi belum dapat dimuat.</div>`;

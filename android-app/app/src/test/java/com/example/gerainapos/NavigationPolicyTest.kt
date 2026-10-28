@@ -45,7 +45,8 @@ class NavigationPolicyTest {
     }
     @Test fun onlySubscriptionCheckoutReturnsToBilling() {
         for (path in listOf("/geraina/pricing", "/geraina/checkout", "/geraina/order?receipt=fixture")) {
-            assertEquals(NavigationPolicy.BILLING_URL, NavigationPolicy.subscriptionReturnUrl("https://dagangos.com$path", "https://checkout.xendit.co/web/fixture"))
+            assertEquals(if (BuildConfig.WEB_SUBSCRIPTIONS_ENABLED) NavigationPolicy.BILLING_URL else null,
+                NavigationPolicy.subscriptionReturnUrl("https://dagangos.com$path", "https://checkout.xendit.co/web/fixture"))
         }
         for (source in listOf("https://dagangos.com/geraina/app/pos", "https://dagangos.com/geraina/app/about", "https://evil.test/geraina/checkout", "http://dagangos.com/geraina/checkout")) {
             assertEquals(null, NavigationPolicy.subscriptionReturnUrl(source, "https://checkout.xendit.co/web/fixture"))

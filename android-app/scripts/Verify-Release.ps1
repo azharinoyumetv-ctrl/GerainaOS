@@ -1,10 +1,12 @@
-param([string]$VersionName = '1.2.6')
+param([string]$VersionName = '1.2.16', [ValidateSet('website','play')][string]$Distribution = 'website')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $sdk = Join-Path $env:USERPROFILE 'AppData\Local\Android\Sdk'
 $buildTools = Join-Path $sdk 'build-tools\36.0.0'
-$apk = Join-Path $projectRoot "releases\Geraina-POS-$VersionName.apk"
-$bundle = Join-Path $projectRoot "releases\Geraina-POS-$VersionName.aab"
+$releaseDir = Join-Path $projectRoot 'releases'
+if ($Distribution -eq 'play') { $releaseDir = Join-Path $releaseDir 'play' }
+$apk = Join-Path $releaseDir "Geraina-POS-$VersionName.apk"
+$bundle = Join-Path $releaseDir "Geraina-POS-$VersionName.aab"
 $bundletool = Join-Path $projectRoot 'build\tools\bundletool-all-1.18.3.jar'
 if (!(Test-Path -LiteralPath $bundletool)) { throw 'The verified local bundletool jar is not present.' }
 & java -jar $bundletool validate "--bundle=$bundle" *> (Join-Path $projectRoot 'build\bundle-validation.txt')

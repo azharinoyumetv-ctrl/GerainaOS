@@ -21,9 +21,10 @@ android {
         minSdk = 34
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
         targetSdk = 36
-        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("20").get().toInt()
-        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.15").get()
+        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("21").get().toInt()
+        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.16").get()
         buildConfigField("boolean", "WEB_SUBSCRIPTIONS_ENABLED", (distribution == "website").toString())
+        buildConfigField("String", "DISTRIBUTION", "\"$distribution\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -59,6 +60,10 @@ android {
         buildConfig = true
     }
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/frontend-assets").get().asFile)
+    sourceSets.getByName("main").kotlin.srcDir("src/$distribution/java")
+    for (variant in listOf("debug", "release")) {
+        sourceSets.getByName(variant).manifest.srcFile("src/$distribution/AndroidManifest.xml")
+    }
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
 
