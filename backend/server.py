@@ -11,10 +11,11 @@ load_dotenv(ROOT_DIR / ".env")
 if not os.getenv('VERCEL') and os.getenv('ENV') != 'test':
     load_dotenv(ROOT_DIR / '.env.support.local')
 
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import close_db, get_db
+from erasure_guard import ErasureContextMiddleware, capabilities
 from routes_auth import router as auth_router
 from routes_products import router as products_router
 from routes_orders import router as orders_router
@@ -40,6 +41,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname
 logger = logging.getLogger("geraina")
 
 app = FastAPI(title="Geraina POS by DagangOS")
+app.add_middleware(ErasureContextMiddleware, default_module="geraina")
 
 # Health check (mounted at /api by frontend, but also at root for k8s)
 api_router = APIRouter(prefix="/api")
@@ -62,6 +64,12 @@ async def health():
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+@api_router.get("/system/erasure-capabilities")
+async def erasure_capabilities(response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    return capabilities("geraina", get_db())
 
 
 app.include_router(api_router)

@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "version": "1.2.16",
+  "checkedAt": "2026-10-28T17:25:12.248Z",
+  "status": "reviewed-external-dependencies-and-erasure-gap-open",
+  "productionWrites": 0,
+  "previouslyPassedBench": {
+    "printerCommandTests": 7,
+    "paymentContractTests": 113,
+    "supportIdentityTests": 23,
+    "rerunInThisReview": false
+  },
+  "physicalPrinting": {
+    "status": "blocked-no-accessible-android-printer",
+    "adbDevices": 0,
+    "observation": "ADB lists no connected device. No receipt-printer transport or paper output was exercised.",
+    "printerInventoryLimit": "Windows printer query was unavailable; an empty queue result is not evidence that the owner has no printer.",
+    "inventory": {
+      "checkedAt": "2026-10-28T17:22:42.1791699Z",
+      "adb": [
+        "List of devices attached",
+        ""
+      ],
+      "printQueues": [],
+      "scope": "Read-only ADB and Windows print-queue inventory; no print was sent"
+    },
+    "windowsProbe": {
+      "pnpCommandAvailable": true,
+      "windowsPrinters": [],
+      "printerQueryStatus": "unavailable"
+    },
+    "toClose": "Connect a test Android device and paired supported receipt printer, then verify a sample receipt on paper, including width, totals and reconnect."
+  },
+  "merchantSettlement": {
+    "status": "blocked-merchant-payment-not-configured",
+    "readiness": {
+      "checkedAt": "2026-10-28T17:20:47.202Z",
+      "origin": "https://dagangos.com",
+      "scope": "Authenticated read-only check of the configured test store; no order, charge, mail or deletion",
+      "authenticatedStoreMatched": true,
+      "plan": "trial",
+      "endpointStatus": {
+        "/api/payments/options": 200,
+        "/api/payments/bank-qris": 200,
+        "/api/support/context": 200,
+        "/api/settings": 200
+      },
+      "gateways": {
+        "xendit": {
+          "configured": false,
+          "plan_allowed": true
+        },
+        "midtrans": {
+          "configured": false,
+          "plan_allowed": true
+        },
+        "doku": {
+          "configured": false,
+          "plan_allowed": true
+        }
+      },
+      "cashierMethods": {
+        "cash": {
+          "enabled": true,
+          "displayed": true,
+          "provider": null
+        },
+        "qris_bank": {
+          "enabled": false,
+          "displayed": false,
+          "provider": null
+        },
+        "ewallet": {
+          "enabled": false,
+          "displayed": false,
+          "provider": "xendit"
+        },
+        "doku": {
+          "enabled": false,
+          "displayed": false,
+          "provider": "doku"
+        },
+        "va": {
+          "enabled": false,
+          "displayed": false,
+          "provider": null
+        },
+        "credit_card": {
+          "enabled": false,
+          "displayed": false,
+          "provider": null
+        }
+      },
+      "bankQris": {
+        "active": false,
+        "codeConfigured": false,
+        "confirmationMode": "manual_bank"
+      },
+      "support": {
+        "deliveryReady": true,
+        "accountIdentityMatches": true
+      },
+      "printerSettings": {
+        "mode": null,
+        "paperSize": "80mm"
+      },
+      "realSettlementVerified": false,
+      "physicalPrintingVerified": false,
+      "productionWrites": 0
+    },
+    "observation": "The configured test store has cash enabled; bank QRIS and all three merchant gateways are unconfigured. No charge or settlement was attempted.",
+    "toClose": "Configure the test merchant bank QRIS or merchant-owned gateway. A real payment then needs the bank/provider receipt plus matching order and webhook/manual-confirmation evidence. Platform subscription billing is separate."
+  },
+  "accountErasure": {
+    "status": "software-gaps-verified-publication-pending",
+    "passed": [
+      "Public privacy and deletion pages returned HTTP 200 and identify Geraina POS and contact@dagangos.com.",
+      "Live support context is ready and identifies the authenticated test account.",
+      "Existing automated support/deletion-request intake checks passed."
+    ],
+    "interpretation": "Support-assisted deletion is allowed by Google. The gap is evidence of actual fulfillment and clear retention practices, not the use of a support form.",
+    "toClose": [
+      "Publish the coordinated backend/website changes and verify matching live fence capabilities",
+      "For an actual customer request, approve its scope/disposition/deadlines and complete the separately recorded external-copy steps"
+    ],
+    "policySource": "https://support.google.com/googleplay/android-developer/answer/13327111?hl=en",
+    "actualAccountsErased": 0,
+    "initialSourceFindings": [
+      "routes_support.py creates and tracks support requests; it does not erase accounts.",
+      "No account-erasure fulfillment implementation or operating procedure was found in the reviewed Geraina repository.",
+      "Staff deletion deactivates access; it is not account/data erasure.",
+      "Published privacy/deletion pages do not state concrete retention periods or a fulfillment timeframe."
+    ],
+    "currentImplementation": {
+      "status": "software-gaps-verified-publication-pending",
+      "closedSoftwareGaps": [
+        "Shared Geraina/DapurOS identities and staff-only membership erasure",
+        "Transaction-level account/module/store/membership fencing in both backends",
+        "Approved minimum financial/time retention, explicit expiry and due-only purge",
+        "Durable begin/resume/status/cancel, lost-response retry and restore replay"
+      ],
+      "evidence": "GerainaOS/docs/ACCOUNT-ERASURE-VERIFICATION.json",
+      "backendTests": 467,
+      "dapurBackendTests": 27,
+      "realReplicaChecks": 14,
+      "browserChecks": 6,
+      "published": false
+    }
+  },
+  "googlePlay": {
+    "status": "blocked-duns-application-incomplete-and-no-submission",
+    "consoleObservation": "Official Play Console opened developer-account registration for the default signed-in account. Other-account check was stopped after automatic approval review detected an unexpected google.play origin.",
+    "ownerConfirmation": "D-U-N-S requested but not yet available.",
+    "playPackage": "Existing signed Play AAB/package checks passed; this is separate from developer registration, submission and Google approval.",
+    "toClose": "Complete the D&B application and issuance, organization registration/verification, declarations and required testing, then submit for Google review.",
+    "organizationRegistration": "Owner reports the D-U-N-S application is in progress; no issued number or Play approval was verified."
+  }
+}

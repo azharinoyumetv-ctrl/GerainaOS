@@ -2,16 +2,18 @@
 import os
 from datetime import datetime, timezone, timedelta
 from motor.motor_asyncio import AsyncIOMotorClient
+from erasure_guard import GuardedDatabase
 
 _client = None
 _db = None
+_guarded = None
 
 
 import logging
 
 logger = logging.getLogger("geraina.database")
 
-def get_db():
+def get_raw_db():
     global _client, _db
     if _db is None:
         mongo_url = os.environ["MONGO_URL"].strip()
@@ -22,10 +24,19 @@ def get_db():
     return _db
 
 
+def get_db():
+    global _guarded
+    raw = get_raw_db()
+    if _guarded is None or _guarded.raw is not raw:
+        _guarded = GuardedDatabase(raw, "geraina")
+    return _guarded
+
+
 def close_db():
-    global _client
+    global _client, _db, _guarded
     if _client is not None:
         _client.close()
+    _client = _db = _guarded = None
 
 
 def utcnow() -> datetime:

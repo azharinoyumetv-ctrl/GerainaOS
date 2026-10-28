@@ -85,3 +85,6 @@ memory/test_credentials.md
 android-sdk/
 .venv-offline-tests/
 .offline-test-cache/
+
+# Private verified deletion cases (never commit customer evidence)
+.private-erasure/

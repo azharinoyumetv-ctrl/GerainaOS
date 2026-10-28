@@ -389,5 +389,23 @@
     "supportIdentityTests": 23,
     "status": "passed",
     "scope": "Emulated/captured only; no paper output, live settlement or real erasure"
+  },
+  "externalVerificationReview": {
+    "checkedAt": "2026-10-28T17:25:12.248Z",
+    "status": "reviewed-external-dependencies-and-erasure-gap-open",
+    "report": "GerainaOS/docs/EXTERNAL-VERIFICATION-1.2.16.json",
+    "printer": "not-verified-no-accessible-hardware",
+    "settlement": "not-verified-test-merchant-unconfigured",
+    "erasure": "software-gaps-verified-publication-pending",
+    "play": "not-submitted-duns-application-pending-completion"
+  },
+  "accountErasureCandidate": {
+    "status": "software-gaps-verified-publication-pending",
+    "backendTests": 467,
+    "dapurBackendTests": 27,
+    "realReplicaChecks": 14,
+    "browserChecks": 6,
+    "published": false,
+    "evidence": "GerainaOS/docs/ACCOUNT-ERASURE-VERIFICATION.json"
   }
 }

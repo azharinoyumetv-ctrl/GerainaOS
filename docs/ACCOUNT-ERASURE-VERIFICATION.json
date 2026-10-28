@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 2,
+  "status": "software-gaps-verified-publication-pending",
+  "reviewedAt": "2026-10-28T18:56:09.201Z",
+  "applicationVersion": "1.2.16",
+  "apkChanged": false,
+  "published": false,
+  "closedSoftwareGaps": [
+    "Shared Geraina/DapurOS identities and staff-only membership erasure",
+    "Transaction-level account/module/store/membership fencing in both backends",
+    "Approved minimum financial/time retention, explicit expiry and due-only purge",
+    "Durable begin/resume/status/cancel, lost-response retry and restore replay"
+  ],
+  "backendTests": {
+    "tests": 467,
+    "failures": 0,
+    "errors": 0
+  },
+  "dapurBackendTests": {
+    "tests": 27,
+    "failures": 0,
+    "errors": 0
+  },
+  "realReplica": {
+    "status": "passed",
+    "finishedAt": "2026-10-28T18:46:05.078697+00:00",
+    "checks": [
+      "Concurrent first writes create guards safely and preserve all six increments",
+      "Closure waits for an existing transaction and rejects the now-stale preview without losing the committed write",
+      "Real Geraina HTTP cash checkout, duplicate retry, void/stock restoration and offline synchronization retain their existing atomic behavior behind the fence",
+      "A real Geraina HTTP request authenticated before closure is fenced at its later write; closing access is visible through normal authentication",
+      "An actual mid-erasure database failure rolls back records and retention copies; durable closure remains resumable",
+      "Retry after an interruption or lost success response returns the durable result without duplicate retention copies; old sessions reject",
+      "Overall completion requires a separately recorded outcome for every external-copy step; the database result alone never reports full completion",
+      "Real retention projection excludes identity/contact/provider fields; the TTL index is installed and deterministic expiry removes only due data",
+      "Independent DapurOS HTTP login and product writes work during and after Geraina closure; shared credentials and the DapurOS paid entitlement survive",
+      "Staff-only erasure preserves sales totals, removes attribution, reopens the store to its owner and still fences the erased staff identity",
+      "Cancellation before commit safely reopens writes; restored records stay fenced and reviewed restore replay removes them without affecting another tenant",
+      "All supported Mongo mutation shapes are fenced, unscoped upserts fail closed, and nested helpers share the outer session without a self-deadlock",
+      "Actual operator CLI preview, begin, status, resume/retry and external-step acknowledgements pass against the marked local fixture",
+      "Actual built frontend passed Playwright sign-in, closed-account reload/login, staff logout and surviving-owner access on desktop and phone layouts"
+    ],
+    "scope": "Real local MongoDB replica, Geraina ASGI HTTP and independent DapurOS process; fixtures only",
+    "productionWrites": 0,
+    "realExternalActions": 0,
+    "sourceFiles": [
+      "backend/erasure_guard.py",
+      "backend/erasure_workflow.py",
+      "backend/erasure_inventory.py",
+      "backend/database.py",
+      "backend/auth.py",
+      "backend/fulfill_account_erasure.py"
+    ],
+    "fixtures_removed": true
+  },
+  "browser": {
+    "status": "passed",
+    "finishedAt": "2026-10-28T18:46:04.790Z",
+    "checks": [
+      "Owner closure drops the old session and cached workspace on reload at 1365px",
+      "Staff-only deletion drops the old staff session at 1365px",
+      "The surviving owner can sign in and load the unchanged product catalogue at 1365px",
+      "Owner closure drops the old session and cached workspace on reload at 393px",
+      "Staff-only deletion drops the old staff session at 393px",
+      "The surviving owner can sign in and load the unchanged product catalogue at 393px"
+    ],
+    "productionWrites": 0,
+    "scope": "Actual built Geraina frontend and current backend; isolated loopback fixtures"
+  },
+  "normalizedSourceSha256": {
+    "backend/account_erasure.py": "03701316f2bf159705b13c70d1e868b71f965e9b355479cea93f66a86b0cb0da",
+    "backend/erasure_workflow.py": "490fe601447fbd4f1b73239914da40d2f6033b736929e53fd9dc110bcf1d44ac",
+    "backend/erasure_guard.py": "b24297360d8862948a165252c0a18fa3726df8ef26a81245001b67524700d8e1",
+    "backend/erasure_inventory.py": "ad2a52e70c1ac232ea1f5be80699cec9cf1f0e4f32de22d8cbe5d16f4464db08",
+    "backend/erasure_runtime.py": "2ed209b4f905ac1e6320a8471c63be4268e5117716abab6fea64bf81e08330cb",
+    "backend/fulfill_account_erasure.py": "059ba5da59bf21e6024da9b30b4cd5025baacab4e58d9d14628f274badf37098",
+    "backend/database.py": "15409c1fafcdceb4b7943273584e985ef56d8550c141d658732bbd4aa025af33",
+    "backend/auth.py": "6656ff65c0aa715e1920681d31dcc5ab0e7020572983b698e46088454ca0524e",
+    "backend/server.py": "5eda6de926229e69fe05e4e44a7639b486edb937fe6b7500a4cb14a05e9b0aca",
+    "backend/transactions.py": "192ce43a155ccb44028ecd1987c99ac2de183603102707c113fe79c21d40fb81"
+  },
+  "sharedFenceSha256": "b24297360d8862948a165252c0a18fa3726df8ef26a81245001b67524700d8e1",
+  "operatorRunbook": "docs/ACCOUNT-ERASURE-RUNBOOK.md",
+  "safeguards": [
+    "Production CLI requires matching live fences on both official backends and the local tool",
+    "Cases require verified authority, a reviewed disposition and explicit audit/retention deadlines",
+    "Pending/uncertain payments, indefinite holds and ambiguous/uninventoried scope fail closed",
+    "Only a primary-database outcome is reported until all external-copy steps have evidence"
+  ],
+  "externalLimits": [
+    "Actual provider/mail/file/log/backup/device erasure is a recorded operational step, not simulated as completed for a customer",
+    "A real case still needs its actual lawful retention/fulfillment dates and evidence",
+    "Printer paper output, live bank settlement and Google Play verification remain separate"
+  ],
+  "productionCustomerAccountsErased": 0
+}

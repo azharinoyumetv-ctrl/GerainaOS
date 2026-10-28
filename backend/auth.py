@@ -14,6 +14,7 @@ from fastapi.security import OAuth2PasswordBearer
 from database import get_db, utcnow
 from subscription_state import apply_store_subscription
 from permissions import canonical_role, capabilities_for, EMPLOYEE_ROLES
+from erasure_guard import actor_context
 
 JWT_SECRET = os.environ.get("JWT_SECRET_KEY", "change-me")
 if JWT_SECRET == "change-me" and os.environ.get("ENV") == "production":
@@ -64,7 +65,9 @@ def employee_password_error(password: str) -> Optional[str]:
 
 def account_is_active(user: dict) -> bool:
     status = str(user.get("status", "Aktif")).replace("-", "").replace(" ", "").casefold()
-    return user.get("is_active") is not False and user.get("disabled") is not True and not user.get("deleted_at") and status in ("aktif", "active")
+    return (user.get("is_active") is not False and user.get("disabled") is not True
+            and not user.get("deleted_at") and user.get("erasure_state") not in ("closing", "erased")
+            and status in ("aktif", "active"))
 
 
 async def staff_membership(user: dict, store_id: str) -> Optional[dict]:
@@ -76,7 +79,11 @@ async def resolve_user_context(user: dict, module: str) -> dict:
     if not account_is_active(user):
         raise HTTPException(status_code=401, detail="Akun staf tidak aktif. Hubungi Owner.")
     module = (module or "geraina").lower()
+    if isinstance(user.get("closed_modules"), dict) and user["closed_modules"].get(module):
+        raise HTTPException(401, detail="Akses produk ini telah dihapus sesuai permintaan. Akses produk lain yang masih aktif tetap tersedia.")
     store = await _resolve_store(user, module)
+    if store and store.get("erasure_state") in ("closing", "erased"):
+        raise HTTPException(409, "Toko sedang ditutup atau telah dihapus. Hubungi dukungan untuk status permintaan.")
     result = dict(user)
     result["current_module"] = module
     result["is_store_owner"] = False
@@ -169,7 +176,7 @@ async def _maybe_expire_trial(user: dict) -> dict:
     # Best-effort only -- store.plan is never read for authorization (every check_capacity()/
     # require_plan() call reads user.get("plan")), this just keeps it from looking stale.
     await db.stores.update_many(
-        {"owner_user_id": user["id"], "plan": "trial"},
+        {"owner_user_id": user["id"], "plan": "trial", "module": actor_context.get()[1] or "geraina"},
         {"$set": {"plan": "expired"}},
     )
     user["plan"] = "expired"
