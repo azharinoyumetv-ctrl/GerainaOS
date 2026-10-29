@@ -131,5 +131,76 @@
       "Another account cannot read or replay the first account’s local receipts"
     ],
     "merchantWrites": 0
-  }
+  },
+  "publication": {
+    "status": "published",
+    "verifiedAt": "2026-10-29T14:46:46.667Z",
+    "downloadUrl": "https://dagangos.com/downloads/geraina/Geraina-POS-1.2.17.apk",
+    "portalRevision": "b33296a7fc2dde57eb03ba5a8d1a9783783a2260",
+    "workflow": {
+      "conclusion": "success",
+      "headSha": "b33296a7fc2dde57eb03ba5a8d1a9783783a2260",
+      "status": "completed",
+      "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40890802709"
+    },
+    "website": {
+      "status": "passed",
+      "base": "https://dagangos.com",
+      "version": "1.2.17",
+      "checks": [
+        "Listing, images and verified download links fit 1440px",
+        "Listing, images and verified download links fit 768px",
+        "Listing, images and verified download links fit 393px",
+        "Listing, images and verified download links fit 320px",
+        "Clicking Download saves the exact verified APK bytes",
+        "Unavailable release metadata leaves download buttons safely disabled"
+      ]
+    },
+    "metadata": {
+      "version": "1.2.17",
+      "versionCode": 22,
+      "applicationId": "com.dagangos.geraina",
+      "downloadUrl": "/downloads/geraina/Geraina-POS-1.2.17.apk",
+      "bytes": 19157435,
+      "sha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602",
+      "minimumAndroid": "14.0",
+      "minimumSdk": 34,
+      "supportedAbis": [
+        "arm64-v8a",
+        "x86_64"
+      ],
+      "verifiedAt": "2026-10-29T14:19:40.952Z",
+      "signingCertificateSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8"
+    },
+    "services": [
+      {
+        "origin": "https://dapuros.vercel.app",
+        "health": {
+          "ok": true
+        },
+        "fence": {
+          "module": "dapuros",
+          "protocol": "dagangos-erasure-fence-v1",
+          "implementation_sha256": "b24297360d8862948a165252c0a18fa3726df8ef26a81245001b67524700d8e1",
+          "write_fence_enabled": true
+        }
+      },
+      {
+        "origin": "https://geraina-os.vercel.app",
+        "health": {
+          "ok": true
+        },
+        "fence": {
+          "module": "geraina",
+          "protocol": "dagangos-erasure-fence-v1",
+          "implementation_sha256": "b24297360d8862948a165252c0a18fa3726df8ef26a81245001b67524700d8e1",
+          "write_fence_enabled": true
+        }
+      }
+    ],
+    "customerWrites": 0,
+    "realPayments": 0,
+    "realEmails": 0
+  },
+  "environmentNote": "The isolated emulator was restarted after an Android HWUI renderer stall; the final Samsung restaurant/profile checks then passed on the same APK bytes."
 }

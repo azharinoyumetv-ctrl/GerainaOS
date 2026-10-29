@@ -1,6 +1,6 @@
 # Geraina POS 1.2.17: companion switching and session recovery
 
-Status: tested release candidate. Package com.dagangos.geraina, build 22, Android 14 or newer.
+Status: published and verified on the live website. [Download 1.2.17](https://dagangos.com/downloads/geraina/Geraina-POS-1.2.17.apk). Package com.dagangos.geraina, build 22, Android 14 or newer.
 
 - Open the installed companion app through its fixed Android package; no credential or entitlement handoff.
 - Do not infer companion activation from an incomplete or cached store list.
