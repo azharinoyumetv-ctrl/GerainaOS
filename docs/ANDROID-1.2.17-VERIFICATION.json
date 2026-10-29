@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 13,
+  "status": "passed",
+  "publicationAuthorized": true,
+  "verifiedAt": "2026-10-29T14:19:40.952Z",
+  "companionSwitching": [
+    {
+      "status": "passed",
+      "applicationId": "com.dagangos.geraina",
+      "targetPackage": "com.dagangos.dapuros",
+      "profile": "phone",
+      "fixtureOnly": true,
+      "sessionRetained": true,
+      "documentRetained": true,
+      "planRetained": "business",
+      "foregroundActivity": "    topResumedActivity=ActivityRecord{45619d6 u0 com.dagangos.dapuros/com.example.dapurospos.MainActivity t57}",
+      "apkSha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602",
+      "installedApkSha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602",
+      "version": "1.2.17"
+    },
+    {
+      "status": "passed",
+      "applicationId": "com.dagangos.geraina",
+      "targetPackage": "com.dagangos.dapuros",
+      "profile": "xiaomi-landscape",
+      "fixtureOnly": true,
+      "sessionRetained": true,
+      "documentRetained": true,
+      "planRetained": "business",
+      "foregroundActivity": "    topResumedActivity=ActivityRecord{82f5da3 u0 com.dagangos.dapuros/com.example.dapurospos.MainActivity t63}",
+      "apkSha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602",
+      "installedApkSha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602",
+      "version": "1.2.17"
+    },
+    {
+      "status": "passed",
+      "applicationId": "com.dagangos.geraina",
+      "targetPackage": "com.dagangos.dapuros",
+      "profile": "samsung-landscape",
+      "fixtureOnly": true,
+      "sessionRetained": true,
+      "documentRetained": true,
+      "planRetained": "business",
+      "foregroundActivity": "    topResumedActivity=ActivityRecord{d303789 u0 com.dagangos.dapuros/com.example.dapurospos.MainActivity t69}",
+      "apkSha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602",
+      "installedApkSha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602",
+      "version": "1.2.17"
+    }
+  ],
+  "startupRecovery": {
+    "status": "passed",
+    "applicationId": "com.dagangos.geraina",
+    "fixtureOnly": true,
+    "tokenRetained": true,
+    "retryValidatedOwnModule": true,
+    "planRetained": "business",
+    "installedApkSha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602"
+  },
+  "missingCompanion": {
+    "status": "passed",
+    "choices": [
+      "download official app",
+      "open browser",
+      "cancel"
+    ],
+    "fixtureOnly": true
+  },
+  "scope": "Signed website APKs on isolated Android 14 emulator; phone and two landscape tablet profiles. Browser and API fixtures do not contact customer accounts.",
+  "changes": [
+    "Open the installed companion app through its fixed Android package; no credential or entitlement handoff.",
+    "Do not infer companion activation from an incomplete or cached store list.",
+    "Keep product sessions independent during sign-in, sign-out and token expiry.",
+    "Retry failed cold-start validation without discarding the saved token or granting unverified product access."
+  ],
+  "limitations": [
+    "Actual customer-account Geraina logout was not reproduced.",
+    "Tablet layouts use AOSP emulator profiles, not physical Xiaomi or Samsung firmware.",
+    "No real payment, email, physical printer or customer erasure was performed.",
+    "MongoDB fixture shutdown printed a connection-reset diagnostic after all 12 transaction assertions passed."
+  ],
+  "version": "1.2.17",
+  "versionCode": 22,
+  "minimumSdk": 34,
+  "applicationId": "com.dagangos.geraina",
+  "apkSha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602",
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "package": {
+    "applicationId": "com.dagangos.geraina",
+    "version": "1.2.17",
+    "versionCode": 22,
+    "minimumSdk": 34,
+    "supportedAbis": [
+      "arm64-v8a",
+      "x86_64"
+    ],
+    "apkSha256": "9b7cc539b842556feab5c19f1647855d06c95301b5b31a5b369a2791e931f602",
+    "apkBytes": 19157435,
+    "aabSha256": "c9fc19e7dd47c46e39fc83e59abfdcdc53c7092ef7f66203dbede7aae408cfa7",
+    "signingCertificateSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "unitTests": 27,
+    "lintErrors": 0,
+    "lintWarnings": 67,
+    "privateCredentialScan": "passed",
+    "frontendManifestEntriesVerified": 81,
+    "signatureVerified": true,
+    "bundleManifestEntriesVerified": 81,
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8"
+  },
+  "backend": {
+    "productIsolationPassed": 22,
+    "writeFencePreserved": true,
+    "normalizedWriteFenceSha256": "b24297360d8862948a165252c0a18fa3726df8ef26a81245001b67524700d8e1"
+  },
+  "browser": {
+    "companionPassed": 16,
+    "offlinePassed": 6,
+    "failed": 0
+  },
+  "offlineBrowser": {
+    "status": "passed",
+    "scope": "Bundled Android frontend in Chromium; all account/product/order endpoints are isolated local fixtures",
+    "results": [
+      "Catalogue persists before going offline",
+      "Offline cash checkout commits receipt and sale durably before confirmation",
+      "Restart recovers cached catalogue and the exact pending receipt",
+      "Failed synchronization retains the sale for retry",
+      "Successful retry keeps the same ID and acknowledged sales stop replaying",
+      "Another account cannot read or replay the first account’s local receipts"
+    ],
+    "merchantWrites": 0
+  }
+}
