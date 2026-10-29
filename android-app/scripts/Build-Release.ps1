@@ -10,7 +10,7 @@ if (Test-Path -LiteralPath $publishedManifest) {
 if (!(Test-Path -LiteralPath (Join-Path $projectRoot 'keystore.properties'))) { throw 'Run Prepare-UploadKey.ps1 once before building a release.' }
 Push-Location $projectRoot
 try {
-    & .\gradlew.bat testDebugUnitTest lintRelease assembleRelease bundleRelease "-PgerainaVersionCode=$VersionCode" "-PgerainaVersionName=$VersionName" "-PgerainaDistribution=$Distribution" --console=plain
+    & .\gradlew.bat testReleaseUnitTest lintRelease assembleRelease bundleRelease assembleReleaseAndroidTest "-PgerainaVersionCode=$VersionCode" "-PgerainaVersionName=$VersionName" "-PgerainaDistribution=$Distribution" --console=plain
     if ($LASTEXITCODE -ne 0) { throw 'Android release verification or build failed.' }
     & (Join-Path $PSScriptRoot 'Verify-Distribution.ps1') -Distribution $Distribution
     $releaseDir = Join-Path $projectRoot 'releases'

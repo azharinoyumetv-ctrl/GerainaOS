@@ -249,11 +249,11 @@ export default function AppLayout() {
             <div className="absolute top-14 left-2 right-2 bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border border-slate-700 z-[100] animate-fadein space-y-2 text-left" data-testid="odoo-ecosystem-menu">
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-800">
                 <span className="text-[10px] uppercase font-black text-slate-400 tracking-wider">DagangOS Ecosystem Apps</span>
-                <span className="text-[9px] bg-blue-600/30 text-blue-300 border border-blue-500/40 px-1.5 py-0.5 rounded font-mono">SSO Active</span>
+                <span className="text-[9px] bg-blue-600/30 text-blue-300 border border-blue-500/40 px-1.5 py-0.5 rounded font-mono">Akun DagangOS</span>
               </div>
 
               {(() => {
-                const activated = new Set(["geraina", ...(user?.stores || []).map((s) => s.module)]);
+                const nativeApp = window.GerainaDevice?.offline === true;
                 const tiles = [
                   { mod: "dapuros", label: "DapurOS", desc: "F&B & Restoran OS", img: "/assets/brand/dapuros-icon.png", tone: "orange", home: "/dapuros/app/dashboard", activate: "/dapuros/activate" },
                   { mod: "geraina", label: "Geraina POS", desc: "Retail & Toko OS", img: "/assets/brand/geraina-icon.png", tone: "blue", home: "/geraina/app/dashboard", activate: "/geraina/activate" },
@@ -261,7 +261,7 @@ export default function AppLayout() {
                 return (
                   <div className="suite-list pt-1">
                     {tiles.map(({ mod, label, desc, img, tone, home, activate }) => {
-                      const isOn = activated.has(mod);
+                      const isOn = mod === "geraina";
                       const box = tone === "orange"
                         ? "bg-orange-500/20 border-orange-500/40 hover:bg-orange-500/30"
                         : "bg-blue-500/20 border-blue-500/40 hover:bg-blue-500/30";
@@ -270,7 +270,7 @@ export default function AppLayout() {
                       return (
                         <a
                           key={mod}
-                          href={isOn ? home : activate}
+                          href={home}
                           className={`suite-row p-2.5 border transition-all block text-left ${box}`}
                           data-testid={`suite-tile-${mod}`}
                         >
@@ -280,7 +280,7 @@ export default function AppLayout() {
                           </div>
                           <p className="text-[10px] text-slate-300 leading-tight">{desc}</p>
                           <span className={`inline-block mt-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded ${isOn ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-slate-700 text-slate-200 border border-slate-600"}`}>
-                            {isOn ? "Aktif" : "+ Aktifkan"}
+                            {isOn ? "Sedang digunakan" : nativeApp ? "Buka aplikasi" : "Buka"}
                           </span>
                         </a>
                       );

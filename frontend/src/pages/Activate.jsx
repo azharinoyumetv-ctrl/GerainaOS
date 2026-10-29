@@ -1,3 +1,6 @@
+import { clearSession } from "@/auth/session";
+import { useAuth } from "@/auth/AuthContext";
+import { Navigate } from "react-router-dom";
 import { useState } from "react";
 import { checkoutReturn } from "@/auth/checkoutReturn";
 import { Store, ArrowRight, LogOut } from "lucide-react";
@@ -11,6 +14,8 @@ export default function Activate() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const { user } = useAuth();
+  if (user?.store_id && user.current_module === MODULE) return <Navigate to={HOME} replace />;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -27,10 +32,8 @@ export default function Activate() {
   };
 
   const logout = () => {
-    ["geraina_token", "dagangos_token", "dapuros_token", "dagangos_user", "geraina_user"].forEach((k) =>
-      localStorage.removeItem(k)
-    );
-    window.location.href = "/login";
+    clearSession();
+    window.location.href = "/geraina/login";
   };
 
   return (

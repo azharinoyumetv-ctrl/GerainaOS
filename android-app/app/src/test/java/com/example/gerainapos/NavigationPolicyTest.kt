@@ -37,6 +37,16 @@ class NavigationPolicyTest {
             assertEquals(path, INTERNAL, NavigationPolicy.classify("https://dagangos.com$path"))
         }
     }
+    @Test fun companionAppRoutesUseOnlyTheKnownInstalledPackage() {
+        assertEquals("com.dagangos.dapuros", NavigationPolicy.COMPANION_PACKAGE)
+        for (path in listOf("/dapuros/login", "/dapuros/activate", "/dapuros/app/dashboard", "/dapuros/app/pos")) {
+            assertEquals(path, COMPANION, NavigationPolicy.classify("https://dagangos.com$path"))
+        }
+        for (url in listOf("https://dagangos.com/dapuros", "https://dagangos.com/dapuros/android", "https://evil.test/dapuros/app/pos", "https://dagangos.com.evil.test/dapuros/login", "http://dagangos.com/dapuros/login", "https://user@dagangos.com/dapuros/login", "https://dagangos.com:8443/dapuros/login")) {
+            assertEquals(url, false, NavigationPolicy.isCompanionUrl(url))
+        }
+    }
+
     @Test fun exportNamesCannotEscapeTheSelectedDirectory() {
         assertEquals("invoice.pdf", NavigationPolicy.safeFilename("../../invoice.pdf"))
         assertEquals("invoice.pdf", NavigationPolicy.safeFilename("C:\\private\\invoice.pdf"))

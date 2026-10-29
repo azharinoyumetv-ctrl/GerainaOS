@@ -1,3 +1,4 @@
+import { sessionToken } from "@/auth/session";
 import { safeAppReturn } from "@/auth/appReturn";
 import "@/index.css";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
@@ -96,7 +97,7 @@ function AndroidRouterBridge() {
 
 function GerainaRootComponent() {
   const { user } = useAuth();
-  const token = typeof window !== "undefined" ? (localStorage.getItem("dagangos_token") || localStorage.getItem("geraina_token") || localStorage.getItem("dapuros_token")) : null;
+  const token = typeof window !== "undefined" ? sessionToken() : null;
   if (user || token) {
     return <Navigate to="/geraina/app/dashboard" replace />;
   }

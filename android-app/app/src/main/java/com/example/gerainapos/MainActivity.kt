@@ -531,6 +531,7 @@ class MainActivity : ComponentActivity() {
                     }
                 } else webView.loadUrl(url)
             }
+            NavigationPolicy.Destination.COMPANION -> openCompanion(url)
             NavigationPolicy.Destination.EXTERNAL -> {
                 val checkoutReturn = NavigationPolicy.subscriptionReturnUrl(lastPage, url)
                 try {
@@ -548,6 +549,24 @@ class MainActivity : ComponentActivity() {
             NavigationPolicy.Destination.SUBSCRIPTION -> showSubscriptionNotice()
             NavigationPolicy.Destination.BLOCKED -> notice("Tautan ini tidak dapat dibuka.")
         }
+    }
+
+    private fun openCompanion(url: String) {
+        // Launch the installed app's existing task. Never forward tokens or browser state.
+        val launch = packageManager.getLaunchIntentForPackage(NavigationPolicy.COMPANION_PACKAGE)
+        if (launch != null) {
+            try { startActivity(launch); return } catch (_: ActivityNotFoundException) { /* Offer installation below. */ }
+        }
+        AlertDialog.Builder(this).setTitle("${NavigationPolicy.COMPANION_LABEL} belum terpasang")
+            .setMessage("Unduh aplikasi resmi untuk beralih antar aplikasi. Anda juga dapat membukanya di browser dengan sesi browser tersendiri.")
+            .setPositiveButton("Unduh aplikasi") { _, _ -> openBrowser(NavigationPolicy.COMPANION_DOWNLOAD) }
+            .setNeutralButton("Buka di browser") { _, _ -> openBrowser(url) }
+            .setNegativeButton("Batal", null).show()
+    }
+
+    private fun openBrowser(url: String) {
+        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+        catch (_: ActivityNotFoundException) { notice("Tidak ada browser untuk membuka tautan ini.") }
     }
 
     private fun showSubscriptionNotice() {
@@ -630,7 +649,10 @@ class MainActivity : ComponentActivity() {
     }
     override fun onResume() {
         super.onResume()
-        if (::webView.isInitialized) webView.onResume()
+        if (::webView.isInitialized) {
+            webView.onResume()
+            webView.evaluateJavascript("window.dispatchEvent(new Event('focus'))", null)
+        }
         val checkoutReturn = subscriptionReturnUrl
         if (checkoutReturn != null && ::webView.isInitialized && nativeFeaturesReady) {
             subscriptionReturnUrl = null

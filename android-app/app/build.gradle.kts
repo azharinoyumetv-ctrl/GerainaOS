@@ -16,13 +16,14 @@ val signingProperties = Properties().apply {
 android {
     namespace = "com.example.gerainapos"
     compileSdk = 36
+    testBuildType = providers.gradleProperty("gerainaTestVariant").orElse("release").get()
     defaultConfig {
         applicationId = "com.dagangos.geraina"
         minSdk = 34
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
         targetSdk = 36
-        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("21").get().toInt()
-        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.16").get()
+        versionCode = providers.gradleProperty("gerainaVersionCode").orElse("22").get().toInt()
+        versionName = providers.gradleProperty("gerainaVersionName").orElse("1.2.17").get()
         buildConfigField("boolean", "WEB_SUBSCRIPTIONS_ENABLED", (distribution == "website").toString())
         buildConfigField("String", "DISTRIBUTION", "\"$distribution\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

@@ -3,16 +3,19 @@ const {readFileSync,writeFileSync,mkdirSync}=require('node:fs');
 const {join,resolve}=require('node:path');
 const {chromium}=require('../../frontend/node_modules/playwright');
 const root=resolve(__dirname,'..'),frontend=resolve(root,'../frontend/build'),out=join(root,'app/build/reports/offline-browser');mkdirSync(out,{recursive:true});
-const user={id:'offline-fixture-user',store_id:'offline-fixture-store',email:'offline@example.invalid',store_name:'Geraina offline test',role:'Owner',plan:'pro'};
+const user={id:'offline-fixture-user',store_id:'offline-fixture-store',email:'offline@example.invalid',store_name:'Geraina offline test',role:'Owner',plan:'pro',current_module:'geraina'};
 const products=[{id:'coffee',name:'Coffee fixture',sku:'5901234123457',price:12500,stock:10,category:'Drinks',unit:'pcs'}];
 let submissions=[],failResponse=true;
 const origin='https://dagangos.com';
 const results=[],runtimeErrors=[];
 async function setup(page){
+ await page.route('**/*',route=>new URL(route.request().url()).origin===origin?route.fallback():route.abort());
  await page.route(`${origin}/geraina/**`,route=>{const path=new URL(route.request().url()).pathname;const asset=path.includes('/static/')?path.slice('/geraina/'.length):'index.html';try{return route.fulfill({path:join(frontend,asset)});}catch{return route.abort();}});
  await page.route(`${origin}/api/**`,async route=>{
   const path=new URL(route.request().url()).pathname;
   if(path==='/api/auth/me')return route.fulfill({json:user});
+  if(path==='/api/products/catalogue')return route.fulfill({json:{items:products,total:products.length,next_cursor:null}});
+  if(path==='/api/payments/options')return route.fulfill({json:{methods:{cash:{enabled:true,displayed:true}},ewallet_channels:[]}});
   if(route.request().method()!=='GET'){
    assert.equal(path,'/api/offline/orders');const body=route.request().postDataJSON();submissions.push(body);
    if(failResponse)return route.fulfill({status:503,json:{detail:'Temporary fixture interruption'}});
@@ -42,7 +45,7 @@ async function setup(page){
  assert.match(await page.getByTestId('offline-status').innerText(),/1 transaksi tersimpan/);
  await page.locator('[data-testid="offline-status"] summary').click();await page.locator('[data-testid^="local-sale-"]').click();assert.equal(await page.getByTestId('receipt-order-no').innerText(),reference);await page.getByTestId('receipt-done-btn').click();
  results.push('Restart recovers cached catalogue and the exact pending receipt');
- await page.goto(`${origin}/geraina/app/dashboard`);await page.unroute(`${origin}/api/**`);await setup(page);
+ await page.goto(`${origin}/geraina/app/dashboard`,{waitUntil:'domcontentloaded'});await page.unroute(`${origin}/api/**`);await setup(page);
  await page.evaluate(()=>{Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>true});dispatchEvent(new Event('online'));});
  for(let attempt=0;attempt<30&&!submissions.length;attempt++)await page.waitForTimeout(100);
  assert.equal(submissions.length,1,'Replay starts from the dashboard without reopening the cashier');
@@ -56,7 +59,7 @@ async function setup(page){
  const acknowledgedCount=submissions.length;await page.getByTestId('offline-sync').click();await page.waitForTimeout(200);assert.equal(submissions.length,acknowledgedCount);
  results.push('Successful retry keeps the same ID and acknowledged sales stop replaying');
  // Switching cached account must not expose the first account's local receipts.
- await page.evaluate(()=>{const other={id:'different-user',store_id:'different-store',email:'other@example.invalid',role:'Owner'};localStorage.setItem('geraina_user',JSON.stringify(other));localStorage.setItem('dagangos_user',JSON.stringify(other));});
+ await page.evaluate(()=>{const other={id:'different-user',store_id:'different-store',email:'other@example.invalid',role:'Owner',plan:'pro',current_module:'geraina'};localStorage.setItem('geraina_user',JSON.stringify(other));});
  await page.route(`${origin}/api/**`,route=>route.abort());await page.reload();await page.getByTestId('pos-page').waitFor();assert.equal(await page.locator('[data-testid^="local-sale-"]').count(),0);
  results.push('Another account cannot read or replay the first account’s local receipts');
  await page.screenshot({path:join(out,'isolated-account.png')});

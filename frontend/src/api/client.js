@@ -1,3 +1,4 @@
+import { sessionToken } from "@/auth/session";
 import axios from "axios";
 import { mockDb } from "./mockDb";
 
@@ -163,7 +164,7 @@ function handleMockRequest(url, method, data) {
 }
 
 api.interceptors.request.use((cfg) => {
-  const t = localStorage.getItem("geraina_token") || localStorage.getItem("dagangos_token");
+  const t = sessionToken();
   if (t) cfg.headers.Authorization = `Bearer ${t}`;
   cfg.headers["X-DagangOS-Module"] = "geraina";
 

@@ -1,3 +1,4 @@
+import { sessionToken } from "@/auth/session";
 // IndexedDB commits a cash sale before checkout is acknowledged. Each replay keeps its UUID.
 const DB_NAME = "geraina-pos-offline-v1";
 let opened;
@@ -88,7 +89,7 @@ export async function recordCashSale(user, payload) {
 function sessionMatches(scope) {
   try {
     const user = JSON.parse(localStorage.getItem("geraina_user") || localStorage.getItem("dagangos_user") || "null");
-    return scopeFor(user) === scope && Boolean(localStorage.getItem("geraina_token") || localStorage.getItem("dagangos_token"));
+    return scopeFor(user) === scope && Boolean(sessionToken());
   } catch { return false; }
 }
 

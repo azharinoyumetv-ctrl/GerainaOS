@@ -8,7 +8,18 @@ object NavigationPolicy {
     const val START_URL = "$ORIGIN/geraina/login"
     const val MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024
     const val BILLING_URL = "$ORIGIN/geraina/app/settings/billing"
-    enum class Destination { INTERNAL, EXTERNAL, SUBSCRIPTION, BLOCKED }
+    enum class Destination { INTERNAL, COMPANION, EXTERNAL, SUBSCRIPTION, BLOCKED }
+
+    const val COMPANION_PACKAGE = "com.dagangos.dapuros"
+    const val COMPANION_LABEL = "DapurOS"
+    const val COMPANION_DOWNLOAD = "$ORIGIN/dapuros/android"
+
+    fun isCompanionUrl(url: String): Boolean {
+        val uri = runCatching { URI(url) }.getOrNull() ?: return false
+        if (uri.scheme?.lowercase(Locale.ROOT) != "https" || uri.rawUserInfo != null || uri.port !in setOf(-1, 443) || uri.host?.lowercase(Locale.ROOT) != "dagangos.com") return false
+        val path = uri.normalize().path.orEmpty().trimEnd('/').lowercase(Locale.ROOT)
+        return path in setOf("/dapuros/login", "/dapuros/activate", "/dapuros/app") || path.startsWith("/dapuros/app/")
+    }
 
     fun subscriptionReturnUrl(source: String, destination: String): String? {
         val from = runCatching { URI(source) }.getOrNull() ?: return null
@@ -21,6 +32,7 @@ object NavigationPolicy {
     }
 
     fun classify(url: String, allowSubscriptions: Boolean = BuildConfig.WEB_SUBSCRIPTIONS_ENABLED): Destination {
+        if (isCompanionUrl(url)) return Destination.COMPANION
         val uri = runCatching { URI(url) }.getOrNull() ?: return Destination.BLOCKED
         val scheme = uri.scheme?.lowercase(Locale.ROOT)
         if (scheme in setOf("mailto", "tel")) return Destination.EXTERNAL

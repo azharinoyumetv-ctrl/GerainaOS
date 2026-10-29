@@ -4,3 +4,7 @@
 -keep class com.google.mlkit.** implements com.google.firebase.components.ComponentRegistrar {
     public <init>();
 }
+
+# Runtime shared with the separate signed-release verification APK.
+-keep class androidx.tracing.** { *; }
+-keep class kotlin.** { *; }
