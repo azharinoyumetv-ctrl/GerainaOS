@@ -128,47 +128,10 @@ async def list_addons():
 
 @router.post("/upgrade")
 async def upgrade_plan(payload: dict, user: dict = Depends(require_billing_admin)):
-    """Self-service ONLY for free tiers (trial). Paid tiers are NOT granted here -- this
-    endpoint used to set `plan` unconditionally for any tier_id, which meant any store admin
-    could call it directly (bypassing the UI, which only ever wires the button to "trial" and
-    shows "Hubungi Sales" for every paid tier) and grant themselves Starter/Pro/Business
-    for free. No payment gateway is wired yet (Xendit/Midtrans keys pending), so
-    until a real payment-confirmed activation flow exists, paid-tier requests are recorded and
-    left pending for manual activation by DagangOS staff after payment is confirmed offline --
-    matching what the Billing settings tab already tells users. Replace this with a real
-    gateway-webhook-driven activation once Xendit/Midtrans keys arrive."""
-    tier_id = payload.get("tier_id")
-    tier = next((t for t in TIERS if t["id"] == tier_id), None)
-    if not tier:
-        raise HTTPException(status_code=400, detail="Paket tidak valid")
-
-    db = get_db()
-    is_free = (tier.get("price_idr_monthly") or 0) == 0 and (tier.get("price_idr_yearly") or 0) == 0
-    if is_free:
-        await db.users.find_one_and_update(
-            {"id": user["id"]},
-            {"$set": {"plan": tier_id}}
-        )
-        await db.stores.find_one_and_update(
-            {"id": user["store_id"]},
-            {"$set": {"plan": tier_id}}
-        )
-        return {"ok": True, "status": "activated", "plan": tier_id}
-
-    await db.upgrade_requests.insert_one({
-        "store_id": user["store_id"],
-        "requested_by": user["id"],
-        "requested_by_email": user.get("email"),
-        "tier_id": tier_id,
-        "status": "pending",
-        "created_at": utcnow().isoformat(),
-    })
-    return {
-        "ok": True,
-        "status": "pending_manual_activation",
-        "message": "Permintaan upgrade tercatat. Paket berbayar belum bisa diaktifkan otomatis karena payment gateway belum tersambung -- tim kami akan mengaktifkan paket Anda secara manual setelah pembayaran dikonfirmasi.",
-    }
-
+    """Trials begin once at product activation; paid plans need verified checkout."""
+    if payload.get("tier_id") not in {tier["id"] for tier in TIERS}:
+        raise HTTPException(400, "Paket tidak valid")
+    raise HTTPException(409, "Trial hanya dimulai saat aktivasi produk. Pilih paket berbayar melalui Langganan & Tagihan atau halaman Harga.")
 
 @router.get("/addons/my", dependencies=[Depends(require_permission("billing.manage"))])
 async def list_my_addons(user: dict = Depends(get_billing_user)):

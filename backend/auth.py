@@ -85,6 +85,7 @@ async def resolve_user_context(user: dict, module: str) -> dict:
     if store and store.get("erasure_state") in ("closing", "erased"):
         raise HTTPException(409, "Toko sedang ditutup atau telah dihapus. Hubungi dukungan untuk status permintaan.")
     result = dict(user)
+    result["_account_primary_store_id"] = user.get("store_id")
     result["current_module"] = module
     result["is_store_owner"] = False
     result["staff_id"] = None
@@ -93,15 +94,13 @@ async def resolve_user_context(user: dict, module: str) -> dict:
         owns_any = await get_db().stores.find_one({"owner_user_id": user["id"]}, {"_id": 0, "id": 1})
         if not owns_any:
             raise HTTPException(status_code=409, detail="no_store_for_module")
-        result = {**result, **await _maybe_expire_trial(user)}
         result.update(role="Owner", store_id=None, store_name=None)
     else:
         is_owner = store.get("owner_user_id") == user["id"]
         member = None if is_owner else await staff_membership(user, store["id"])
         legacy_owner = not store.get("owner_user_id") and user.get("store_id") == store["id"] and canonical_role(user.get("role")) == "Owner" and member is None
         if is_owner or legacy_owner:
-            result = {**result, **await _maybe_expire_trial(user)}
-            result.update(role="Owner", is_store_owner=True)
+                result.update(role="Owner", is_store_owner=True)
         else:
             if member is None or not account_is_active(member):
                 raise HTTPException(status_code=401, detail="Keanggotaan staf tidak aktif. Hubungi Owner.")
@@ -116,7 +115,7 @@ async def resolve_user_context(user: dict, module: str) -> dict:
             # Legacy employee snapshots must not preserve an expired/free/stale store plan.
             owner = await get_db().users.find_one({"id": store.get("owner_user_id")}, {"_id": 0, "password_hash": 0}) if store.get("owner_user_id") else None
             if owner:
-                owner = await _maybe_expire_trial(owner)
+                result["_account_primary_store_id"] = owner.get("store_id")
                 for key in ("plan", "trial_ends_at", "trial_expired_at", "subscriptions"):
                     if key in owner:
                         result[key] = owner[key]
@@ -129,59 +128,6 @@ async def resolve_user_context(user: dict, module: str) -> dict:
     result.pop("password_hash", None)
     result.pop("_token_has_cv", None)
     return result
-
-
-async def _maybe_expire_trial(user: dict) -> dict:
-    """Lazy trial-expiry enforcement, run on every authenticated request via _decode_identity
-    (both get_current_user and get_identity route through it). There's no scheduled-job infra
-    in this deployment to sweep expired trials on a timer, so the check happens on-read
-    instead: once trial_ends_at has passed, the account is marked plan="expired" -- a
-    sentinel that is NOT a real, purchasable tier. (Earlier this fell back to "starter", but
-    starter is itself a PAID plan -- silently granting it for free when a trial lapses defeats
-    the entire point of gating. An expired trial must lose access, not get a free plan.)
-
-    get_current_user() below hard-blocks any request whose resolved user has plan=="expired"
-    with 402. Only the billing endpoints (get_billing_user/require_billing_admin in
-    routes_pricing.py) skip that block, so an expired account can still pay to reactivate
-    itself instead of being locked out forever with no way back in.
-
-    The plan is corrected both in the DB and on the in-memory dict, so every check later in
-    THIS SAME request already sees "expired" instead of a stale "trial".
-
-    Note: the frontend's AuthContext only fetches /auth/me on mount, not on a timer, so a tab
-    left open past the trial deadline won't visually flip to the paywall until next
-    reload/login -- but every actual API call is still re-checked here regardless of what the
-    UI displays, so this is a cosmetic staleness window, not a bypass (the API itself already
-    returns 402 the moment the deadline passes)."""
-    if user.get("plan") != "trial":
-        return user
-    ends_at = user.get("trial_ends_at")
-    if not ends_at:
-        return user
-    try:
-        expires = datetime.fromisoformat(ends_at)
-    except (TypeError, ValueError):
-        return user
-    if expires.tzinfo is None:
-        expires = expires.replace(tzinfo=timezone.utc)
-    if datetime.now(timezone.utc) < expires:
-        return user
-
-    db = get_db()
-    stamp = utcnow().isoformat()
-    await db.users.find_one_and_update(
-        {"id": user["id"], "plan": "trial"},
-        {"$set": {"plan": "expired", "trial_expired_at": stamp}},
-    )
-    # Best-effort only -- store.plan is never read for authorization (every check_capacity()/
-    # require_plan() call reads user.get("plan")), this just keeps it from looking stale.
-    await db.stores.update_many(
-        {"owner_user_id": user["id"], "plan": "trial", "module": actor_context.get()[1] or "geraina"},
-        {"$set": {"plan": "expired"}},
-    )
-    user["plan"] = "expired"
-    user["trial_expired_at"] = stamp
-    return user
 
 
 async def _decode_identity(token: str) -> dict:
@@ -235,8 +181,7 @@ async def _resolve_store(user: dict, module: str) -> Optional[dict]:
 
 
 async def _resolve_current(token: str, module: str) -> dict:
-    """Shared by get_current_user and get_billing_user: decode identity (incl. lazy trial-
-    expiry accounting) and resolve the active store for this module. Does NOT itself block on
+    """Shared by get_current_user and get_billing_user: decode identity and resolve the active store for this module. Does NOT itself block on
     plan=="expired" -- callers decide whether that matters for them."""
     user = await _decode_identity(token)
     module = (module or "geraina").lower()

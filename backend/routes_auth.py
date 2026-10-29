@@ -8,6 +8,7 @@ Model multi-store: satu akun (owner) bisa memiliki banyak toko, satu toko per mo
 dengan backend DapurOS agar SSO lintas modul tetap bekerja.
 """
 import uuid
+from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, ConfigDict, Field
@@ -48,6 +49,7 @@ def _user_public(user: dict) -> dict:
     user = apply_subscription(user, user.get("current_module", DEFAULT_MODULE))
     return {
         "id": user["id"],
+        "current_module": user.get("current_module", DEFAULT_MODULE),
         "email": user["email"],
         "name": user.get("name") or user.get("store_name"),
         "role": user.get("role", "Owner"),
@@ -94,12 +96,16 @@ async def _seed_store_skeleton(db, store_id: str, store_name: str, module: str):
 
 async def _create_store(db, user_id: str, store_name: str, module: str) -> dict:
     store_id = str(uuid.uuid4())
+    trial_started = utcnow()
     store_doc = {
         "id": store_id,
         "name": store_name,
         "module": module,
         "owner_user_id": user_id,
-        "created_at": utcnow().isoformat(),
+        "created_at": trial_started.isoformat(),
+        "plan": "trial",
+        "trial_started_at": trial_started.isoformat(),
+        "trial_ends_at": (trial_started + timedelta(days=14)).isoformat(),
     }
     await db.stores.insert_one(store_doc)
     await _seed_store_skeleton(db, store_id, store_name, module)
