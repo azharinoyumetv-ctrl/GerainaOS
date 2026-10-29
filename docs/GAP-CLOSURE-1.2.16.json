@@ -392,20 +392,72 @@
   },
   "externalVerificationReview": {
     "checkedAt": "2026-10-28T17:25:12.248Z",
-    "status": "reviewed-external-dependencies-and-erasure-gap-open",
+    "status": "software-gaps-closed-external-verification-pending",
     "report": "GerainaOS/docs/EXTERNAL-VERIFICATION-1.2.16.json",
     "printer": "not-verified-no-accessible-hardware",
     "settlement": "not-verified-test-merchant-unconfigured",
-    "erasure": "software-gaps-verified-publication-pending",
+    "erasure": "published-software-gaps-verified",
     "play": "not-submitted-duns-application-pending-completion"
   },
   "accountErasureCandidate": {
-    "status": "software-gaps-verified-publication-pending",
+    "status": "published-software-gaps-verified",
     "backendTests": 467,
     "dapurBackendTests": 27,
-    "realReplicaChecks": 14,
+    "realReplicaGroups": 14,
     "browserChecks": 6,
-    "published": false,
-    "evidence": "GerainaOS/docs/ACCOUNT-ERASURE-VERIFICATION.json"
+    "liveChecks": 8,
+    "published": true,
+    "websiteInstructionsPublished": true,
+    "backendCommits": {
+      "geraina": "4050b06",
+      "dapuros": "b5059b4"
+    },
+    "sharedFenceSha256": "b24297360d8862948a165252c0a18fa3726df8ef26a81245001b67524700d8e1",
+    "evidence": "GerainaOS/docs/ACCOUNT-ERASURE-VERIFICATION.json",
+    "liveEvidence": "GerainaOS/docs/ACCOUNT-ERASURE-LIVE-VERIFICATION.json",
+    "websitePublication": {
+      "checkedAt": "2026-10-29T04:38:53.580Z",
+      "portalCommit": "32cc4e2d35e41ccee7dbb9dd6eaa34a4a4782455",
+      "workflow": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40751074764",
+      "workflowAttempt": 2,
+      "workflowConclusion": "success",
+      "jobs": [
+        {
+          "name": "public-accessibility",
+          "conclusion": "success",
+          "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40751074764/job/123266082626"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "success",
+          "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40751074764/job/123266082864"
+        },
+        {
+          "name": "e2e-geraina",
+          "conclusion": "success",
+          "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40751074764/job/123266084127"
+        },
+        {
+          "name": "cloudflare-zone-audit",
+          "conclusion": "success",
+          "url": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/40751074764/job/123266114787"
+        }
+      ],
+      "pages": [
+        {
+          "url": "https://dagangos.com/geraina/delete-account",
+          "status": 200,
+          "scopeAndRetentionInstructions": "matched",
+          "bodySha256": "225f6d9143599160d770cf5860003192e37cf5ebeb8b6635816a94bd17eeaf42"
+        },
+        {
+          "url": "https://dagangos.com/geraina/privacy",
+          "status": 200,
+          "scopeAndRetentionInstructions": "matched",
+          "bodySha256": "b971c1170bcedf3a1d34439b896745118ca200c16260b4219c3da7599825f638"
+        }
+      ],
+      "firstAttempt": "Deploy, Cloudflare zone audit and Geraina E2E passed; public-accessibility encountered a transport ECONNRESET. Its unchanged rerun passed."
+    }
   }
 }
