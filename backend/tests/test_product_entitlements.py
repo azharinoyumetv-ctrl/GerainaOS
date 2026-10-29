@@ -120,3 +120,26 @@ def test_legacy_upgrade_cannot_rewrite_shared_account_entitlements(account, tier
     saved = run(db.users.find_one({"id":"owner"}))
     assert saved["plan"] == before["plan"]
     assert saved["subscriptions"] == before["subscriptions"]
+
+
+@pytest.mark.parametrize("primary", ["geraina", "dapuros"])
+def test_unlabelled_legacy_store_is_never_shared_between_products(account, primary):
+    db, client = account
+    _, other, headers = seed(db, primary)
+    run(db.stores.delete_one({"id":other}))
+    run(db.stores.update_one({"id":primary},{"$unset":{"module":""}}))
+    run(db.users.update_one({"id":"owner"},{"$set":{"primary_module":primary}}))
+    assert client.get("/operational",headers=headers).status_code == 409
+    assert client.get("/operational",headers={**headers,"X-DagangOS-Module":primary}).json()["plan"] == "business"
+
+
+@pytest.mark.parametrize("primary", ["geraina", "dapuros"])
+def test_ambiguous_legacy_store_requires_product_verification(account, primary):
+    db, client = account
+    _, other, headers = seed(db, primary)
+    run(db.stores.delete_one({"id":other}))
+    run(db.stores.update_one({"id":primary},{"$unset":{"module":""}}))
+    for module in (primary,other):
+        response=client.get("/operational",headers={**headers,"X-DagangOS-Module":module})
+        assert response.status_code == 409
+        assert response.json()["detail"] == "legacy_store_module_unverified"

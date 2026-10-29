@@ -134,6 +134,7 @@ async def register(payload: UserRegister, x_dagangos_module: str = Header(defaul
         "store_id": store_doc["id"],
         "store_name": payload.store_name,
         "last_active_store_id": store_doc["id"],
+        "primary_module": module,
         "plan": "trial",
         "trial_ends_at": trial_ends,
         "created_at": utcnow().isoformat(),

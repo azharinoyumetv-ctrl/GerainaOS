@@ -175,8 +175,15 @@ async def _resolve_store(user: dict, module: str) -> Optional[dict]:
     legacy_id = user.get("store_id")
     if legacy_id:
         ls = await db.stores.find_one({"id": legacy_id})
-        if ls and ls.get("module") in (None, module):
+        if ls and ls.get("module") == module:
             return ls
+        if ls and ls.get("module") is None:
+            owner = user if ls.get("owner_user_id") in (None, user["id"]) else await db.users.find_one({"id": ls["owner_user_id"]}, {"primary_module": 1})
+            bound_module = (owner or {}).get("primary_module")
+            if bound_module == module:
+                return ls
+            if bound_module not in ("geraina", "dapuros"):
+                raise HTTPException(409, "legacy_store_module_unverified")
     return None
 
 
