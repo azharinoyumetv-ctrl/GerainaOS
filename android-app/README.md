@@ -1,10 +1,10 @@
 # Geraina POS for Android
 
-Current website release: **1.2.18, build 23**. Saved category selection is verified in `../docs/ANDROID-1.2.18-VERIFICATION.md`. Published 1.2.17 companion-app switching and session recovery evidence remains in `../docs/ANDROID-1.2.17-VERIFICATION.md`.
+Website release candidate: **1.2.19, build 24**. Direct product-photo capture and gallery selection are verified in `../docs/ANDROID-1.2.19-VERIFICATION.md`. Published category and companion-session evidence remains in the 1.2.18 and 1.2.17 verification documents.
 
 The Android app connects to the production Geraina service at `https://dagangos.com/geraina/login`. It bundles the Geraina frontend for offline startup in a hardened Android WebView, with durable cash-sale storage and replay, native camera barcode scanning, Bluetooth/USB receipt printing, navigation, Android file selection and PDF/export saving.
 
-Application ID: `com.dagangos.geraina`. Source version: `1.2.18`, version code `23`; the current public download is recorded in the portal manifest. The separate Play build has not been submitted. Android 14 (API 34) or newer; targets Android 16 (API 36). A recent Android System WebView/Chrome is required. The debug build uses a separate `.debug` app ID.
+Application ID: `com.dagangos.geraina`. Source version: `1.2.19`, version code `24`; the current public download is recorded in the portal manifest. The separate Play build has not been submitted. Android 14 (API 34) or newer; targets Android 16 (API 36). A recent Android System WebView/Chrome is required. The debug build uses a separate `.debug` app ID.
 
 Distribution is website-first at `https://dagangos.com/geraina/android`. Google Play publication is postponed at the owner's request while the organization's D-U-N-S is unavailable. The parent portal's `scripts/stage-geraina-android.mjs` stages only the verified signed APK, its public metadata and selected screenshots.
 

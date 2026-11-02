@@ -1,9 +1,11 @@
 package com.example.gerainapos
 
 import android.annotation.SuppressLint
+import android.Manifest
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
@@ -42,6 +44,9 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowCompat
@@ -68,6 +73,9 @@ class MainActivity : ComponentActivity() {
     private val screenBackground = InsetBackgroundDrawable()
     private val io = Executors.newSingleThreadExecutor()
     private var fileCallback: ValueCallback<Array<Uri>>? = null
+    private var photoSelectionOpen = false
+    private var pendingPhotoName: String? = null
+    private val productPhotos by lazy { ProductPhotoStore(cacheDir) }
     private var lastPage = NavigationPolicy.START_URL
     private var subscriptionReturnUrl: String? = null
     private var pageFailed = false
@@ -83,8 +91,25 @@ class MainActivity : ComponentActivity() {
     private val pendingExport get() = File(cacheDir, "pending-export")
 
     private val selectFile = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        fileCallback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data))
-        fileCallback = null
+        finishFileSelection(WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data))
+    }
+    private val selectPhoto = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        finishFileSelection(uri?.takeIf { it.scheme == "content" }?.let { arrayOf(it) })
+    }
+    private val takeProductPhoto = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        val file = productPhotos.file(pendingPhotoName)
+        val valid = success && file != null && file.length() > 0 && fileCallback != null
+        val uri = if (valid) FileProvider.getUriForFile(this, "$packageName.productphotos", file!!) else null
+        if (uri == null) productPhotos.release(pendingPhotoName)
+        pendingPhotoName = null
+        finishFileSelection(uri?.let { arrayOf(it) })
+    }
+    private val photoPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted && fileCallback != null) launchProductCamera()
+        else {
+            finishFileSelection(null)
+            if (!granted) notice("Izin kamera diperlukan untuk mengambil foto. Anda tetap dapat memilih dari galeri; izin dapat diubah di Pengaturan aplikasi.")
+        }
     }
     private val scanBarcode = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         scannerOpen = false
@@ -112,6 +137,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingPhotoName = savedInstanceState?.getString("pendingPhotoName")
+        productPhotos.prune()
         barcodeTarget = savedInstanceState?.getString("barcodeTarget") ?: "pos"
         barcodeOriginPath = savedInstanceState?.getString("barcodeOriginPath") ?: ""
         scannerOpen = savedInstanceState?.getBoolean("scannerOpen") ?: false
@@ -395,11 +422,29 @@ class MainActivity : ComponentActivity() {
             override fun onProgressChanged(view: WebView, value: Int) { progress.progress = value }
             override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
                 if (NavigationPolicy.classify(view.url.orEmpty()) != NavigationPolicy.Destination.INTERNAL) return false
+                if (photoSelectionOpen) { callback.onReceiveValue(null); return true }
                 fileCallback?.onReceiveValue(null)
                 fileCallback = callback
                 return try {
                     val mimeTypes = FilePickerPolicy.mimeTypes(params.acceptTypes) {
                         MimeTypeMap.getSingleton().getMimeTypeFromExtension(it)
+                    }
+                    when (FilePickerPolicy.source(mimeTypes, params.mode == FileChooserParams.MODE_OPEN_MULTIPLE, params.isCaptureEnabled)) {
+                        FilePickerPolicy.Source.CAMERA -> {
+                            photoSelectionOpen = true
+                            if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) launchProductCamera()
+                            else photoPermission.launch(Manifest.permission.CAMERA)
+                            return true
+                        }
+                        FilePickerPolicy.Source.GALLERY -> {
+                            photoSelectionOpen = true
+                            val type = mimeTypes.singleOrNull()?.takeIf { it != "image/*" }
+                                ?.let { ActivityResultContracts.PickVisualMedia.SingleMimeType(it) }
+                                ?: ActivityResultContracts.PickVisualMedia.ImageOnly
+                            selectPhoto.launch(PickVisualMediaRequest(type))
+                            return true
+                        }
+                        FilePickerPolicy.Source.DOCUMENTS -> Unit
                     }
                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                         addCategory(Intent.CATEGORY_OPENABLE)
@@ -409,8 +454,11 @@ class MainActivity : ComponentActivity() {
                     }
                     selectFile.launch(intent); true
                 } catch (_: ActivityNotFoundException) {
-                    callback.onReceiveValue(null); fileCallback = null
+                    finishFileSelection(null)
                     notice("Tidak ada aplikasi pemilih file."); true
+                } catch (_: SecurityException) {
+                    finishFileSelection(null)
+                    notice("Foto atau file tidak dapat dibuka. Periksa izin aplikasi lalu coba lagi."); true
                 }
             }
         }
@@ -431,6 +479,26 @@ class MainActivity : ComponentActivity() {
                     })();
                 """.trimIndent(), null)
             }
+        }
+    }
+
+    private fun finishFileSelection(uris: Array<Uri>?) {
+        val callback = fileCallback
+        fileCallback = null
+        photoSelectionOpen = false
+        callback?.onReceiveValue(uris)
+    }
+
+    private fun launchProductCamera() {
+        try {
+            val photo = productPhotos.create()
+            pendingPhotoName = photo.name
+            takeProductPhoto.launch(FileProvider.getUriForFile(this, "$packageName.productphotos", photo))
+        } catch (_: Exception) {
+            productPhotos.release(pendingPhotoName)
+            pendingPhotoName = null
+            finishFileSelection(null)
+            notice("Kamera tidak dapat dibuka. Pilih foto dari galeri atau periksa aplikasi kamera perangkat.")
         }
     }
 
@@ -467,6 +535,7 @@ class MainActivity : ComponentActivity() {
         }
         val message = runCatching { JSONObject(raw) }.getOrNull() ?: return
         when (message.optString("type")) {
+            "releaseProductPhoto" -> productPhotos.release(message.optString("name"))
             "print" -> printPage()
             "open" -> navigate(message.optString("url"))
             "subscription" -> showSubscriptionNotice()
@@ -632,6 +701,7 @@ class MainActivity : ComponentActivity() {
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
     override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("pendingPhotoName", pendingPhotoName)
         outState.putString("subscriptionReturnUrl", subscriptionReturnUrl)
         outState.putString("barcodeTarget", barcodeTarget)
         outState.putString("barcodeOriginPath", barcodeOriginPath)

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import api, { fmtIDR, API_BASE } from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
 import { canManageProducts } from "@/auth/permissions";
-import { Plus, Upload, Search, Edit3, Trash2, X, Download, FileSpreadsheet, CheckCircle2, AlertCircle, ScanBarcode } from "lucide-react";
+import { Plus, Upload, Search, Edit3, Trash2, X, Download, FileSpreadsheet, CheckCircle2, AlertCircle, ScanBarcode, Camera, Images } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 function ProductForm({ product, categories, categoriesLoading, categoriesError, onRetryCategories, onClose, onSaved }) {
@@ -22,9 +22,15 @@ function ProductForm({ product, categories, categoriesLoading, categoriesError, 
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const [photoProcessing, setPhotoProcessing] = useState(false);
+  const photoRequest = useRef(0);
+  const galleryInput = useRef(null);
+  const cameraInput = useRef(null);
+  const canTakePhoto = window.__gerainaAndroid || /Android|iPhone|iPad/i.test(navigator.userAgent);
   const [customCategory, setCustomCategory] = useState(false);
   const categoryOptions = [...new Set(["Umum", ...categories, ...(!customCategory && form.category ? [form.category] : [])])];
   const saveInFlight = useRef(false);
+  useEffect(() => () => { photoRequest.current++; }, []);
   useEffect(() => {
     const scanned = event => {
       const { value, target } = event.detail || {};
@@ -38,28 +44,50 @@ function ProductForm({ product, categories, categoriesLoading, categoriesError, 
 
   const handleImage = (file) => {
     if (!file) return;
-    if (!file.type.startsWith("image/")) { setErr("File harus berupa gambar (JPG/PNG)."); return; }
+    const request = ++photoRequest.current;
+    const release = () => { try { window.GerainaDevice?.releaseProductPhoto?.(file.name); } catch {} };
+    const failed = () => {
+      if (request !== photoRequest.current) return;
+      setPhotoProcessing(false); setErr("Foto tidak dapat dibaca. Pilih gambar lain atau ambil foto kembali.");
+    };
+    setErr("");
+    if (!file.type.startsWith("image/")) { release(); setPhotoProcessing(false); setErr("File harus berupa gambar (JPG/PNG/WebP)."); return; }
+    setPhotoProcessing(true);
     const reader = new FileReader();
+    reader.onloadend = release;
+    reader.onerror = failed;
+    reader.onabort = failed;
     reader.onload = (ev) => {
       const img = new Image();
+      img.onerror = failed;
       img.onload = () => {
-        const MAX = 320;
-        let { width, height } = img;
-        if (width > height && width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
-        else if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
-        const canvas = document.createElement("canvas");
-        canvas.width = width; canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        setForm((f) => ({ ...f, image_url: canvas.toDataURL("image/jpeg", 0.72) }));
+        if (request !== photoRequest.current) return;
+        try {
+          const MAX = 320;
+          let { width, height } = img;
+          if (width > height && width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
+          else if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
+          const canvas = document.createElement("canvas");
+          canvas.width = width; canvas.height = height;
+          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+          setForm((f) => ({ ...f, image_url: canvas.toDataURL("image/jpeg", 0.72) }));
+          setPhotoProcessing(false);
+        } catch { failed(); }
       };
       img.src = ev.target.result;
     };
-    reader.readAsDataURL(file);
+    try { reader.readAsDataURL(file); } catch { release(); failed(); }
+  };
+
+  const chooseImage = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    handleImage(file);
   };
 
   const save = async (e) => {
     e.preventDefault();
-    if (saveInFlight.current) return;
+    if (saveInFlight.current || photoProcessing) return;
     if (!form.category.trim()) { setErr("Pilih atau isi kategori produk."); return; }
     const cost = String(form.cost).trim() === "" ? 0 : Number(form.cost);
     const stock = String(form.stock).trim() === "" ? 0 : Number(form.stock);
@@ -154,23 +182,29 @@ function ProductForm({ product, categories, categoriesLoading, categoriesError, 
             {form.image_url ? (
               <div className="relative w-full">
                 <img src={form.image_url} alt="Pratinjau produk" className="w-full h-40 object-cover rounded-lg border border-slate-200" data-testid="pf-image-preview" />
-                <button type="button" onClick={() => setForm({ ...form, image_url: null })} title="Hapus foto"
+                <button type="button" disabled={saving || photoProcessing} onClick={() => setForm({ ...form, image_url: null })} title="Hapus foto"
                   className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 rounded-lg p-1.5 shadow" data-testid="pf-image-remove"><Trash2 size={16} /></button>
               </div>
             ) : (
               <label htmlFor="pf-image-input" className="flex flex-col items-center justify-center gap-1 w-full h-40 border-2 border-dashed border-slate-200 rounded-lg cursor-pointer hover:border-teal-400 hover:bg-teal-50/30 transition-colors text-center" data-testid="pf-image-drop">
                 <Upload size={22} className="text-slate-400" />
-                <span className="text-xs font-semibold text-slate-500">Unggah foto produk</span>
+                <span className="text-xs font-semibold text-slate-500">Tambahkan foto produk</span>
                 <span className="text-[10px] text-slate-400">JPG/PNG · otomatis dikecilkan</span>
               </label>
             )}
-            <input id="pf-image-input" type="file" accept="image/*" className="hidden" onChange={(e) => handleImage(e.target.files?.[0])} data-testid="pf-image-input" />
+            <div className="flex gap-2 mt-2">
+              {canTakePhoto && <button type="button" disabled={saving || photoProcessing} className="btn-outline flex-1" onClick={() => cameraInput.current?.click()} data-testid="pf-photo-camera"><Camera size={16} /> Ambil foto</button>}
+              <button type="button" disabled={saving || photoProcessing} className="btn-outline flex-1" onClick={() => galleryInput.current?.click()} data-testid="pf-photo-gallery"><Images size={16} /> {canTakePhoto ? "Pilih dari galeri" : "Pilih gambar"}</button>
+            </div>
+            {photoProcessing && <p role="status" className="text-xs mt-2" data-testid="pf-photo-processing">Memproses foto…</p>}
+            <input ref={galleryInput} id="pf-image-input" type="file" accept="image/*" disabled={saving || photoProcessing} className="hidden" onChange={chooseImage} data-testid="pf-image-input" />
+            <input ref={cameraInput} id="pf-camera-input" type="file" accept="image/*" capture="environment" disabled={saving || photoProcessing} className="hidden" onChange={chooseImage} data-testid="pf-camera-input" />
           </div>
         </div>
         {err && <p role="alert" data-testid="pf-error" className="text-sm text-[hsl(var(--destructive))] mt-3">{err}</p>}
         <div className="flex gap-2 mt-5">
           <button type="button" onClick={onClose} className="btn-outline flex-1" data-testid="pf-cancel">Batal</button>
-          <button type="submit" disabled={saving} className="btn-primary flex-1" data-testid="pf-save">{saving ? "Menyimpan…" : "Simpan"}</button>
+          <button type="submit" disabled={saving || photoProcessing} className="btn-primary flex-1" data-testid="pf-save">{saving ? "Menyimpan…" : "Simpan"}</button>
         </div>
       </form>
     </div>

@@ -5,6 +5,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FilePickerPolicyTest {
+    @Test fun imageUploadUsesGalleryAndCaptureUsesCamera() {
+        assertEquals(FilePickerPolicy.Source.GALLERY, FilePickerPolicy.source(listOf("image/*"), false, false))
+        assertEquals(FilePickerPolicy.Source.CAMERA, FilePickerPolicy.source(listOf("image/jpeg"), false, true))
+        assertEquals(FilePickerPolicy.Source.GALLERY, FilePickerPolicy.source(listOf("image/png", "image/jpeg"), false, false))
+    }
+
+    @Test fun importsAndMixedOrMultipleUploadsKeepDocumentPicker() {
+        for (types in listOf(emptyList(), listOf("text/csv"), listOf("image/jpeg", "application/pdf"))) {
+            assertEquals(FilePickerPolicy.Source.DOCUMENTS, FilePickerPolicy.source(types, false, true))
+        }
+        assertEquals(FilePickerPolicy.Source.DOCUMENTS, FilePickerPolicy.source(listOf("image/*"), true, false))
+    }
     private val knownTypes = mapOf("csv" to "text/csv", "xlsx" to "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xls" to "application/vnd.ms-excel")
 
     @Test fun commaSeparatedExtensionsProduceMimeNamesForAndroidProviders() {

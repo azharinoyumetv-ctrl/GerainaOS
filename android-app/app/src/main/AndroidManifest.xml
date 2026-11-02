@@ -22,6 +22,10 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="false"
         android:theme="@style/Theme.GerainaPOS">
+        <provider android:name=".ProductPhotoProvider"
+            android:authorities="${applicationId}.productphotos" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/product_photo_paths" />
+        </provider>
         <activity android:name=".BarcodeScannerActivity" android:exported="false" />
         <activity
             android:name=".MainActivity"

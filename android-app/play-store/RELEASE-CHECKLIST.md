@@ -20,6 +20,7 @@ Test readable inputs, tablet layouts, loading/error/empty states and interrupted
 
 ## Privacy, support and deletion
 
+- Product-photo follow-up (website 1.2.19): verify gallery/camera, denial/cancel and temporary-file cleanup on the next separate Play build. Account for optional product photos saved to the service; barcode scanning frames remain on device. Website verification does not certify an older Play package.
 - Public URLs: https://dagangos.com/geraina/privacy and https://dagangos.com/geraina/delete-account. Both must load without login and identify Geraina POS / PT DagangOS Digital Indonesia. Native Privacy opens the Geraina-specific policy.
 - Android Menu → Minta penghapusan akun → Buka formulir dukungan opens a prepared request using the authenticated account email. Only explicit submission sends it. The public page provides email instructions without requiring app access.
 - A request is not completed erasure. Document who verifies and handles requests, removal/anonymization of account and associated data, shared-store authority, and actual retention periods before Play submission. Do not invent retention periods or silently delete shared transaction records.

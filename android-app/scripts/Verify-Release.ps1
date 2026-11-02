@@ -1,4 +1,4 @@
-param([string]$VersionName = '1.2.18', [ValidateSet('website','play')][string]$Distribution = 'website')
+param([string]$VersionName = '1.2.19', [ValidateSet('website','play')][string]$Distribution = 'website')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $sdk = Join-Path $env:USERPROFILE 'AppData\Local\Android\Sdk'

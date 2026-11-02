@@ -3,6 +3,13 @@ package com.example.gerainapos
 import java.util.Locale
 
 object FilePickerPolicy {
+    enum class Source { DOCUMENTS, GALLERY, CAMERA }
+
+    fun source(mimeTypes: List<String>, multiple: Boolean, capture: Boolean): Source =
+        if (!multiple && mimeTypes.isNotEmpty() && mimeTypes.all { it.startsWith("image/") }) {
+            if (capture) Source.CAMERA else Source.GALLERY
+        } else Source.DOCUMENTS
+
     /** Android document providers use several different MIME names for CSV files. */
     fun mimeTypes(acceptTypes: Array<String>, fromExtension: (String) -> String?): List<String> {
         val accepted = acceptTypes.flatMap { it.split(',') }.map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotEmpty() }

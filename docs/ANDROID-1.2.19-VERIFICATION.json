@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 15,
+  "version": "1.2.19",
+  "versionCode": 24,
+  "status": "passed",
+  "applicationId": "com.dagangos.geraina",
+  "minimumSdk": 34,
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "verifiedAt": "2026-11-02T11:34:55.646678+00:00",
+  "apkSha256": "bd106fb998274962477ebcfd6bafff944eed64a1b75b2daa302445176309a7b0",
+  "apkBytes": 19175615,
+  "publicationAuthorized": true,
+  "authorizationContext": "Requested gallery/direct-camera improvement within the established verified website-release workflow.",
+  "backendChanged": false,
+  "baseRelease": {
+    "version": "1.2.18",
+    "versionCode": 23,
+    "published": true
+  },
+  "fixes": [
+    "Direct product-photo camera and system gallery actions, including replacing an existing image",
+    "Retain the product draft and previous photo on denial or cancellation; show decoding failures and block saving while processing",
+    "Release only generated temporary captures after reading, discard cancelled captures, and prune abandoned captures",
+    "Preserve document picker behavior for CSV/Excel and mixed-file uploads; retain the saved-category dropdown"
+  ],
+  "browser": {
+    "tool": "Playwright CLI",
+    "photosPassed": 9,
+    "categoriesPassed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "profiles": [
+      "phone",
+      "xiaomi-tablet",
+      "samsung-tablet"
+    ],
+    "scope": "Actual frontend/API and disposable MongoDB replica; browser file inputs use explicit image fixtures"
+  },
+  "package": {
+    "unitTests": 32,
+    "lintErrors": 0,
+    "signatureVerified": true,
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "privateCredentialScan": "passed",
+    "bundleManifestEntriesVerified": 81,
+    "distributionManifestAndCode": "passed",
+    "alignment16kb": "passed",
+    "bundleStructure": "passed",
+    "photoProviderExported": false,
+    "broadPhotoPermissions": false
+  },
+  "android": {
+    "status": "passed",
+    "verifiedAt": "2026-11-02T11:29:54.685Z",
+    "version": "1.2.19",
+    "versionCode": 24,
+    "apkSha256": "bd106fb998274962477ebcfd6bafff944eed64a1b75b2daa302445176309a7b0",
+    "installedApkSha256": "bd106fb998274962477ebcfd6bafff944eed64a1b75b2daa302445176309a7b0",
+    "checks": [
+      "camera-denial-retains-draft",
+      "system-gallery-selection-without-camera-permission",
+      "gallery-cancel-retains-photo-and-draft",
+      "real-emulated-camera-capture-and-preview",
+      "camera-cancel-retains-previous-photo",
+      "captured-photo-saved-and-reopened",
+      "temporary-camera-files-released",
+      "tablet-gallery-replacement-retains-draft",
+      "tablet-camera-launch-and-cancel"
+    ],
+    "upgrade": {
+      "fromVersion": "1.2.18",
+      "status": "passed",
+      "tokenRetained": true,
+      "preferenceRetained": true
+    },
+    "runtimeErrors": [],
+    "productionWrites": 0,
+    "scope": "Exact signed APK, actual AOSP photo picker and virtual camera; real isolated API and MongoDB; phone plus resized large-tablet window. No physical vendor-camera certification."
+  },
+  "sourceSha256": {
+    "frontend/src/pages/Products.jsx": "a13dd3303c5ed6ccba4ffb2f7e55a5e1b1ed37565a14ee34c7b48e61ba6c6284",
+    "android-app/app/src/main/java/com/example/gerainapos/MainActivity.kt": "2ce7fa67ef3b87f397df789a32f6bbf6345ccefeadd756c0313eea3db0100f19",
+    "android-app/app/src/main/java/com/example/gerainapos/ProductPhotoStore.kt": "7ebc1eb4f5193829dc940fd8d43a52d24b520602b88bc8bbc42e9e123f3f2287",
+    "android-app/app/src/main/java/com/example/gerainapos/FilePickerPolicy.kt": "2411ca3c941f7d55958fec319c52772a1fd319aff94cfcf7f4b8916531e7b0aa",
+    "android-app/app/src/main/AndroidManifest.xml": "0c83ff2ec42da81fdf1f1037e0dd5e3bf0b9d0859f72a3b98572afc87c05e475",
+    "android-app/app/src/main/assets/device-features.js": "96f70358821be72b4fe2ce18012f38cb87004a834b18d69eedf6b1c96f441d2e"
+  },
+  "limits": [
+    "Native checks use the real AOSP system picker and virtual camera, not physical vendor firmware.",
+    "No customer records, payments or external deliveries were used.",
+    "Android users need the 1.2.19 app update for native gallery/camera handling."
+  ]
+}
