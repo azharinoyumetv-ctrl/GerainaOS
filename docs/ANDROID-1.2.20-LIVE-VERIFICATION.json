@@ -1,0 +1,44 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-11-02T15:46:36.618Z",
+  "version": "1.2.20",
+  "versionCode": 25,
+  "apkSha256": "b6fcece07b4ab7b3b23a6bb3c8fe0b68bb1aa3818da185aaf432cb460ca31e0f",
+  "downloadBytes": 19176155,
+  "unitChoicesVerified": 6,
+  "browser": [
+    {
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "status": "passed",
+      "checks": [
+        "all-live-saved-units-offered",
+        "selection-and-custom-entry",
+        "draft-retained-on-selection",
+        "category-and-photo-actions-retained",
+        "cancel-without-save"
+      ],
+      "merchantWrites": 0,
+      "runtimeErrors": 0
+    },
+    {
+      "viewport": {
+        "width": 1480,
+        "height": 924
+      },
+      "status": "passed",
+      "checks": [
+        "all-live-saved-units-offered",
+        "selection-and-custom-entry",
+        "draft-retained-on-selection",
+        "category-and-photo-actions-retained",
+        "cancel-without-save"
+      ],
+      "merchantWrites": 0,
+      "runtimeErrors": 0
+    }
+  ],
+  "scope": "Official feed/download bytes and authenticated live editor. Registry reads only; no product/unit saved, payment or photo upload."
+}

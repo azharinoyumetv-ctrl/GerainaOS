@@ -1,6 +1,6 @@
 # Geraina 1.2.20 — saved product units
 
-Status: signed website release candidate verified; live publication is checked separately.
+Status: published and verified. The official APK/feed match the installed signed bytes, and the live editor passed read-only phone and tablet checks.
 
 Add/Edit Product now selects units from the store's saved **Satuan Unit** list. Choices show the full name and symbol, such as **Kilogram (kg)**, and save the symbol in the existing product `unit` field. This preserves the existing receipt, inventory and import contract; registry IDs are not substituted for display units.
 
@@ -20,3 +20,5 @@ APK SHA-256: `b6fcece07b4ab7b3b23a6bb3c8fe0b68bb1aa3818da185aaf432cb460ca31e0f`.
 No backend/payment changes or production customer writes. Emulators do not certify physical vendor firmware. Android needs the new APK for this bundled product form; the hosted web form receives the source deployment. Gallery/camera behavior from 1.2.19 remains included. This is the website distribution, with no claim of Play Console submission.
 
 Evidence: [ANDROID-1.2.20-VERIFICATION.json](ANDROID-1.2.20-VERIFICATION.json).
+
+Publication: [official Android download](https://dagangos.com/geraina/android), [successful deployment](https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/41474212982). All 65 portal checks passed. The write-capable production suite was intentionally skipped; live checks did not save any customer records. Disposable regression fixtures were removed.

@@ -109,5 +109,84 @@
     "Installed tests use an owned AOSP emulator, not physical vendor firmware.",
     "No customer records, payments or external deliveries were used.",
     "Android needs the 1.2.20 APK for its bundled product editor; hosted web receives the source deployment."
-  ]
+  ],
+  "published": true,
+  "liveVerification": {
+    "status": "passed",
+    "checkedAt": "2026-11-02T15:46:36.618Z",
+    "version": "1.2.20",
+    "versionCode": 25,
+    "apkSha256": "b6fcece07b4ab7b3b23a6bb3c8fe0b68bb1aa3818da185aaf432cb460ca31e0f",
+    "downloadBytes": 19176155,
+    "unitChoicesVerified": 6,
+    "browser": [
+      {
+        "viewport": {
+          "width": 412,
+          "height": 915
+        },
+        "status": "passed",
+        "checks": [
+          "all-live-saved-units-offered",
+          "selection-and-custom-entry",
+          "draft-retained-on-selection",
+          "category-and-photo-actions-retained",
+          "cancel-without-save"
+        ],
+        "merchantWrites": 0,
+        "runtimeErrors": 0
+      },
+      {
+        "viewport": {
+          "width": 1480,
+          "height": 924
+        },
+        "status": "passed",
+        "checks": [
+          "all-live-saved-units-offered",
+          "selection-and-custom-entry",
+          "draft-retained-on-selection",
+          "category-and-photo-actions-retained",
+          "cancel-without-save"
+        ],
+        "merchantWrites": 0,
+        "runtimeErrors": 0
+      }
+    ],
+    "scope": "Official feed/download bytes and authenticated live editor. Registry reads only; no product/unit saved, payment or photo upload."
+  },
+  "portalTests": {
+    "passed": 65,
+    "failed": 0
+  },
+  "fixtureCleanup": {
+    "fixturesRemoved": true,
+    "database": "geraina_categories_a2810fa0c4644deb925f9c568d6fcb8b",
+    "scope": "Owned isolated unit regression database only"
+  },
+  "publication": {
+    "sourceCommit": "b7fad97",
+    "portalCommit": "d19a19c1d275c432e9dd417050b7bb42bc5ea8e0",
+    "workflow": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/41474212982",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "deploy",
+        "conclusion": "success"
+      },
+      {
+        "name": "cloudflare-zone-audit",
+        "conclusion": "success"
+      },
+      {
+        "name": "public-accessibility",
+        "conclusion": "success"
+      },
+      {
+        "name": "e2e-geraina",
+        "conclusion": "skipped"
+      }
+    ],
+    "liveE2ENote": "Write-capable production suite intentionally skipped. 42 isolated browser cases, exact installed-APK tests and two read-only live editor checks passed."
+  }
 }
