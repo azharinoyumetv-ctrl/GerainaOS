@@ -112,5 +112,82 @@
     "Emulated Android layouts do not certify physical vendor firmware.",
     "No customer records, merchant charges, email deliveries or erasures were used for this regression.",
     "APK users need the 1.2.18 update because product screens are bundled; the web fix uses the deployed frontend."
-  ]
+  ],
+  "published": true,
+  "liveVerification": {
+    "status": "passed",
+    "checkedAt": "2026-11-02T10:54:58.210Z",
+    "version": "1.2.18",
+    "versionCode": 23,
+    "apkSha256": "a4b7130467db7930d2efbc3d4a99a600f41f42e0e2f66a54284c95dee39f6400",
+    "downloadBytes": 19158055,
+    "listing": "https://dagangos.com/geraina/android",
+    "browser": [
+      {
+        "viewport": {
+          "width": 412,
+          "height": 915
+        },
+        "status": "passed",
+        "checks": [
+          "live-product-editor-dropdown",
+          "saved-and-legacy-categories-available",
+          "cancel-without-save"
+        ],
+        "categoryChoices": 8,
+        "merchantWrites": 0,
+        "runtimeErrors": 0
+      },
+      {
+        "viewport": {
+          "width": 1480,
+          "height": 924
+        },
+        "status": "passed",
+        "checks": [
+          "live-product-editor-dropdown",
+          "saved-and-legacy-categories-available",
+          "cancel-without-save"
+        ],
+        "categoryChoices": 8,
+        "merchantWrites": 0,
+        "runtimeErrors": 0
+      }
+    ],
+    "scope": "Official feed/download bytes and authenticated read-only live product editor; no category/product/order saved on production."
+  },
+  "portalTests": {
+    "passed": 65,
+    "failed": 0
+  },
+  "fixtureCleanup": {
+    "status": "passed",
+    "fixturesRemoved": true,
+    "productionWrites": 0
+  },
+  "publication": {
+    "sourceCommit": "321392c",
+    "portalCommit": "b58b98b2a94977ff1aec8947166db24bb78001f9",
+    "workflow": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/41432175456",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "deploy",
+        "conclusion": "success"
+      },
+      {
+        "name": "cloudflare-zone-audit",
+        "conclusion": "success"
+      },
+      {
+        "name": "public-accessibility",
+        "conclusion": "success"
+      },
+      {
+        "name": "e2e-geraina",
+        "conclusion": "skipped"
+      }
+    ],
+    "liveE2ENote": "Write-capable production suite intentionally skipped by local-verified release marker; 18 isolated browser cases, exact installed APK checks and two read-only live editor checks passed."
+  }
 }

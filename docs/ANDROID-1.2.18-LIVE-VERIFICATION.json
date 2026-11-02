@@ -1,0 +1,42 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-11-02T10:54:58.210Z",
+  "version": "1.2.18",
+  "versionCode": 23,
+  "apkSha256": "a4b7130467db7930d2efbc3d4a99a600f41f42e0e2f66a54284c95dee39f6400",
+  "downloadBytes": 19158055,
+  "listing": "https://dagangos.com/geraina/android",
+  "browser": [
+    {
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "status": "passed",
+      "checks": [
+        "live-product-editor-dropdown",
+        "saved-and-legacy-categories-available",
+        "cancel-without-save"
+      ],
+      "categoryChoices": 8,
+      "merchantWrites": 0,
+      "runtimeErrors": 0
+    },
+    {
+      "viewport": {
+        "width": 1480,
+        "height": 924
+      },
+      "status": "passed",
+      "checks": [
+        "live-product-editor-dropdown",
+        "saved-and-legacy-categories-available",
+        "cancel-without-save"
+      ],
+      "categoryChoices": 8,
+      "merchantWrites": 0,
+      "runtimeErrors": 0
+    }
+  ],
+  "scope": "Official feed/download bytes and authenticated read-only live product editor; no category/product/order saved on production."
+}

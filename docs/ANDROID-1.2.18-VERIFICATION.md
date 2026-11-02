@@ -1,6 +1,6 @@
 # Geraina 1.2.18 — saved product categories
 
-Status: signed release candidate verified; website publication is checked separately.
+Status: published and verified on the official website. The download/feed bytes match the installed APK, and the live product editor passed read-only phone and tablet checks.
 
 The product editor previously displayed a text input, and its choices only came from categories already assigned to products. Creating a category succeeded but did not make it selectable for the first product.
 
@@ -20,3 +20,5 @@ APK SHA-256: `a4b7130467db7930d2efbc3d4a99a600f41f42e0e2f66a54284c95dee39f6400`.
 No backend or payment handling changed. Android users need the new APK because the product screen is bundled; web users receive the deployed frontend. No customer data, actual merchant payment or external delivery was used. Emulator checks do not certify physical vendor firmware.
 
 Machine-readable evidence: [ANDROID-1.2.18-VERIFICATION.json](ANDROID-1.2.18-VERIFICATION.json).
+
+Publication: [official Android download](https://dagangos.com/geraina/android), [successful deployment](https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/41432175456). All 65 portal checks passed. The write-capable production suite was intentionally skipped; the live browser check did not save customer records.
