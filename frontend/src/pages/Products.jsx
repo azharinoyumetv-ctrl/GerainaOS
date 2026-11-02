@@ -6,7 +6,7 @@ import { canManageProducts } from "@/auth/permissions";
 import { Plus, Upload, Search, Edit3, Trash2, X, Download, FileSpreadsheet, CheckCircle2, AlertCircle, ScanBarcode, Camera, Images } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
-function ProductForm({ product, categories, categoriesLoading, categoriesError, onRetryCategories, onClose, onSaved }) {
+function ProductForm({ product, categories, categoriesLoading, categoriesError, onRetryCategories, units, unitsLoading, unitsError, onRetryUnits, onClose, onSaved }) {
   const isEdit = !!product?.id;
   const [form, setForm] = useState({
     name: product?.name || "",
@@ -29,6 +29,12 @@ function ProductForm({ product, categories, categoriesLoading, categoriesError, 
   const canTakePhoto = window.__gerainaAndroid || /Android|iPhone|iPad/i.test(navigator.userAgent);
   const [customCategory, setCustomCategory] = useState(false);
   const categoryOptions = [...new Set(["Umum", ...categories, ...(!customCategory && form.category ? [form.category] : [])])];
+  const [customUnit, setCustomUnit] = useState(false);
+  // Products store the symbol, not the registry id. Preserve older free-text
+  // values verbatim until the owner explicitly chooses a replacement.
+  const unitOptions = new Map(units.map(unit => [unit.value, unit.label]));
+  if (!unitOptions.has("pcs")) unitOptions.set("pcs", "pcs");
+  if (!customUnit && form.unit && !unitOptions.has(form.unit)) unitOptions.set(form.unit, form.unit);
   const saveInFlight = useRef(false);
   useEffect(() => () => { photoRequest.current++; }, []);
   useEffect(() => {
@@ -89,6 +95,7 @@ function ProductForm({ product, categories, categoriesLoading, categoriesError, 
     e.preventDefault();
     if (saveInFlight.current || photoProcessing) return;
     if (!form.category.trim()) { setErr("Pilih atau isi kategori produk."); return; }
+    if (!form.unit.trim()) { setErr("Pilih atau isi satuan produk."); return; }
     const cost = String(form.cost).trim() === "" ? 0 : Number(form.cost);
     const stock = String(form.stock).trim() === "" ? 0 : Number(form.stock);
     if (!form.name.trim() || String(form.price).trim() === "" || ![Number(form.price), cost, stock].every(value => Number.isFinite(value) && value >= 0) || !Number.isInteger(stock)) {
@@ -101,6 +108,7 @@ function ProductForm({ product, categories, categoriesLoading, categoriesError, 
         ...form,
         name: form.name.trim(),
         category: customCategory ? form.category.trim() : form.category,
+        unit: customUnit ? form.unit.trim() : form.unit,
         price: Number(form.price),
         cost,
         stock,
@@ -173,9 +181,24 @@ function ProductForm({ product, categories, categoriesLoading, categoriesError, 
                    onChange={(e) => setForm({ ...form, stock: e.target.value })} data-testid="pf-stock" />
           </div>
           <div>
-            <label className="label-tiny">Unit</label>
-            <input className="input-field mt-1.5" value={form.unit}
-                   onChange={(e) => setForm({ ...form, unit: e.target.value })} data-testid="pf-unit" />
+            <label className="label-tiny" htmlFor="product-unit">Unit</label>
+            <select id="product-unit" className="input-field mt-1.5" data-testid="pf-unit"
+                    value={customUnit ? "custom" : `unit:${form.unit}`} aria-busy={unitsLoading}
+                    onChange={(e) => {
+                      const custom = e.target.value === "custom";
+                      setCustomUnit(custom);
+                      setForm({ ...form, unit: custom ? "" : e.target.value.slice("unit:".length) });
+                    }}>
+              {[...unitOptions].map(([value, label]) => <option key={value} value={`unit:${value}`}>{label}</option>)}
+              <option value="custom">Satuan lainnya…</option>
+            </select>
+            {customUnit && <input className="input-field mt-2" required autoFocus aria-label="Satuan lainnya"
+              placeholder="Simbol satuan" value={form.unit} data-testid="pf-unit-custom"
+              onChange={(e) => setForm({ ...form, unit: e.target.value })} />}
+            {unitsLoading && <p role="status" className="text-xs mt-1">Memuat satuan…</p>}
+            {unitsError && <div role="alert" className="text-xs mt-1" data-testid="pf-unit-error">
+              <p>{unitsError}</p><button type="button" className="underline mt-1" onClick={onRetryUnits}>Coba lagi</button>
+            </div>}
           </div>
           <div className="col-span-2">
             <label className="label-tiny block mb-1.5">Foto Produk</label>
@@ -369,6 +392,10 @@ export default function Products() {
   const [categoriesIdentity, setCategoriesIdentity] = useState("");
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState("");
+  const [units, setUnits] = useState([]);
+  const [unitsIdentity, setUnitsIdentity] = useState("");
+  const [unitsLoading, setUnitsLoading] = useState(false);
+  const [unitsError, setUnitsError] = useState("");
   const [filterCat, setFilterCat] = useState("all");
   const [loadError, setLoadError] = useState("");
   useEffect(() => {
@@ -388,6 +415,7 @@ export default function Products() {
   const loadReqIdRef = useRef(0);
   const summaryReqIdRef = useRef(0);
   const categoriesReqIdRef = useRef(0);
+  const unitsReqIdRef = useRef(0);
   const requestControllerRef = useRef(null);
   const requestIsUnfilteredRef = useRef(false);
   const controllersRef = useRef(new Set());
@@ -456,12 +484,34 @@ export default function Products() {
     }
   };
 
+  const loadUnits = async () => {
+    const requestIdentity = identity;
+    const requestId = ++unitsReqIdRef.current;
+    const current = () => identityRef.current === requestIdentity && unitsReqIdRef.current === requestId;
+    setUnitsLoading(true); setUnitsError("");
+    try {
+      const saved = await readCollection("/products/units");
+      const choices = new Map();
+      for (const unit of saved.data) {
+        const value = typeof unit.short_name === "string" ? unit.short_name.trim() : "";
+        const name = typeof unit.name === "string" ? unit.name.trim() : "";
+        if (value && !choices.has(value)) choices.set(value, { value, label: name && name !== value ? `${name} (${value})` : value });
+      }
+      if (current()) { setUnits([...choices.values()]); setUnitsIdentity(requestIdentity); }
+    } catch {
+      if (current()) setUnitsError("Daftar satuan belum dapat dimuat.");
+    } finally {
+      if (current()) setUnitsLoading(false);
+    }
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setItems([]); setCatalogue(null); setCategories([]); setPage(0); setQ(""); setFilterCat("all");
+    setUnits([]); setUnitsError(""); setUnitsLoading(false);
     setShowForm(false); setShowImport(false); setEditing(null); setLoading(true); setLoadError("");
     loadCategories();
-    return () => { loadReqIdRef.current++; summaryReqIdRef.current++; categoriesReqIdRef.current++; controllersRef.current.forEach(controller => controller.abort()); controllersRef.current.clear(); };
+    return () => { loadReqIdRef.current++; summaryReqIdRef.current++; categoriesReqIdRef.current++; unitsReqIdRef.current++; controllersRef.current.forEach(controller => controller.abort()); controllersRef.current.clear(); };
   }, [identity]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setTimeout(load, q ? 200 : 0); return () => clearTimeout(t); }, [q, filterCat, identity]);
@@ -472,6 +522,7 @@ export default function Products() {
   const visibleItems = currentItems.slice(currentPage * 25, currentPage * 25 + 25);
   const summary = catalogueIdentity === identity ? catalogue : null;
   const visibleCategories = categoriesIdentity === identity ? categories : [];
+  const visibleUnits = unitsIdentity === identity ? units : [];
   const showPage = next => { setPage(next); requestAnimationFrame(() => listRef.current?.scrollIntoView({ block: "start" })); };
 
   const remove = async (p) => {
@@ -496,7 +547,7 @@ export default function Products() {
           <button onClick={() => { setDialogIdentity(identity); setShowImport(true); }} className="btn-outline" data-testid="open-import-btn">
             <Upload size={16} /> Impor Excel/CSV
           </button>
-          <button onClick={() => { setDialogIdentity(identity); setEditing(null); setShowForm(true); loadCategories(); }} className="btn-primary" data-testid="new-product-btn">
+          <button onClick={() => { setDialogIdentity(identity); setEditing(null); setShowForm(true); loadCategories(); loadUnits(); }} className="btn-primary" data-testid="new-product-btn">
             <Plus size={16} /> Produk Baru
           </button>
         </div>}
@@ -570,7 +621,7 @@ export default function Products() {
                 <td className="px-5 py-3 text-right num-display">{p.stock} <span className="text-xs text-[hsl(var(--muted))]">{p.unit}</span></td>
                 <td className="px-5 py-3 text-right">
                   {editable && <>
-                    <button onClick={() => { setDialogIdentity(identity); setEditing(p); setShowForm(true); loadCategories(); }} className="btn-ghost p-1.5" data-testid={`edit-product-${p.id}`}><Edit3 size={15} /></button>
+                    <button onClick={() => { setDialogIdentity(identity); setEditing(p); setShowForm(true); loadCategories(); loadUnits(); }} className="btn-ghost p-1.5" data-testid={`edit-product-${p.id}`}><Edit3 size={15} /></button>
                     <button onClick={() => remove(p)} className="btn-ghost p-1.5 text-[hsl(var(--destructive))]" data-testid={`delete-product-${p.id}`}><Trash2 size={15} /></button>
                   </>}
                 </td>
@@ -591,7 +642,7 @@ export default function Products() {
         </div>
       </div>}
 
-      {editable && showForm && dialogIdentity === identity && <ProductForm product={editing} categories={visibleCategories} categoriesLoading={categoriesLoading} categoriesError={categoriesError} onRetryCategories={loadCategories} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load({ refreshSummary: true }); loadCategories(); }} />}
+      {editable && showForm && dialogIdentity === identity && <ProductForm product={editing} categories={visibleCategories} categoriesLoading={categoriesLoading} categoriesError={categoriesError} onRetryCategories={loadCategories} units={visibleUnits} unitsLoading={unitsLoading} unitsError={unitsError} onRetryUnits={loadUnits} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load({ refreshSummary: true }); loadCategories(); }} />}
       {editable && showImport && dialogIdentity === identity && <ImportDialog onClose={() => setShowImport(false)} onDone={() => { load({ refreshSummary: true }); loadCategories(); }} />}
     </div>
   );

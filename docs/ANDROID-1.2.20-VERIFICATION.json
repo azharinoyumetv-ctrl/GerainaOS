@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 16,
+  "version": "1.2.20",
+  "versionCode": 25,
+  "status": "passed",
+  "applicationId": "com.dagangos.geraina",
+  "minimumSdk": 34,
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "verifiedAt": "2026-11-02T15:40:18.243182+00:00",
+  "apkSha256": "b6fcece07b4ab7b3b23a6bb3c8fe0b68bb1aa3818da185aaf432cb460ca31e0f",
+  "apkBytes": 19176155,
+  "publicationAuthorized": true,
+  "authorizationContext": "Requested saved-unit product selector within the established tested website-release workflow.",
+  "backendChanged": false,
+  "baseRelease": {
+    "version": "1.2.19",
+    "versionCode": 24,
+    "published": true
+  },
+  "fixes": [
+    "Saved unit dropdown in Add/Edit Product displaying names and symbols; save the symbol in the existing product field",
+    "Preserve default pcs, legacy/full-name values and explicit custom units without silently converting existing products",
+    "Load every registry page, deduplicate symbols, isolate store responses, retry failed loading without losing the draft",
+    "Refresh saved choices when reopening the editor; retain category selection and gallery/camera actions"
+  ],
+  "browser": {
+    "tool": "Playwright CLI",
+    "failed": 0,
+    "skipped": 0,
+    "profiles": [
+      "phone",
+      "xiaomi-tablet",
+      "samsung-tablet"
+    ],
+    "unitsPassed": 15,
+    "categoriesPassed": 18,
+    "photosPassed": 9
+  },
+  "package": {
+    "unitTests": 32,
+    "lintErrors": 0,
+    "signatureVerified": true,
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "privateCredentialScan": "passed",
+    "bundleManifestEntriesVerified": 81,
+    "distributionManifestAndCode": "passed",
+    "alignment16kb": "passed",
+    "bundleStructure": "passed"
+  },
+  "android": {
+    "status": "passed",
+    "verifiedAt": "2026-11-02T15:39:51.073Z",
+    "version": "1.2.20",
+    "versionCode": 25,
+    "apkSha256": "b6fcece07b4ab7b3b23a6bb3c8fe0b68bb1aa3818da185aaf432cb460ca31e0f",
+    "installedApkSha256": "b6fcece07b4ab7b3b23a6bb3c8fe0b68bb1aa3818da185aaf432cb460ca31e0f",
+    "upgrade": {
+      "fromVersion": "1.2.19",
+      "status": "passed",
+      "tokenRetained": true,
+      "preferenceRetained": true
+    },
+    "profiles": [
+      {
+        "name": "phone",
+        "size": "1080x2400",
+        "density": "420",
+        "status": "passed",
+        "apkSha256": "b6fcece07b4ab7b3b23a6bb3c8fe0b68bb1aa3818da185aaf432cb460ca31e0f",
+        "checks": [
+          "create-unit",
+          "select-saved-unit",
+          "save-product-symbol",
+          "edit-retains-selection",
+          "category-and-photo-actions-retained"
+        ],
+        "selection": "native-popup-open-and-tap"
+      },
+      {
+        "name": "large-tablet-window",
+        "size": "2960x1848",
+        "density": "240",
+        "status": "passed",
+        "apkSha256": "b6fcece07b4ab7b3b23a6bb3c8fe0b68bb1aa3818da185aaf432cb460ca31e0f",
+        "checks": [
+          "create-unit",
+          "select-saved-unit",
+          "save-product-symbol",
+          "edit-retains-selection",
+          "category-and-photo-actions-retained"
+        ],
+        "selection": "real-WebView-selectOption"
+      }
+    ],
+    "runtimeErrors": [],
+    "productionRequests": 0,
+    "productionWrites": 0,
+    "scope": "Signed installed APK; owned AOSP phone/resized tablet emulator and real isolated API/MongoDB. Phone popup tapped via native UI; tablet selection through real WebView. No physical vendor certification."
+  },
+  "sourceSha256": {
+    "frontend/src/pages/Products.jsx": "5034ae0f00c3fc93eab42b4e1679f658491b23771dff4d968fc2beb749029616",
+    "android-app/app/src/main/java/com/example/gerainapos/MainActivity.kt": "2ce7fa67ef3b87f397df789a32f6bbf6345ccefeadd756c0313eea3db0100f19",
+    "android-app/app/src/main/assets/device-features.js": "96f70358821be72b4fe2ce18012f38cb87004a834b18d69eedf6b1c96f441d2e"
+  },
+  "limits": [
+    "Installed tests use an owned AOSP emulator, not physical vendor firmware.",
+    "No customer records, payments or external deliveries were used.",
+    "Android needs the 1.2.20 APK for its bundled product editor; hosted web receives the source deployment."
+  ]
+}
