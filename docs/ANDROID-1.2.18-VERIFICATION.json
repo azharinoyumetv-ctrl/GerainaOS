@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 14,
+  "version": "1.2.18",
+  "versionCode": 23,
+  "status": "passed",
+  "applicationId": "com.dagangos.geraina",
+  "minimumSdk": 34,
+  "supportedAbis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "verifiedAt": "2026-11-02T10:49:32.463005+00:00",
+  "apkSha256": "a4b7130467db7930d2efbc3d4a99a600f41f42e0e2f66a54284c95dee39f6400",
+  "apkBytes": 19158055,
+  "publicationAuthorized": true,
+  "authorizationContext": "Requested product-category repair within the established build, test and website-release workflow.",
+  "backendChanged": false,
+  "baseRelease": {
+    "version": "1.2.17",
+    "versionCode": 22,
+    "published": true
+  },
+  "fixes": [
+    "Select saved categories in Add/Edit Product without typing the name again",
+    "Load every saved category page and merge legacy/imported product category names without duplicates",
+    "Keep existing categories and optional custom entry; show category-load failures and retry without losing a draft",
+    "Refresh choices on form open and prevent another store or superseded request from replacing current choices"
+  ],
+  "reproduction": {
+    "status": "reproduced-before-fix",
+    "actualTag": "INPUT",
+    "expectedTag": "SELECT",
+    "categoryCreation": "passed against actual local API before the selector assertion failed"
+  },
+  "browser": {
+    "tool": "Playwright CLI",
+    "categoriesPassed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "profiles": [
+      "phone",
+      "xiaomi-tablet",
+      "samsung-tablet"
+    ],
+    "scope": "Actual frontend, actual API handlers and disposable MongoDB replica; pagination interruption uses explicit fixtures"
+  },
+  "package": {
+    "unitTests": 27,
+    "lintErrors": 0,
+    "signatureVerified": true,
+    "signerSha256": "52e14a39a7da4f5f528838f33602860e35960373070a6132d08f682487494ec8",
+    "privateCredentialScan": "passed",
+    "bundleManifestEntriesVerified": 81,
+    "categoryFixPresentInBundledCode": true,
+    "distributionManifestAndCode": "passed",
+    "alignment16kb": "passed",
+    "bundleStructure": "passed"
+  },
+  "android": {
+    "status": "passed",
+    "verifiedAt": "2026-11-02T10:47:27.996Z",
+    "version": "1.2.18",
+    "versionCode": 23,
+    "apkSha256": "a4b7130467db7930d2efbc3d4a99a600f41f42e0e2f66a54284c95dee39f6400",
+    "installedApkSha256": "a4b7130467db7930d2efbc3d4a99a600f41f42e0e2f66a54284c95dee39f6400",
+    "upgrade": {
+      "fromVersion": "1.2.17",
+      "status": "passed",
+      "tokenRetained": true,
+      "preferenceRetained": true
+    },
+    "profiles": [
+      {
+        "name": "phone",
+        "size": "1080x2400",
+        "density": "420",
+        "status": "passed",
+        "checks": [
+          "create-category",
+          "native-dropdown-open-and-tap",
+          "save-product",
+          "persisted-category",
+          "edit-retains-selection"
+        ],
+        "apkSha256": "a4b7130467db7930d2efbc3d4a99a600f41f42e0e2f66a54284c95dee39f6400"
+      },
+      {
+        "name": "large-tablet-window",
+        "size": "2960x1848",
+        "density": "240",
+        "status": "passed",
+        "checks": [
+          "create-category",
+          "native-dropdown-open-and-tap",
+          "save-product",
+          "persisted-category",
+          "edit-retains-selection"
+        ],
+        "apkSha256": "a4b7130467db7930d2efbc3d4a99a600f41f42e0e2f66a54284c95dee39f6400"
+      }
+    ],
+    "runtimeErrors": [],
+    "productionRequests": 0,
+    "productionWrites": 0,
+    "scope": "Exact signed APK on owned AOSP emulator-5556; native phone and resized large-tablet window, isolated real backend and MongoDB. Not physical vendor firmware."
+  },
+  "sourceSha256": {
+    "frontend/src/pages/Products.jsx": "5a286a4fcc1b8399583ac63cbbb280c3c8327de606d3b9f886c89a6f8dd8031e",
+    "android-app/app/build.gradle.kts": "ae58aedd6d7fc103ca7e51fb5fffd8437ac38fbab8987a3bfcd97b398c0ceaf5"
+  },
+  "limits": [
+    "Emulated Android layouts do not certify physical vendor firmware.",
+    "No customer records, merchant charges, email deliveries or erasures were used for this regression.",
+    "APK users need the 1.2.18 update because product screens are bundled; the web fix uses the deployed frontend."
+  ]
+}

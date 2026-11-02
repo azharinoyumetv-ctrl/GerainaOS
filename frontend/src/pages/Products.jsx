@@ -6,7 +6,7 @@ import { canManageProducts } from "@/auth/permissions";
 import { Plus, Upload, Search, Edit3, Trash2, X, Download, FileSpreadsheet, CheckCircle2, AlertCircle, ScanBarcode } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
-function ProductForm({ product, onClose, onSaved }) {
+function ProductForm({ product, categories, categoriesLoading, categoriesError, onRetryCategories, onClose, onSaved }) {
   const isEdit = !!product?.id;
   const [form, setForm] = useState({
     name: product?.name || "",
@@ -22,6 +22,8 @@ function ProductForm({ product, onClose, onSaved }) {
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const [customCategory, setCustomCategory] = useState(false);
+  const categoryOptions = [...new Set(["Umum", ...categories, ...(!customCategory && form.category ? [form.category] : [])])];
   const saveInFlight = useRef(false);
   useEffect(() => {
     const scanned = event => {
@@ -58,6 +60,7 @@ function ProductForm({ product, onClose, onSaved }) {
   const save = async (e) => {
     e.preventDefault();
     if (saveInFlight.current) return;
+    if (!form.category.trim()) { setErr("Pilih atau isi kategori produk."); return; }
     const cost = String(form.cost).trim() === "" ? 0 : Number(form.cost);
     const stock = String(form.stock).trim() === "" ? 0 : Number(form.stock);
     if (!form.name.trim() || String(form.price).trim() === "" || ![Number(form.price), cost, stock].every(value => Number.isFinite(value) && value >= 0) || !Number.isInteger(stock)) {
@@ -69,6 +72,7 @@ function ProductForm({ product, onClose, onSaved }) {
       const payload = {
         ...form,
         name: form.name.trim(),
+        category: customCategory ? form.category.trim() : form.category,
         price: Number(form.price),
         cost,
         stock,
@@ -88,7 +92,7 @@ function ProductForm({ product, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 grid place-items-center z-50 p-4" onClick={onClose} data-testid="product-form-modal">
-      <form onSubmit={save} className="card-surface bg-white p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()} data-testid="product-form">
+      <form onSubmit={save} className="card-surface bg-white p-6 w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="product-form">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-display text-xl font-bold">{isEdit ? "Edit Produk" : "Produk Baru"}</h2>
           <button type="button" onClick={onClose} className="btn-ghost p-2" data-testid="product-form-close"><X size={18} /></button>
@@ -106,9 +110,24 @@ function ProductForm({ product, onClose, onSaved }) {
             {window.GerainaDevice?.scanBarcode && <button type="button" className="btn-outline mt-2 w-full" data-testid="pf-scan-barcode" onClick={() => window.GerainaDevice.scanBarcode("product")}><ScanBarcode size={17} /> Scan barcode</button>}
           </div>
           <div>
-            <label className="label-tiny">Kategori</label>
-            <input className="input-field mt-1.5" value={form.category}
-                   onChange={(e) => setForm({ ...form, category: e.target.value })} data-testid="pf-category" />
+            <label className="label-tiny" htmlFor="product-category">Kategori</label>
+            <select id="product-category" className="input-field mt-1.5" data-testid="pf-category"
+                    value={customCategory ? "custom" : `category:${form.category}`} aria-busy={categoriesLoading}
+                    onChange={(e) => {
+                      const custom = e.target.value === "custom";
+                      setCustomCategory(custom);
+                      setForm({ ...form, category: custom ? "" : e.target.value.slice("category:".length) });
+                    }}>
+              {categoryOptions.map(name => <option key={name} value={`category:${name}`}>{name}</option>)}
+              <option value="custom">Kategori lainnya…</option>
+            </select>
+            {customCategory && <input className="input-field mt-2" required autoFocus aria-label="Nama kategori baru"
+              placeholder="Nama kategori" value={form.category} data-testid="pf-category-custom"
+              onChange={(e) => setForm({ ...form, category: e.target.value })} />}
+            {categoriesLoading && <p role="status" className="text-xs mt-1">Memuat kategori…</p>}
+            {categoriesError && <div role="alert" className="text-xs mt-1" data-testid="pf-category-error">
+              <p>{categoriesError}</p><button type="button" className="underline mt-1" onClick={onRetryCategories}>Coba lagi</button>
+            </div>}
           </div>
           <div>
             <label className="label-tiny">Harga Jual (Rp)</label>
@@ -313,6 +332,9 @@ export default function Products() {
   const [showImport, setShowImport] = useState(false);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
+  const [categoriesIdentity, setCategoriesIdentity] = useState("");
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState("");
   const [filterCat, setFilterCat] = useState("all");
   const [loadError, setLoadError] = useState("");
   useEffect(() => {
@@ -331,6 +353,7 @@ export default function Products() {
   // request issued.
   const loadReqIdRef = useRef(0);
   const summaryReqIdRef = useRef(0);
+  const categoriesReqIdRef = useRef(0);
   const requestControllerRef = useRef(null);
   const requestIsUnfilteredRef = useRef(false);
   const controllersRef = useRef(new Set());
@@ -379,13 +402,24 @@ export default function Products() {
     }
   };
 
-  // Filter dropdown must reflect the same category values the product table shows
-  // (the free-text `category` field on each product), not the separate user-managed
-  // Kategori collection -- that collection is often empty even when products exist,
-  // which left the dropdown stuck on "Semua Kategori" only.
-  const loadCategories = () => {
+  // Saved categories must be available before their first product is created.
+  // Keep legacy/imported product names too, so existing values remain selectable.
+  const loadCategories = async () => {
     const requestIdentity = identity;
-    api.get("/products/category-names").then((r) => { if (identityRef.current === requestIdentity) setCategories(Array.isArray(r.data) ? r.data : []); }).catch(() => {});
+    const requestId = ++categoriesReqIdRef.current;
+    const current = () => identityRef.current === requestIdentity && categoriesReqIdRef.current === requestId;
+    setCategoriesLoading(true); setCategoriesError("");
+    try {
+      const [saved, used] = await Promise.all([readCollection("/products/categories"), api.get("/products/category-names")]);
+      if (!Array.isArray(used.data)) throw new Error("Jawaban kategori tidak valid.");
+      const names = [...new Set([...saved.data.map(category => category.name), ...used.data]
+        .filter(name => typeof name === "string" && name.trim()))].sort((a, b) => a.localeCompare(b, "id"));
+      if (current()) { setCategories(names); setCategoriesIdentity(requestIdentity); }
+    } catch {
+      if (current()) setCategoriesError("Daftar kategori belum dapat dimuat.");
+    } finally {
+      if (current()) setCategoriesLoading(false);
+    }
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -393,7 +427,7 @@ export default function Products() {
     setItems([]); setCatalogue(null); setCategories([]); setPage(0); setQ(""); setFilterCat("all");
     setShowForm(false); setShowImport(false); setEditing(null); setLoading(true); setLoadError("");
     loadCategories();
-    return () => { loadReqIdRef.current++; summaryReqIdRef.current++; controllersRef.current.forEach(controller => controller.abort()); controllersRef.current.clear(); };
+    return () => { loadReqIdRef.current++; summaryReqIdRef.current++; categoriesReqIdRef.current++; controllersRef.current.forEach(controller => controller.abort()); controllersRef.current.clear(); };
   }, [identity]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setTimeout(load, q ? 200 : 0); return () => clearTimeout(t); }, [q, filterCat, identity]);
@@ -403,6 +437,7 @@ export default function Products() {
   const currentPage = Math.min(page, pages - 1);
   const visibleItems = currentItems.slice(currentPage * 25, currentPage * 25 + 25);
   const summary = catalogueIdentity === identity ? catalogue : null;
+  const visibleCategories = categoriesIdentity === identity ? categories : [];
   const showPage = next => { setPage(next); requestAnimationFrame(() => listRef.current?.scrollIntoView({ block: "start" })); };
 
   const remove = async (p) => {
@@ -427,7 +462,7 @@ export default function Products() {
           <button onClick={() => { setDialogIdentity(identity); setShowImport(true); }} className="btn-outline" data-testid="open-import-btn">
             <Upload size={16} /> Impor Excel/CSV
           </button>
-          <button onClick={() => { setDialogIdentity(identity); setEditing(null); setShowForm(true); }} className="btn-primary" data-testid="new-product-btn">
+          <button onClick={() => { setDialogIdentity(identity); setEditing(null); setShowForm(true); loadCategories(); }} className="btn-primary" data-testid="new-product-btn">
             <Plus size={16} /> Produk Baru
           </button>
         </div>}
@@ -452,11 +487,14 @@ export default function Products() {
             data-testid="products-category-filter"
           >
             <option value="all">Semua Kategori</option>
-            {categories.map((c) => {
+            {visibleCategories.map((c) => {
               const name = typeof c === "string" ? c : c.name;
               return <option key={name} value={name}>{name}</option>;
             })}
           </select>
+          {categoriesError && <div role="alert" className="text-sm" data-testid="products-categories-error">
+            <p>{categoriesError}</p><button type="button" className="underline" onClick={loadCategories}>Coba lagi</button>
+          </div>}
         </div>
       </div>
 
@@ -498,7 +536,7 @@ export default function Products() {
                 <td className="px-5 py-3 text-right num-display">{p.stock} <span className="text-xs text-[hsl(var(--muted))]">{p.unit}</span></td>
                 <td className="px-5 py-3 text-right">
                   {editable && <>
-                    <button onClick={() => { setDialogIdentity(identity); setEditing(p); setShowForm(true); }} className="btn-ghost p-1.5" data-testid={`edit-product-${p.id}`}><Edit3 size={15} /></button>
+                    <button onClick={() => { setDialogIdentity(identity); setEditing(p); setShowForm(true); loadCategories(); }} className="btn-ghost p-1.5" data-testid={`edit-product-${p.id}`}><Edit3 size={15} /></button>
                     <button onClick={() => remove(p)} className="btn-ghost p-1.5 text-[hsl(var(--destructive))]" data-testid={`delete-product-${p.id}`}><Trash2 size={15} /></button>
                   </>}
                 </td>
@@ -519,7 +557,7 @@ export default function Products() {
         </div>
       </div>}
 
-      {editable && showForm && dialogIdentity === identity && <ProductForm product={editing} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load({ refreshSummary: true }); loadCategories(); }} />}
+      {editable && showForm && dialogIdentity === identity && <ProductForm product={editing} categories={visibleCategories} categoriesLoading={categoriesLoading} categoriesError={categoriesError} onRetryCategories={loadCategories} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load({ refreshSummary: true }); loadCategories(); }} />}
       {editable && showImport && dialogIdentity === identity && <ImportDialog onClose={() => setShowImport(false)} onDone={() => { load({ refreshSummary: true }); loadCategories(); }} />}
     </div>
   );
