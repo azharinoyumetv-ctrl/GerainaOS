@@ -1,6 +1,6 @@
 # Geraina POS for Android
 
-Website release candidate: **1.2.19, build 24**. Direct product-photo capture and gallery selection are verified in `../docs/ANDROID-1.2.19-VERIFICATION.md`. Published category and companion-session evidence remains in the 1.2.18 and 1.2.17 verification documents.
+Current website release: **1.2.19, build 24**. Direct product-photo capture and gallery selection are verified in `../docs/ANDROID-1.2.19-VERIFICATION.md`. Published category and companion-session evidence remains in the 1.2.18 and 1.2.17 verification documents.
 
 The Android app connects to the production Geraina service at `https://dagangos.com/geraina/login`. It bundles the Geraina frontend for offline startup in a hardened Android WebView, with durable cash-sale storage and replay, native camera barcode scanning, Bluetooth/USB receipt printing, navigation, Android file selection and PDF/export saving.
 

@@ -92,5 +92,82 @@
     "Native checks use the real AOSP system picker and virtual camera, not physical vendor firmware.",
     "No customer records, payments or external deliveries were used.",
     "Android users need the 1.2.19 app update for native gallery/camera handling."
-  ]
+  ],
+  "published": true,
+  "liveVerification": {
+    "status": "passed",
+    "checkedAt": "2026-11-02T15:30:12.068Z",
+    "version": "1.2.19",
+    "versionCode": 24,
+    "apkSha256": "bd106fb998274962477ebcfd6bafff944eed64a1b75b2daa302445176309a7b0",
+    "downloadBytes": 19175615,
+    "privacy": "passed",
+    "browser": [
+      {
+        "viewport": {
+          "width": 412,
+          "height": 915
+        },
+        "status": "passed",
+        "checks": [
+          "gallery-and-camera-actions",
+          "capture-input-contract",
+          "category-dropdown-retained",
+          "cancel-preserves-draft"
+        ],
+        "merchantWrites": 0,
+        "runtimeErrors": 0
+      },
+      {
+        "viewport": {
+          "width": 1480,
+          "height": 924
+        },
+        "status": "passed",
+        "checks": [
+          "gallery-and-camera-actions",
+          "capture-input-contract",
+          "category-dropdown-retained",
+          "cancel-preserves-draft"
+        ],
+        "merchantWrites": 0,
+        "runtimeErrors": 0
+      }
+    ],
+    "scope": "Official download/feed and photo privacy; authenticated live editor read-only, gallery cancellation, no product saves or photo uploads."
+  },
+  "portalTests": {
+    "passed": 65,
+    "failed": 0
+  },
+  "fixtureCleanup": {
+    "fixturesRemoved": true,
+    "database": "geraina_categories_f0e02aa30bc94ee3a281f011049328f1",
+    "scope": "Owned isolated category/photo regression database only"
+  },
+  "publication": {
+    "sourceCommit": "87c410d",
+    "portalCommit": "82d4c669105bcd81c22ce510d8e8b62626a6a1b4",
+    "workflow": "https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/41440022750",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "deploy",
+        "conclusion": "success"
+      },
+      {
+        "name": "cloudflare-zone-audit",
+        "conclusion": "success"
+      },
+      {
+        "name": "public-accessibility",
+        "conclusion": "success"
+      },
+      {
+        "name": "e2e-geraina",
+        "conclusion": "skipped"
+      }
+    ],
+    "liveE2ENote": "Write-capable production suite intentionally skipped by local-verified release marker; 27 isolated browser cases, exact installed APK checks and two read-only live editor checks passed."
+  }
 }

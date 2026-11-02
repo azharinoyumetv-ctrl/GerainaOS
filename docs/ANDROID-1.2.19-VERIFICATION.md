@@ -1,6 +1,6 @@
 # Geraina 1.2.19 — product gallery and direct camera
 
-Status: signed website release candidate verified; live publication is checked separately.
+Status: published and verified on the official website. The download/feed bytes match the installed APK, and the live product editor passed read-only phone and tablet checks.
 
 Add/Edit Product now offers **Ambil foto** and **Pilih dari galeri**, including when replacing an existing picture. Android image uploads use the system photo picker; capture inputs launch the device camera and return the picture to the same product draft. Desktop browsers retain image-file selection. CSV/Excel and mixed uploads retain the document picker.
 
@@ -22,3 +22,5 @@ No backend, payment handling or customer records changed. Native tests use an AO
 Implementation follows Android's [photo picker contracts](https://developer.android.com/training/data-storage/shared/photo-picker) and [TakePicture contract](https://developer.android.com/reference/androidx/activity/result/contract/ActivityResultContracts.TakePicture).
 
 Machine-readable evidence: [ANDROID-1.2.19-VERIFICATION.json](ANDROID-1.2.19-VERIFICATION.json).
+
+Publication: [official Android download](https://dagangos.com/geraina/android), [successful deployment](https://github.com/azharinoyumetv-ctrl/DagangOS/actions/runs/41440022750). All 65 portal checks passed. The write-capable production suite was intentionally skipped; the live browser check did not save customer records.
