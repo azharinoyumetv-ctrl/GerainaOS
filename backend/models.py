@@ -58,6 +58,7 @@ class ProductBase(BaseModel):
     cost: float = Field(default=0, ge=0, le=1_000_000_000_000, allow_inf_nan=False)
     stock: int = Field(default=0, ge=0, le=1000000000)
     category: Optional[str] = "Umum"
+    brand_id: Optional[str] = Field(default=None, max_length=128)
     unit: Optional[str] = "pcs"
     image_url: Optional[str] = None
     description: Optional[str] = None
@@ -76,6 +77,7 @@ class ProductUpdate(BaseModel):
     stock: Optional[int] = Field(default=None, ge=0)
     expected_stock: Optional[int] = None
     category: Optional[str] = None
+    brand_id: Optional[str] = Field(default=None, max_length=128)
     unit: Optional[str] = None
     image_url: Optional[str] = None
     description: Optional[str] = None

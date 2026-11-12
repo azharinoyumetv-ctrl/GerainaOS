@@ -8,6 +8,13 @@ from stock_ledger import movement
 
 async def save_product(db, user, values, session, identifier=None, expected_stock=None):
     store_id=user['store_id'];at=utcnow().isoformat()
+    if values.get('brand_id'):
+        brand = await db.brands.update_one(
+            {'id': values['brand_id'], 'store_id': store_id},
+            {'$inc': {'product_revision': 1}}, session=session,
+        )
+        if not brand.matched_count:
+            raise HTTPException(400, 'Brand tidak ditemukan di toko ini.')
     if 'name' in values:
         values={**values,'name':values['name'].strip()}
         if not values['name']:

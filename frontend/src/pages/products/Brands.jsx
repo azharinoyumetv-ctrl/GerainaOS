@@ -49,7 +49,9 @@ export default function Brands() {
 
   const handleDelete = (id) => {
     if (confirm("Apakah Anda yakin ingin menghapus brand ini?")) {
-      api.delete(`/products/brands/${id}`).then(() => fetchBrands());
+      api.delete(`/products/brands/${id}`).then(() => fetchBrands()).catch(err => {
+        setError(typeof err.response?.data?.detail === "string" ? err.response.data.detail : "Brand belum dapat dihapus.");
+      });
     }
   };
 

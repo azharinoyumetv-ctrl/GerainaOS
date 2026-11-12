@@ -103,10 +103,18 @@ async def update_brand(brand_id: str, payload: BrandBase, user: dict = Depends(g
 @router.delete("/brands/{brand_id}", dependencies=[Depends(require_permission("products.write"))])
 async def delete_brand(brand_id: str, user: dict = Depends(get_current_user)):
     db = get_db()
-    res = await db.brands.delete_one({"id": brand_id, "store_id": user["store_id"]})
-    if res.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Brand tidak ditemukan")
-    return {"ok": True}
+    async def remove(session):
+        brand = await db.brands.find_one_and_update(
+            {"id": brand_id, "store_id": user["store_id"]},
+            {"$inc": {"product_revision": 1}}, session=session,
+        )
+        if not brand:
+            raise HTTPException(status_code=404, detail="Brand tidak ditemukan")
+        if await db.products.find_one({"store_id": user["store_id"], "brand_id": brand_id}, session=session):
+            raise HTTPException(status_code=409, detail="Brand masih digunakan produk. Hapus atau ubah brand pada produk terlebih dahulu.")
+        await db.brands.delete_one({"id": brand_id, "store_id": user["store_id"]}, session=session)
+        return {"ok": True}
+    return await transactions.run_transaction(db, remove)
 
 # ---------- Units ----------
 @router.get("/units", response_model=List[Unit], dependencies=[Depends(require_permission("products.read"))])

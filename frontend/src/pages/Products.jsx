@@ -6,7 +6,7 @@ import { canManageProducts } from "@/auth/permissions";
 import { Plus, Upload, Search, Edit3, Trash2, X, Download, FileSpreadsheet, CheckCircle2, AlertCircle, ScanBarcode, Camera, Images } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
-function ProductForm({ product, categories, categoriesLoading, categoriesError, onRetryCategories, units, unitsLoading, unitsError, onRetryUnits, onClose, onSaved }) {
+function ProductForm({ product, categories, categoriesLoading, categoriesError, onRetryCategories, units, unitsLoading, unitsError, onRetryUnits, brands, brandsLoading, brandsError, onRetryBrands, onClose, onSaved }) {
   const isEdit = !!product?.id;
   const [form, setForm] = useState({
     name: product?.name || "",
@@ -15,6 +15,7 @@ function ProductForm({ product, categories, categoriesLoading, categoriesError, 
     cost: product?.cost || 0,
     stock: product?.stock || 0,
     category: product?.category || "Umum",
+    brand_id: product?.brand_id || "",
     unit: product?.unit || "pcs",
     description: product?.description || "",
     active: product?.active !== false,
@@ -164,6 +165,18 @@ function ProductForm({ product, categories, categoriesLoading, categoriesError, 
             {categoriesError && <div role="alert" className="text-xs mt-1" data-testid="pf-category-error">
               <p>{categoriesError}</p><button type="button" className="underline mt-1" onClick={onRetryCategories}>Coba lagi</button>
             </div>}
+          </div>
+          <div>
+            <label className="label-tiny" htmlFor="product-brand">Brand</label>
+            <select id="product-brand" className="input-field mt-1.5" data-testid="pf-brand"
+                    value={form.brand_id} aria-busy={brandsLoading}
+                    onChange={(e) => setForm({ ...form, brand_id: e.target.value })}>
+              <option value="">Tanpa brand</option>
+              {form.brand_id && !brands.some(brand => brand.id === form.brand_id) && <option value={form.brand_id}>Brand tidak tersedia</option>}
+              {brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
+            </select>
+            {brandsLoading && <p role="status" className="text-xs mt-1">Memuat brand…</p>}
+            {brandsError && <div role="alert" className="text-xs mt-1"><p>{brandsError}</p><button type="button" className="underline" onClick={onRetryBrands}>Coba lagi</button></div>}
           </div>
           <div>
             <label className="label-tiny">Harga Jual (Rp)</label>
@@ -396,6 +409,10 @@ export default function Products() {
   const [unitsIdentity, setUnitsIdentity] = useState("");
   const [unitsLoading, setUnitsLoading] = useState(false);
   const [unitsError, setUnitsError] = useState("");
+  const [brands, setBrands] = useState([]);
+  const [brandsIdentity, setBrandsIdentity] = useState("");
+  const [brandsLoading, setBrandsLoading] = useState(false);
+  const [brandsError, setBrandsError] = useState("");
   const [filterCat, setFilterCat] = useState("all");
   const [loadError, setLoadError] = useState("");
   useEffect(() => {
@@ -416,6 +433,7 @@ export default function Products() {
   const summaryReqIdRef = useRef(0);
   const categoriesReqIdRef = useRef(0);
   const unitsReqIdRef = useRef(0);
+  const brandsReqIdRef = useRef(0);
   const requestControllerRef = useRef(null);
   const requestIsUnfilteredRef = useRef(false);
   const controllersRef = useRef(new Set());
@@ -505,13 +523,30 @@ export default function Products() {
     }
   };
 
+  const loadBrands = async () => {
+    const requestIdentity = identity;
+    const requestId = ++brandsReqIdRef.current;
+    const current = () => identityRef.current === requestIdentity && brandsReqIdRef.current === requestId;
+    setBrandsLoading(true); setBrandsError("");
+    try {
+      const result = await readCollection("/products/brands");
+      if (current()) { setBrands(result.data); setBrandsIdentity(requestIdentity); }
+    } catch {
+      if (current()) setBrandsError("Daftar brand belum dapat dimuat.");
+    } finally {
+      if (current()) setBrandsLoading(false);
+    }
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setItems([]); setCatalogue(null); setCategories([]); setPage(0); setQ(""); setFilterCat("all");
     setUnits([]); setUnitsError(""); setUnitsLoading(false);
+    setBrands([]); setBrandsError(""); setBrandsLoading(false);
     setShowForm(false); setShowImport(false); setEditing(null); setLoading(true); setLoadError("");
     loadCategories();
-    return () => { loadReqIdRef.current++; summaryReqIdRef.current++; categoriesReqIdRef.current++; unitsReqIdRef.current++; controllersRef.current.forEach(controller => controller.abort()); controllersRef.current.clear(); };
+    loadBrands();
+    return () => { loadReqIdRef.current++; summaryReqIdRef.current++; categoriesReqIdRef.current++; unitsReqIdRef.current++; brandsReqIdRef.current++; controllersRef.current.forEach(controller => controller.abort()); controllersRef.current.clear(); };
   }, [identity]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setTimeout(load, q ? 200 : 0); return () => clearTimeout(t); }, [q, filterCat, identity]);
@@ -523,6 +558,7 @@ export default function Products() {
   const summary = catalogueIdentity === identity ? catalogue : null;
   const visibleCategories = categoriesIdentity === identity ? categories : [];
   const visibleUnits = unitsIdentity === identity ? units : [];
+  const visibleBrands = brandsIdentity === identity ? brands : [];
   const showPage = next => { setPage(next); requestAnimationFrame(() => listRef.current?.scrollIntoView({ block: "start" })); };
 
   const remove = async (p) => {
@@ -547,7 +583,7 @@ export default function Products() {
           <button onClick={() => { setDialogIdentity(identity); setShowImport(true); }} className="btn-outline" data-testid="open-import-btn">
             <Upload size={16} /> Impor Excel/CSV
           </button>
-          <button onClick={() => { setDialogIdentity(identity); setEditing(null); setShowForm(true); loadCategories(); loadUnits(); }} className="btn-primary" data-testid="new-product-btn">
+          <button onClick={() => { setDialogIdentity(identity); setEditing(null); setShowForm(true); loadCategories(); loadUnits(); loadBrands(); }} className="btn-primary" data-testid="new-product-btn">
             <Plus size={16} /> Produk Baru
           </button>
         </div>}
@@ -616,12 +652,12 @@ export default function Products() {
                   </div>
                 </td>
                 <td className="px-5 py-3 text-[hsl(var(--muted))] text-xs">{p.sku || "—"}</td>
-                <td className="px-5 py-3"><span className="pill pill-muted">{p.category}</span></td>
+                <td className="px-5 py-3"><span className="pill pill-muted">{p.category}</span>{p.brand_id && <p className="text-xs mt-1">{visibleBrands.find(brand => brand.id === p.brand_id)?.name || "Brand tidak tersedia"}</p>}</td>
                 <td className="px-5 py-3 text-right font-display font-bold num-display">{fmtIDR(p.price)}</td>
                 <td className="px-5 py-3 text-right num-display">{p.stock} <span className="text-xs text-[hsl(var(--muted))]">{p.unit}</span></td>
                 <td className="px-5 py-3 text-right">
                   {editable && <>
-                    <button onClick={() => { setDialogIdentity(identity); setEditing(p); setShowForm(true); loadCategories(); loadUnits(); }} className="btn-ghost p-1.5" data-testid={`edit-product-${p.id}`}><Edit3 size={15} /></button>
+                    <button onClick={() => { setDialogIdentity(identity); setEditing(p); setShowForm(true); loadCategories(); loadUnits(); loadBrands(); }} className="btn-ghost p-1.5" data-testid={`edit-product-${p.id}`}><Edit3 size={15} /></button>
                     <button onClick={() => remove(p)} className="btn-ghost p-1.5 text-[hsl(var(--destructive))]" data-testid={`delete-product-${p.id}`}><Trash2 size={15} /></button>
                   </>}
                 </td>
@@ -642,7 +678,7 @@ export default function Products() {
         </div>
       </div>}
 
-      {editable && showForm && dialogIdentity === identity && <ProductForm product={editing} categories={visibleCategories} categoriesLoading={categoriesLoading} categoriesError={categoriesError} onRetryCategories={loadCategories} units={visibleUnits} unitsLoading={unitsLoading} unitsError={unitsError} onRetryUnits={loadUnits} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load({ refreshSummary: true }); loadCategories(); }} />}
+      {editable && showForm && dialogIdentity === identity && <ProductForm product={editing} categories={visibleCategories} categoriesLoading={categoriesLoading} categoriesError={categoriesError} onRetryCategories={loadCategories} units={visibleUnits} unitsLoading={unitsLoading} unitsError={unitsError} onRetryUnits={loadUnits} brands={visibleBrands} brandsLoading={brandsLoading} brandsError={brandsError} onRetryBrands={loadBrands} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load({ refreshSummary: true }); loadCategories(); }} />}
       {editable && showImport && dialogIdentity === identity && <ImportDialog onClose={() => setShowImport(false)} onDone={() => { load({ refreshSummary: true }); loadCategories(); }} />}
     </div>
   );
