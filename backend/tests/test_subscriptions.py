@@ -62,6 +62,44 @@ def test_paid_order_activates_correct_account_and_product_only(account, monkeypa
     assert saved["plan"] == "trial"  # no global upgrade leaking into another product
 
 
+def test_affiliate_purchase_uses_verified_charge_and_acquisition_history(account, monkeypatch):
+    db, user = account
+    prepared = run(billing.prepare_order({
+        "orderId": ORDER, "tier": "starter", "period": "yearly", "affiliateCheck": "merchant_product",
+    }, user))
+    assert prepared["affiliate_eligible"] is True
+    assert prepared["amount"] == 1490000
+    prepare(user, tier="starter", period="yearly")
+    proof = {**payment(period="yearly"), "acquisition": True, "baseAmount": 1490000, "amount": 1341000}
+    monkeypatch.setattr(billing, "fetch_payment_status", AsyncMock(return_value={**proof, "baseAmount": 1341000}))
+    with pytest.raises(HTTPException) as error:
+        run(billing.reconcile_order(ORDER))
+    assert error.value.status_code == 502
+    monkeypatch.setattr(billing, "fetch_payment_status", AsyncMock(return_value=proof))
+    assert run(billing.reconcile_order(ORDER))["activation"] == "active"
+    change = run(billing.prepare_order({
+        "orderId": "DG-geraina-" + "b" * 32, "tier": "pro", "period": "monthly", "affiliateCheck": "merchant_product",
+    }, user))
+    assert change["affiliate_eligible"] is False
+    assert change["amount"] == 349000
+    assert run(db.subscription_orders.find_one({"_id": ORDER}))["paid_at"]
+
+
+def test_affiliate_history_uses_all_owned_stores_and_policy_scope(account):
+    db, user = account
+    run(db.subscription_orders.insert_one({
+        "_id": "DG-dapuros-" + "a" * 32, "owner_id": OWNER, "store_id": "another-owned-store",
+        "module": "dapuros", "status": "pending", "receipt": "stored-reference",
+    }))
+    request = {"orderId": ORDER, "tier": "starter", "period": "monthly"}
+    assert run(billing.prepare_order({**request, "affiliateCheck": "merchant_product"}, user))["affiliate_eligible"] is True
+    with pytest.raises(HTTPException) as error:
+        run(billing.prepare_order({**request, "affiliateCheck": "global"}, user))
+    assert error.value.detail["code"] == "first_purchase_pending"
+    run(db.subscription_orders.update_one({"module": "dapuros"}, {"$set": {"status": "refunded"}}))
+    assert run(billing.prepare_order({**request, "affiliateCheck": "global"}, user))["affiliate_eligible"] is False
+
+
 def test_duplicate_notifications_and_status_refreshes_do_not_extend_subscription(account, monkeypatch):
     db, user = account
     prepare(user)

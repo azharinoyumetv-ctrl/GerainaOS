@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { ArrowRight } from "lucide-react";
 import PasswordInput from "@/components/PasswordInput";
+import { toast } from "@/components/ui/sonner";
+import { AffiliateSignupField, useAffiliateSignup } from "@/auth/affiliateSignup";
 
 export default function Register() {
   const [storeName, setStoreName] = useState("");
@@ -14,17 +16,20 @@ export default function Register() {
   const nav = useNavigate();
   const next = checkoutReturn("geraina");
   const { register } = useAuth();
+  const referral = useAffiliateSignup("geraina");
 
   const submit = async (event) => {
     event.preventDefault();
     setError("");
     setLoading(true);
     try {
+      await referral.validate();
       await register(email, password, storeName);
+      if (!await referral.save()) toast.warning("Trial aktif. Kode afiliasi dapat dimasukkan kembali saat memilih paket.");
       if (next) window.location.assign(next);
       else nav("/geraina/app/dashboard");
     } catch (requestError) {
-      setError(requestError?.response?.data?.detail || "Gagal mendaftar.");
+      setError(requestError?.response?.data?.detail || requestError?.message || "Gagal mendaftar.");
     } finally {
       setLoading(false);
     }
@@ -83,6 +88,7 @@ export default function Register() {
               <PasswordInput id="geraina-register-password" toggleTestId="register-password-toggle" name="new-password" autoComplete="new-password" required minLength={6} data-testid="register-password-input" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimal 6 karakter" />
             </div>
 
+            <AffiliateSignupField referral={referral} />
             {error && <p className="auth-error" role="alert" data-testid="register-error">{error}</p>}
 
             <button type="submit" disabled={loading} data-testid="register-submit-btn" className="auth-submit">

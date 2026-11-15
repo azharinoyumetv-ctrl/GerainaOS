@@ -55,6 +55,10 @@ async def prepare_order(payload, user):
     db = get_db()
     if not await db.stores.find_one({"id": user["store_id"], "owner_user_id": user["id"], "module": {"$in": [module, None]}}):
         raise HTTPException(403, "Akun pemilik toko diperlukan")
+    scope = payload.get("affiliateCheck")
+    eligibility = {}
+    if scope in ("global", "merchant_product"):
+        eligibility["affiliate_eligible"] = await first_purchase_eligible(db, user, module, scope, order_id)
     try:
         await db.subscription_orders.insert_one(record)
     except DuplicateKeyError:
@@ -63,9 +67,34 @@ async def prepare_order(payload, user):
             raise HTTPException(409, "Pesanan tidak cocok dengan akun ini")
         record = existing
     result = {**{key: record[key] for key in ("owner_id", "store_id", "module", "tier", "period", "amount")}, "order_id": order_id, "email": user["email"]}
+    result.update(eligibility)
     if module == "geraina" and active and active["active"]:
         result["active_subscription"] = {key: active.get(key) for key in ("tier", "period", "expires_at")}
     return result
+
+
+async def first_purchase_eligible(db, user, module, scope, order_id):
+    orders = {"owner_id": user["id"], "kind": {"$ne": "addon"}}
+    stores = {"owner_user_id": user["id"], "plan": {"$in": ["starter", "pro", "business"]}}
+    subscriptions = user.get("subscriptions") or {}
+    if scope == "merchant_product":
+        orders["module"] = module
+        stores["module"] = {"$in": [module, None]}
+        subscriptions = {module: subscriptions.get(module)}
+    if any(isinstance(item, dict) and (item.get("paid_at") or item.get("tier")) for item in subscriptions.values()):
+        return False
+    if await db.stores.find_one(stores) or await db.subscription_orders.find_one({
+        **orders, "$or": [{"status": {"$in": ["paid", "refunded"]}}, {"paid_at": {"$exists": True}}],
+    }):
+        return False
+    pending = await db.subscription_orders.find_one({
+        **orders, "_id": {"$ne": order_id}, "status": "pending", "receipt": {"$exists": True},
+    })
+    if pending:
+        raise HTTPException(409, detail={
+            "code": "first_purchase_pending", "module": pending["module"], "receipt": pending["receipt"],
+        })
+    return True
 
 
 async def attach_reference(order_id, receipt, user):
@@ -107,6 +136,12 @@ async def reconcile_order(order_id, *, force=True):
     expected = {"orderId": order["_id"], "ownerId": order["owner_id"], "storeId": order["store_id"], **{key: order[key] for key in ("module", "tier", "period", "amount")}}
     if order.get('kind') == 'addon':
         expected.update(kind='addon', addonId=order['addon_id'], renewalId=order.get('renewal_id'))
+    if payment.get("acquisition") is True and not order.get("kind"):
+        base = order["amount"]
+        discount = (base + 5) // 10
+        if payment.get("baseAmount") != base or payment.get("amount") not in (base, base - discount):
+            raise HTTPException(502, "Diskon tidak cocok dengan pesanan")
+        expected["amount"] = payment["amount"]
     if any(payment.get(key) != value for key, value in expected.items()):
         raise HTTPException(502, "Konfirmasi pembayaran tidak cocok dengan pesanan")
     state = payment.get("status")
@@ -159,7 +194,10 @@ async def reconcile_order(order_id, *, force=True):
                 {"$set": {"subscription.status": "revoked", "plan": "expired"}},
             )
         activation = "revoked" if result.matched_count else "pending"
-    await db.subscription_orders.update_one({"_id": order_id}, {"$set": {"status": state, "activation": activation, "expires_at": expiry, "checked_at": stamp(utcnow())}})
+    update = {"status": state, "activation": activation, "expires_at": expiry, "checked_at": stamp(utcnow())}
+    if state == "paid":
+        update["paid_at"] = paid_stamp
+    await db.subscription_orders.update_one({"_id": order_id}, {"$set": update})
     return {"status": state, "activation": activation, "tier": order["tier"], "expires_at": expiry}
 
 

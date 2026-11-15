@@ -5,6 +5,7 @@ import { useState } from "react";
 import { checkoutReturn } from "@/auth/checkoutReturn";
 import { Store, ArrowRight, LogOut } from "lucide-react";
 import api from "@/api/client";
+import { AffiliateSignupField, useAffiliateSignup } from "@/auth/affiliateSignup";
 
 const MODULE = "geraina";
 const BRAND = "#0d9488";
@@ -13,20 +14,33 @@ const HOME = "/geraina/app/dashboard";
 export default function Activate() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [storeCreated, setStoreCreated] = useState(false);
   const [err, setErr] = useState("");
   const { user } = useAuth();
+  const referral = useAffiliateSignup(MODULE);
   if (user?.store_id && user.current_module === MODULE) return <Navigate to={HOME} replace />;
 
   const submit = async (e) => {
     e.preventDefault();
     if (!name.trim() || busy) return;
+    if (storeCreated) {
+      window.location.href = checkoutReturn(MODULE) || HOME;
+      return;
+    }
     setBusy(true);
     setErr("");
     try {
+      await referral.validate();
       await api.post("/auth/stores", { module: MODULE, store_name: name.trim() });
+      if (!await referral.save()) {
+        setErr("Toko sudah dibuat. Kode afiliasi dapat dimasukkan kembali saat memilih paket.");
+        setStoreCreated(true);
+        setBusy(false);
+        return;
+      }
       window.location.href = checkoutReturn(MODULE) || HOME;
     } catch (e2) {
-      setErr(e2?.response?.data?.detail || "Gagal membuat toko. Coba lagi.");
+      setErr(e2?.response?.data?.detail || e2?.message || "Gagal membuat toko. Coba lagi.");
       setBusy(false);
     }
   };
@@ -81,7 +95,8 @@ export default function Activate() {
             />
           </div>
 
-          {err && <p className="text-sm text-red-600" data-testid="activate-error">{err}</p>}
+          {!storeCreated && <AffiliateSignupField referral={referral} />}
+          {err && <p className="text-sm text-red-600" role="alert" data-testid="activate-error">{err}</p>}
 
           <button
             type="submit"
@@ -90,7 +105,7 @@ export default function Activate() {
             style={{ background: BRAND }}
             data-testid="activate-submit"
           >
-            {busy ? "Membuat toko..." : (<>Buat &amp; Masuk <ArrowRight size={16} /></>)}
+            {busy ? "Membuat toko..." : (<>{storeCreated ? "Lanjut" : "Buat & Masuk"} <ArrowRight size={16} /></>)}
           </button>
 
           <button
