@@ -53,12 +53,14 @@ async def prepare_order(payload, user):
         "status": "pending", "created_at": stamp(utcnow()),
     }
     db = get_db()
-    if not await db.stores.find_one({"id": user["store_id"], "owner_user_id": user["id"], "module": {"$in": [module, None]}}):
+    store = await db.stores.find_one({"id": user["store_id"], "owner_user_id": user["id"], "module": {"$in": [module, None]}})
+    if not store:
         raise HTTPException(403, "Akun pemilik toko diperlukan")
     scope = payload.get("affiliateCheck")
     eligibility = {}
     if scope in ("global", "merchant_product"):
         eligibility["affiliate_eligible"] = await first_purchase_eligible(db, user, module, scope, order_id)
+        eligibility["affiliate_signup_at"] = store.get("trial_started_at") or store.get("created_at")
     try:
         await db.subscription_orders.insert_one(record)
     except DuplicateKeyError:

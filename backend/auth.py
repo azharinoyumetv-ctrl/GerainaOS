@@ -121,7 +121,8 @@ async def resolve_user_context(user: dict, module: str) -> dict:
                         result[key] = owner[key]
                     else:
                         result.pop(key, None)
-        result.update(store_id=store["id"], store_name=store.get("name"))
+        result.update(store_id=store["id"], store_name=store.get("name"),
+                      affiliate_signup_at=store.get("trial_started_at") or store.get("created_at"))
     result = apply_store_subscription(result, store, module)
     result["capabilities"] = capabilities_for(result["role"])
     result["must_change_password"] = result.get("must_change_password") is True

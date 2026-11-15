@@ -34,7 +34,7 @@ def account(monkeypatch):
     db = AsyncMongoMockClient().billing_tests
     user = {"id": OWNER, "email": "owner@example.test", "role": "Owner", "store_id": STORE, "current_module": "geraina", "plan": "trial", "trial_ends_at": (NOW + timedelta(days=14)).isoformat()}
     run(db.users.insert_one(user.copy()))
-    run(db.stores.insert_one({"id": STORE, "owner_user_id": OWNER, "module": "geraina"}))
+    run(db.stores.insert_one({"id": STORE, "owner_user_id": OWNER, "module": "geraina", "trial_started_at": NOW.isoformat()}))
     for module in (billing, auth, routes_auth, routes_subscriptions):
         monkeypatch.setattr(module, "get_db", lambda: db)
     return db, user
@@ -68,6 +68,7 @@ def test_affiliate_purchase_uses_verified_charge_and_acquisition_history(account
         "orderId": ORDER, "tier": "starter", "period": "yearly", "affiliateCheck": "merchant_product",
     }, user))
     assert prepared["affiliate_eligible"] is True
+    assert prepared["affiliate_signup_at"] == NOW.isoformat()
     assert prepared["amount"] == 1490000
     prepare(user, tier="starter", period="yearly")
     proof = {**payment(period="yearly"), "acquisition": True, "baseAmount": 1490000, "amount": 1341000}
