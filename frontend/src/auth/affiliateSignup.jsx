@@ -9,9 +9,12 @@ export function useAffiliateSignup(product) {
   useEffect(() => {
     const request = new AbortController();
     fetch(url, { signal: request.signal })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error("Affiliate lookup failed");
+        return response.json();
+      })
       .then(setOffer)
-      .catch(() => { if (!request.signal.aborted) setOffer({ available: false }); });
+      .catch(() => { if (!request.signal.aborted) setOffer({ available: false, unknown: true }); });
     return () => request.abort();
   }, [url]);
 
@@ -28,7 +31,10 @@ export function useAffiliateSignup(product) {
   };
 
   const save = async () => {
-    if (!enteredCode && offer && !offer.code) return true;
+    // A pending or failed lookup may hide a referral cookie. Do not claim it was saved.
+    // The caller keeps the trial and tells the owner how to enter the code at checkout.
+    if (!enteredCode && (!offer || offer.unknown)) return false;
+    if (!enteredCode && !offer.code) return true;
     try {
       const token = sessionToken();
       if (!token) return false;
