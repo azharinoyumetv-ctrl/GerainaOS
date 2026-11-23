@@ -11,7 +11,7 @@ class BundledFrontend(private val assets: AssetManager) {
         val path = uri.path ?: return null
         if (path.contains("..") || path.contains('\\')) return null
         val asset = when {
-            path == "/geraina/login" || path == "/geraina/register" || path.startsWith("/geraina/app/") || path == "/geraina/app" -> "frontend/index.html"
+            path == "/geraina/login" || path == "/geraina/register" || path == "/geraina/activate" || path.startsWith("/geraina/app/") || path == "/geraina/app" -> "frontend/index.html"
             path.startsWith("/geraina/static/") -> "frontend/" + path.removePrefix("/geraina/")
             path in setOf("/geraina/icon-192.png", "/geraina/icon-512.png", "/geraina/favicon.ico") -> "frontend/" + path.removePrefix("/geraina/")
             path in setOf("/assets/brand/geraina-icon.png", "/assets/brand/dapuros-icon.png") -> "frontend" + path

@@ -47,7 +47,7 @@ export default function Integrations() {
   };
   useEffect(() => {
     loadIntegrations();
-    return () => { reqIdRef.current++; };
+    return () => { reqIdRef.current += 1; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 

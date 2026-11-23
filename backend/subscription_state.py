@@ -55,6 +55,9 @@ def apply_store_subscription(user, store, module):
     if plan in ("starter", "pro", "business"):
         result["plan"] = plan
         return result
+    if plan not in (None, "trial", "expired"):
+        result["plan"] = "unknown"
+        return result
     end = store.get("trial_ends_at")
     if end is None and primary:
         end = user.get("trial_ends_at")

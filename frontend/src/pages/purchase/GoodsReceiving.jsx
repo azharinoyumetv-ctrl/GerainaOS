@@ -19,7 +19,8 @@ function Repair({po,products,onSave,busy}){
 }
 export default function GoodsReceiving(){
  const query=useWorkspace(['/purchase/orders','/purchase/receiving','/products']),action=useAction(),attempts=useRef(new Map());
- const pending=useMemo(()=>(query.data['/purchase/orders']||[]).filter(po=>['Ordered','Partial'].includes(po.status)),[query.data['/purchase/orders']]);
+ const purchaseOrders = query.data['/purchase/orders'];
+ const pending = useMemo(() => (purchaseOrders || []).filter(po => ['Ordered', 'Partial'].includes(po.status)), [purchaseOrders]);
  const orders=useTablePage(pending),history=useTablePage(query.data['/purchase/receiving']||[]);
  const receive=(po,items)=>{const signature=JSON.stringify(items),previous=attempts.current.get(po.id);
   if(previous?.signature!==signature)attempts.current.set(po.id,{signature,key:crypto.randomUUID()});

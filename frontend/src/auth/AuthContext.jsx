@@ -17,18 +17,15 @@ export function AuthProvider({ children }) {
 
   // Replay is tied to the authenticated app session, including dashboard/restart,
   // rather than requiring the cashier screen to remain mounted.
+  const scope = scopeFor(user);
+  const mustChangePassword = user?.must_change_password;
   useEffect(() => {
-    const scope = scopeFor(user);
-    if (!scope || user?.must_change_password || !offlineAvailable()) return;
+    if (!scope || mustChangePassword || !offlineAvailable()) return;
     const sync = () => synchronize(scope, api).catch(() => {});
     sync(); window.addEventListener("online", sync); window.addEventListener("focus", sync);
     const timer = setInterval(sync, 30000);
     return () => { clearInterval(timer); window.removeEventListener("online", sync); window.removeEventListener("focus", sync); };
-  }, [user?.id, user?.store_id, user?.must_change_password]);
-
-  const enrichUser = (usr) => {
-    return serverUser(usr);
-  };
+  }, [scope, mustChangePassword]);
 
   const acceptSession = payload => {
     const next = serverUser(payload.user);
@@ -87,19 +84,19 @@ export function AuthProvider({ children }) {
     }
     // The native app can show its saved session immediately, while the server
     // revalidates it. Server requests still require the existing access token.
-    if (savedUser && (offlineAvailable() || !navigator.onLine)) { setUser(enrichUser(savedUser)); setLoading(false); }
+    if (savedUser && (offlineAvailable() || !navigator.onLine)) { setUser(serverUser(savedUser)); setLoading(false); }
     if (!navigator.onLine && savedUser) return;
     let active = true;
     validateSession(true)
       .catch((err) => {
         if (active && sessionToken() === t && err?.response?.status !== 401) {
-          setUser(savedUser ? enrichUser(savedUser) : null);
+          setUser(serverUser(savedUser));
           if (!savedUser) setSessionError(true);
         }
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [validateSession]);
 
   // Refresh account entitlements after returning from payment in this or another tab.
   useEffect(() => {
@@ -118,7 +115,7 @@ export function AuthProvider({ children }) {
       window.removeEventListener("pageshow", sync);
       document.removeEventListener("visibilitychange", sync);
     };
-  }, []);
+  }, [validateSession]);
   useEffect(() => {
     const changed = event => {
       if (event.key && event.key !== "geraina_token" && event.key !== "geraina_signed_out" && !(event.key === "dagangos_token" && !localStorage.getItem("geraina_token"))) return;

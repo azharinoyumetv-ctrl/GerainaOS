@@ -63,7 +63,7 @@ export default function Reports() {
       if (active) setRead({ key, loading: false, error: "" });
     })().catch(() => { if (active) setRead({ key, loading: false, error: "Laporan belum dapat dimuat. Periksa koneksi dan coba lagi; angka kosong tidak digunakan sebagai pengganti data." }); });
     return () => { active = false; controller.abort(); };
-  }, [key, attempt]);
+  }, [key, attempt, type]);
 
   const handleAddExpense = (e) => {
     e.preventDefault();

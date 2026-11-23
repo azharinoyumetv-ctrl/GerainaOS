@@ -185,7 +185,16 @@ class MainActivity : ComponentActivity() {
         installNativeFeatures()
         nativeFeaturesReady = true
         val restored = savedInstanceState?.getBundle("webState")?.let { webView.restoreState(it) }
-        if (restored == null) webView.loadUrl(NavigationPolicy.START_URL)
+        if (restored == null) webView.loadUrl(affiliateUrl(intent) ?: NavigationPolicy.START_URL)
+    }
+
+    private fun affiliateUrl(incoming: Intent): String? =
+        if (incoming.action == Intent.ACTION_VIEW) NavigationPolicy.affiliateRegistrationUrl(incoming.dataString) else null
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (nativeFeaturesReady) affiliateUrl(intent)?.let { navigate(it) }
     }
 
     private fun buildScreen() {

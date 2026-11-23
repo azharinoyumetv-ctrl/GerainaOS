@@ -1,5 +1,6 @@
 import { safeAppReturn } from "@/auth/appReturn";
 import { useEffect, useState } from "react";
+import { affiliateCodeFromSearch, withAffiliateCode } from "@/auth/affiliateSignup";
 import { checkoutReturn, checkoutAuthLink } from "@/auth/checkoutReturn";
 import { Link, useNavigate, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
@@ -14,13 +15,15 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
   const location = useLocation();
+  const linkedCode = affiliateCodeFromSearch(location.search);
+  const activate = withAffiliateCode("/geraina/activate", linkedCode);
   const appNext = safeAppReturn(new URLSearchParams(location.search).get("returnTo"));
   const next = checkoutReturn("geraina");
   const { user, login } = useAuth();
 
   useEffect(() => { if (user && !user.must_change_password && next) window.location.replace(next); }, [user, next]);
   if (user && !user.must_change_password && next) return <p role="status">Melanjutkan ke pembayaran…</p>;
-  if (user) return <Navigate to={appNext || firstAllowedPath(user.role)} replace />;
+  if (user) return <Navigate to={linkedCode && !user.store_id ? activate : appNext || firstAllowedPath(user.role)} replace />;
 
   const submit = async (event) => {
     event.preventDefault();
@@ -28,7 +31,7 @@ export default function Login() {
     setLoading(true);
     try {
       const signedIn = await login(email, password);
-      if (!next || signedIn.must_change_password) nav(appNext || firstAllowedPath(signedIn.role));
+      if (!next || signedIn.must_change_password) nav(linkedCode && !signedIn.store_id ? activate : appNext || firstAllowedPath(signedIn.role));
     } catch (requestError) {
       setError(requestError?.response?.data?.detail || requestError.message || "Email atau kata sandi tidak valid.");
     } finally {

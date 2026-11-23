@@ -53,7 +53,7 @@ export default function Sales() {
     }).catch(() => { if (active) setError("Riwayat penjualan belum dapat dimuat. Periksa koneksi dan coba lagi."); })
       .finally(() => { if (active) { setReadActor(actorKey); setLoading(false); } });
     return () => { active = false; controller.abort(); };
-  }, [request, user?.id, user?.store_id, attempt]);
+  }, [request, actorKey, attempt]);
 
   const voidOrder = async (o) => {
     if (!isOwner) return;

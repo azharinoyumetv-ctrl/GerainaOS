@@ -1,13 +1,13 @@
 import { useAuth } from "@/auth/AuthContext";
 import ReadState from "@/components/ReadState";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api, { fmtIDR } from "@/api/client";
 
 export default function DeadStock() {
   const { user } = useAuth();
   const actor = `${user?.id}:${user?.store_id}`;
   const [page, setPage] = useState({ actor: null, cursor: null, previous: [], index: 0 });
-  const currentPage = page.actor === actor ? page : { actor, cursor: null, previous: [], index: 0 };
+  const currentPage = useMemo(() => page.actor === actor ? page : { actor, cursor: null, previous: [], index: 0 }, [actor, page]);
   const key = `${actor}:${currentPage.cursor || ""}`;
   const [attempt, setAttempt] = useState(0), [read, setRead] = useState({ key: "", loading: true, error: "", data: null });
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function DeadStock() {
       setRead({ key, loading: false, error: "", data });
     }).catch(() => { if (active) setRead({ key, loading: false, error: "Laporan stok mati belum dapat dimuat. Periksa koneksi dan coba lagi.", data: null }); });
     return () => { active = false; controller.abort(); };
-  }, [key, attempt]);
+  }, [key, attempt, actor, currentPage]);
   const loading = read.key !== key || read.loading, error = read.key === key ? read.error : "";
   const report = read.key === key ? read.data : null;
   const deadProducts = report?.items || [];

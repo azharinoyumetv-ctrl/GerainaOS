@@ -352,3 +352,14 @@ def test_manual_business_grant_has_real_expiry_and_shared_store_access(account):
     staff = run(auth.resolve_user_context(employee, "geraina"))
     assert staff["plan"] == "business" and staff["subscription"]["expires_at"] == grant["expires_at"]
     assert staff["is_store_owner"] is False
+
+
+def test_unrecognized_legacy_plan_does_not_extend_trial(account):
+    db, user = account
+    run(db.users.update_one({"id": OWNER}, {"$set": {"plan": "Business", "trial_ends_at": "2099-11-10T13:01:19+00:00"}}))
+    fresh = run(db.users.find_one({"id": OWNER}))
+    context = run(auth.resolve_user_context(fresh, "geraina"))
+    view = run(routes_subscriptions.billing_view(context))
+    assert context["plan"] == view["plan"] == "unknown"
+    assert view["trial_ends_at"] is None
+    assert view["subscription"] is None

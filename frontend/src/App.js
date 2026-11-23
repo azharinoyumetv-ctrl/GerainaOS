@@ -81,8 +81,10 @@ function Protected({ children }) {
 function AndroidRouterBridge() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const signedIn = Boolean(user);
+  const userId = user?.id, storeId = user?.store_id;
   useEffect(() => {
-    if (!window.__gerainaAndroid || !user) return;
+    if (!window.__gerainaAndroid || !signedIn) return;
     const router = { navigate: href => {
       const url = new URL(href, window.location.origin);
       if (url.origin !== window.location.origin || !url.pathname.startsWith("/geraina/app/")) return false;
@@ -91,7 +93,7 @@ function AndroidRouterBridge() {
     } };
     window.GerainaRouter = router;
     return () => { if (window.GerainaRouter === router) delete window.GerainaRouter; };
-  }, [navigate, user?.id, user?.store_id]);
+  }, [navigate, signedIn, userId, storeId]);
   return null;
 }
 

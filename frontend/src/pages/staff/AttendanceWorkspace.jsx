@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Clock, RefreshCw, LogIn, LogOut } from "lucide-react";
 import api from "@/api/client";
@@ -31,7 +31,7 @@ export default function AttendanceWorkspace() {
   const [ownError, setOwnError] = useState(""), [teamError, setTeamError] = useState("");
   const [loading, setLoading] = useState(false), [teamLoading, setTeamLoading] = useState(false), [busy, setBusy] = useState(false);
   const ownSeq = useRef(0), teamSeq = useRef(0), operation = useRef(false);
-  const loadOwn = async () => {
+  const loadOwn = useCallback(async () => {
     const seq = ++ownSeq.current, current = scope;
     setLoading(true); setOwnError("");
     try {
@@ -43,8 +43,8 @@ export default function AttendanceWorkspace() {
       if (nonce && data.history.some(row => row.check_in_request_id === nonce)) clearIntent(current);
     } catch (e) { if (seq === ownSeq.current && current === scopeRef.current) setOwnError(message(e, "Absensi Anda belum dapat dimuat. Periksa koneksi dan coba lagi.")); }
     finally { if (seq === ownSeq.current && current === scopeRef.current) setLoading(false); }
-  };
-  const loadTeam = async () => {
+  }, [scope]);
+  const loadTeam = useCallback(async () => {
     if (!teamAllowed) return;
     const seq = ++teamSeq.current, current = scope;
     setTeamLoading(true); setTeamError("");
@@ -55,13 +55,12 @@ export default function AttendanceWorkspace() {
       setTeam(data);
     } catch (e) { if (seq === teamSeq.current && current === scopeRef.current) setTeamError(message(e, "Kehadiran tim belum dapat dimuat. Coba lagi.")); }
     finally { if (seq === teamSeq.current && current === scopeRef.current) setTeamLoading(false); }
-  };
+  }, [scope, teamAllowed]);
   useEffect(() => {
     setOwn(null); setTeam(null); setOwnError(""); setTeamError(""); loadOwn();
-    return () => { ownSeq.current++; teamSeq.current++; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scope]);
-  useEffect(() => { if (tab === "team" && teamAllowed) loadTeam(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, teamAllowed, scope]);
+    return () => { ownSeq.current += 1; teamSeq.current += 1; };
+  }, [loadOwn]);
+  useEffect(() => { if (tab === "team" && teamAllowed) loadTeam(); }, [tab, teamAllowed, loadTeam]);
   useEffect(() => {
     const beforeSwitch = event => { if (operation.current) event.preventDefault(); };
     window.addEventListener("geraina-before-account-switch", beforeSwitch);
