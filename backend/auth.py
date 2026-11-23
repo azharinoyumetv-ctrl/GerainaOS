@@ -218,6 +218,8 @@ async def get_current_user(
     user = await _resolve_current(token, x_dagangos_module)
     if user.get("must_change_password"):
         raise HTTPException(status_code=403, detail="Ganti kata sandi sementara sebelum menggunakan aplikasi.")
+    if user.get("plan") == "unknown":
+        raise HTTPException(402, "Status paket belum diketahui. Hubungi dukungan untuk memeriksa paket Anda.")
     if user.get("plan") == "expired":
         raise HTTPException(
             status_code=402,
