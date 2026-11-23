@@ -14,6 +14,16 @@ object NavigationPolicy {
     const val COMPANION_LABEL = "DapurOS"
     const val COMPANION_DOWNLOAD = "$ORIGIN/dapuros/android"
 
+    private val affiliateLink = Regex("/geraina/affiliate-signup/([A-Z0-9]{8,24})")
+
+    fun affiliateRegistrationUrl(url: String?): String? {
+        val uri = url?.let { runCatching { URI(it) }.getOrNull() } ?: return null
+        if (uri.scheme != "https" || uri.host != "dagangos.com" || uri.port !in setOf(-1, 443) ||
+            uri.rawUserInfo != null || uri.rawQuery != null || uri.rawFragment != null) return null
+        val code = affiliateLink.matchEntire(uri.rawPath.orEmpty())?.groupValues?.get(1) ?: return null
+        return "$ORIGIN/geraina/register?affiliate=$code"
+    }
+
     fun isCompanionUrl(url: String): Boolean {
         val uri = runCatching { URI(url) }.getOrNull() ?: return false
         if (uri.scheme?.lowercase(Locale.ROOT) != "https" || uri.rawUserInfo != null || uri.port !in setOf(-1, 443) || uri.host?.lowercase(Locale.ROOT) != "dagangos.com") return false

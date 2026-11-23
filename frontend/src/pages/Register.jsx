@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { checkoutReturn, checkoutAuthLink } from "@/auth/checkoutReturn";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { ArrowRight } from "lucide-react";
 import PasswordInput from "@/components/PasswordInput";
 import { toast } from "@/components/ui/sonner";
-import { AffiliateSignupField, useAffiliateSignup } from "@/auth/affiliateSignup";
+import { AffiliateSignupField, affiliateCodeFromSearch, useAffiliateSignup, withAffiliateCode } from "@/auth/affiliateSignup";
 
 export default function Register() {
   const [storeName, setStoreName] = useState("");
@@ -16,7 +16,9 @@ export default function Register() {
   const nav = useNavigate();
   const next = checkoutReturn("geraina");
   const { register } = useAuth();
-  const referral = useAffiliateSignup("geraina");
+  const linkedCode = affiliateCodeFromSearch(useLocation().search);
+  const loginLink = withAffiliateCode(checkoutAuthLink("geraina", "login"), linkedCode);
+  const referral = useAffiliateSignup("geraina", linkedCode);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -45,7 +47,7 @@ export default function Register() {
         </Link>
         <nav aria-label="Navigasi pendaftaran Geraina">
           <Link to="/geraina/pricing">Lihat harga</Link>
-          <Link to={checkoutAuthLink("geraina", "login")}>Masuk</Link>
+          <Link to={loginLink}>Masuk</Link>
         </nav>
       </header>
 
@@ -88,14 +90,14 @@ export default function Register() {
               <PasswordInput id="geraina-register-password" toggleTestId="register-password-toggle" name="new-password" autoComplete="new-password" required minLength={6} data-testid="register-password-input" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimal 6 karakter" />
             </div>
 
-            <AffiliateSignupField referral={referral} />
+            <AffiliateSignupField referral={referral} androidProduct="geraina" />
             {error && <p className="auth-error" role="alert" data-testid="register-error">{error}</p>}
 
             <button type="submit" disabled={loading} data-testid="register-submit-btn" className="auth-submit">
               {loading ? "Memproses..." : next ? "Daftar & Lanjut Bayar" : "Mulai Trial 14 Hari"} {!loading && <ArrowRight size={17} />}
             </button>
 
-            <p className="auth-switch">Sudah punya akun? <Link to={checkoutAuthLink("geraina", "login")} data-testid="register-to-login-link">Masuk</Link></p>
+            <p className="auth-switch">Sudah punya akun? <Link to={loginLink} data-testid="register-to-login-link">Masuk</Link></p>
           </form>
         </section>
       </main>

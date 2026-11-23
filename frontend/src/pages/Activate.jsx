@@ -1,11 +1,11 @@
 import { clearSession } from "@/auth/session";
 import { useAuth } from "@/auth/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { checkoutReturn } from "@/auth/checkoutReturn";
 import { Store, ArrowRight, LogOut } from "lucide-react";
 import api from "@/api/client";
-import { AffiliateSignupField, useAffiliateSignup } from "@/auth/affiliateSignup";
+import { AffiliateSignupField, affiliateCodeFromSearch, useAffiliateSignup } from "@/auth/affiliateSignup";
 
 const MODULE = "geraina";
 const BRAND = "#0d9488";
@@ -17,7 +17,8 @@ export default function Activate() {
   const [storeCreated, setStoreCreated] = useState(false);
   const [err, setErr] = useState("");
   const { user } = useAuth();
-  const referral = useAffiliateSignup(MODULE);
+  const linkedCode = affiliateCodeFromSearch(useLocation().search);
+  const referral = useAffiliateSignup(MODULE, linkedCode);
   if (user?.store_id && user.current_module === MODULE) return <Navigate to={HOME} replace />;
 
   const submit = async (e) => {
