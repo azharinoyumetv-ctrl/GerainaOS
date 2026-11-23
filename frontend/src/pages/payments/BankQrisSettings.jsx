@@ -21,7 +21,7 @@ export default function BankQrisSettings() {
     try { const { data } = await api.get("/payments/bank-qris"); if (mounted.current && seq === sequence.current) setConfig({ ...empty, ...data }); }
     catch (e) { if (mounted.current && seq === sequence.current) setError(bankQrisError(e, "Pengaturan QRIS bank belum dapat dimuat. Coba lagi.")); }
   };
-  useEffect(() => { mounted.current = true; load(); return () => { mounted.current = false; sequence.current++; }; /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.store_id]);
+  useEffect(() => { mounted.current = true; load(); return () => { mounted.current = false; sequence.current += 1; }; /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.store_id]);
   const upload = async event => {
     const file = event.target.files?.[0]; event.target.value = "";
     if (!file) return;

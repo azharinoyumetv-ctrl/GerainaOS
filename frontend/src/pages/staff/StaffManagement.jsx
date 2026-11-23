@@ -28,7 +28,7 @@ export default function StaffManagement() {
   };
   useEffect(() => {
     mounted.current = true; setStaffList([]); clearForm(); fetchStaff();
-    return () => { mounted.current = false; sequence.current++; };
+    return () => { mounted.current = false; sequence.current += 1; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, user?.store_id, user?.role]);
   useEffect(() => {

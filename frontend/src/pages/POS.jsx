@@ -2,7 +2,7 @@ import { readCollection } from '@/api/records';
 import usePosCatalogue from "@/hooks/usePosCatalogue";
 import usePaymentOptions from "@/hooks/usePaymentOptions";
 import ReadState from "@/components/ReadState";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { canonicalRole } from "@/auth/permissions";
@@ -215,11 +215,12 @@ export default function POS() {
   const catalogue = usePosCatalogue(scope, offline, online);
   const { products, setProducts, snapshot, findProduct } = catalogue;
   const payments = usePaymentOptions(scope, offline, online);
-  const paymentEnabled = method => !!payments.options?.methods?.[method]?.enabled && (online || method === "cash");
-  const paymentChoices = PAYMENT_METHODS.filter(method => {
-    const option = payments.options?.methods?.[method.id];
+  const paymentOptions = payments.options;
+  const paymentEnabled = useCallback(method => !!paymentOptions?.methods?.[method]?.enabled && (online || method === "cash"), [paymentOptions, online]);
+  const paymentChoices = useMemo(() => PAYMENT_METHODS.filter(method => {
+    const option = paymentOptions?.methods?.[method.id];
     return option?.displayed ?? option?.enabled;
-  });
+  }), [paymentOptions]);
   const [q, setQ] = useState("");
   const [barcodeInput, setBarcodeInput] = useState("");
   const [cart, setCart] = useState([]);
@@ -302,11 +303,12 @@ export default function POS() {
     return () => window.removeEventListener("geraina-barcode", scanned);
   }, []);
   useEffect(() => {
-    if (!payments.options) return;
-    if (!paymentChoices.some(method => method.id === paymentMethod) || !paymentEnabled(paymentMethod)) setPaymentMethod(paymentChoices.find(method => paymentEnabled(method.id))?.id || "");
-    const channels = payments.options?.ewallet_channels || [];
-    if (!channels.some(channel => channel.code === ewallet) && channels.length) setEwallet(channels[0].code);
-  }, [payments.options, online]);
+    if (!paymentOptions) return;
+    setPaymentMethod(current => paymentChoices.some(method => method.id === current) && paymentEnabled(current)
+      ? current : paymentChoices.find(method => paymentEnabled(method.id))?.id || "");
+    const channels = paymentOptions.ewallet_channels || [];
+    if (channels.length) setEwallet(current => channels.some(channel => channel.code === current) ? current : channels[0].code);
+  }, [paymentOptions, paymentChoices, paymentEnabled]);
 
   // Keyboard barcode scanner hardware listener
   useEffect(() => {

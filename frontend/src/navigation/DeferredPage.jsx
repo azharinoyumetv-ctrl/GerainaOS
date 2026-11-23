@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useMemo, useState } from 'react';
+import { Component, lazy, Suspense, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 class PageBoundary extends Component {
@@ -23,9 +23,8 @@ class PageBoundary extends Component {
 // explicitly, keeping the authenticated document and navigation mounted.
 export function deferred(load) {
   return function DeferredPage(props) {
-    const [attempt, setAttempt] = useState(0);
-    const Page = useMemo(() => lazy(load), [attempt]);
-    return <PageBoundary key={attempt} onRetry={() => setAttempt(value => value + 1)}>
+    const [{ attempt, Page }, setPage] = useState(() => ({ attempt: 0, Page: lazy(load) }));
+    return <PageBoundary key={attempt} onRetry={() => setPage({ attempt: attempt + 1, Page: lazy(load) })}>
       <Suspense fallback={<div className="p-4 text-sm" role="status" data-testid="route-loading">Memuat halaman…</div>}>
         <Page {...props} />
       </Suspense>

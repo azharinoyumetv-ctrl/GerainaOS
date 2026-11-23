@@ -1,5 +1,5 @@
 import { readCollection } from '@/api/records';
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import api, { fmtIDR, API_BASE } from "@/api/client";
 import { useAuth } from "@/auth/AuthContext";
 import { canManageProducts } from "@/auth/permissions";
@@ -484,7 +484,7 @@ export default function Products() {
 
   // Saved categories must be available before their first product is created.
   // Keep legacy/imported product names too, so existing values remain selectable.
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     const requestIdentity = identity;
     const requestId = ++categoriesReqIdRef.current;
     const current = () => identityRef.current === requestIdentity && categoriesReqIdRef.current === requestId;
@@ -500,7 +500,7 @@ export default function Products() {
     } finally {
       if (current()) setCategoriesLoading(false);
     }
-  };
+  }, [identity]);
 
   const loadUnits = async () => {
     const requestIdentity = identity;
@@ -523,7 +523,7 @@ export default function Products() {
     }
   };
 
-  const loadBrands = async () => {
+  const loadBrands = useCallback(async () => {
     const requestIdentity = identity;
     const requestId = ++brandsReqIdRef.current;
     const current = () => identityRef.current === requestIdentity && brandsReqIdRef.current === requestId;
@@ -536,9 +536,17 @@ export default function Products() {
     } finally {
       if (current()) setBrandsLoading(false);
     }
-  };
+  }, [identity]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const cancelCatalogueRequests = useCallback(() => {
+    loadReqIdRef.current++;
+    summaryReqIdRef.current++;
+    categoriesReqIdRef.current++;
+    unitsReqIdRef.current++;
+    brandsReqIdRef.current++;
+    controllersRef.current.forEach(controller => controller.abort());
+    controllersRef.current.clear();
+  }, []);
   useEffect(() => {
     setItems([]); setCatalogue(null); setCategories([]); setPage(0); setQ(""); setFilterCat("all");
     setUnits([]); setUnitsError(""); setUnitsLoading(false);
@@ -546,8 +554,8 @@ export default function Products() {
     setShowForm(false); setShowImport(false); setEditing(null); setLoading(true); setLoadError("");
     loadCategories();
     loadBrands();
-    return () => { loadReqIdRef.current++; summaryReqIdRef.current++; categoriesReqIdRef.current++; unitsReqIdRef.current++; brandsReqIdRef.current++; controllersRef.current.forEach(controller => controller.abort()); controllersRef.current.clear(); };
-  }, [identity]);
+    return cancelCatalogueRequests;
+  }, [identity, loadCategories, loadBrands, cancelCatalogueRequests]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setTimeout(load, q ? 200 : 0); return () => clearTimeout(t); }, [q, filterCat, identity]);
 
